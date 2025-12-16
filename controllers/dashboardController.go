@@ -5,7 +5,9 @@ import (
 )
 
 func DashboardIndex(c *gin.Context) {
-	Render(c, "base.html", gin.H{
+	Render(c, "dashboard/index.html", gin.H{
 		"Title": "Dashboard User",
+		"Page":  "dashboard",
 	})
+
 }

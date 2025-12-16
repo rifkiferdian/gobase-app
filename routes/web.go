@@ -20,5 +20,8 @@ func RegisterWebRoutes(r *gin.Engine) {
 	auth.Use(middleware.AuthRequired())
 	{
 		auth.GET("/dashboard", controllers.DashboardIndex)
+		auth.GET("/suppliers", controllers.SupplierIndex)
+		auth.GET("/items", controllers.ItemIndex)
+		auth.GET("/programs", controllers.ProgramIndex)
 	}
 }

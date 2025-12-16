@@ -25,7 +25,7 @@ func main() {
 	r := gin.Default()
 
 	// Templates & static files
-	r.LoadHTMLGlob("templates/**/*.html")
+	r.LoadHTMLGlob("templates/**/*")
 	r.Static("/assets", "./assets")
 
 	// SESSION - must be registered BEFORE routes that use sessions

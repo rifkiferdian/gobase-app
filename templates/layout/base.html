@@ -1,3 +1,4 @@
+{{ define "layout/base.html" }}
 <!doctype html>
 <html lang="en"
       data-layout-width="boxed"
@@ -11,7 +12,13 @@
         <!-- penting untuk responsive di HP -->
         <meta name="viewport" content="width=device-width, initial-scale=1" />
 
-        <title>Stok Hadiah</title>
+        <title>
+            {{ if .Title }}
+                {{ .Title }}
+            {{ else }}
+                Stock Hadiah App
+            {{ end }}
+        </title>
 
         <!-- Bootstrap Css -->
         <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
@@ -32,7 +39,15 @@
         <div class="main-content">
             <div class="page-content">
                 <div class="container-fluid">
-                    {{ block "content" . }}{{ end }}
+                    {{ if eq .Page "dashboard" }}
+                        {{ template "dashboard_content" . }}
+                    {{ else if eq .Page "supplier" }}
+                        {{ template "supplier_content" . }}
+                    {{ else if eq .Page "item" }}
+                        {{ template "item_content" . }}
+                    {{ else if eq .Page "program" }}
+                        {{ template "program_content" . }}
+                    {{ end }}
                 </div>
             </div>
             {{ template "footer" . }}
@@ -55,3 +70,4 @@
         <script src="/assets/js/app.js"></script>
     </body>
 </html>
+{{ end }}
