@@ -29,6 +29,12 @@
             <div class="card-body">
                 <h4 class="card-title">Data Supplier</h4>
                 <p class="card-title-desc">Add <code>.table-bordered</code> for borders on all sides of the table and cells.</p>    
+
+                {{ if .Error }}
+                <div class="alert alert-danger" role="alert">
+                    {{ .Error }}
+                </div>
+                {{ end }}
                 
                 <div class="table-responsive">
                     <table class="table table-sm m-0">
@@ -87,7 +93,7 @@
                     <div class="modal-body">
                         <div class="mb-3">
                             <label for="supplierName" class="form-label">Nama Supplier</label>
-                            <input type="text" class="form-control" id="supplierName" name="supplier_name" placeholder="Masukkan nama supplier" >
+                            <input type="text" class="form-control" id="supplierName" name="supplier_name" placeholder="Masukkan nama supplier" required>
                         </div>
                         <div class="mb-3">
                             <label for="supplierDescription" class="form-label">Deskripsi</label>

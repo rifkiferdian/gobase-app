@@ -41,13 +41,21 @@ func SupplierStore(c *gin.Context) {
 	}
 
 	var form SupplierForm
-	if err := c.ShouldBind(&form); err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		return
-	}
-
 	repo := &repositories.SupplierRepository{DB: config.DB}
 	service := &services.SupplierService{Repo: repo}
+
+	if err := c.ShouldBind(&form); err != nil {
+		// Jika validasi form gagal, kirim error ke view di atas tabel data
+		data, _ := service.GetSuppliers()
+
+		Render(c, "supplier/index.html", gin.H{
+			"Title":     "Supplier Page",
+			"Page":      "supplier",
+			"suppliers": data,
+			"Error":     "Nama supplier wajib diisi",
+		})
+		return
+	}
 
 	supplier := models.Supplier{
 		SupplierName: form.SupplierName,
@@ -73,13 +81,21 @@ func SupplierUpdate(c *gin.Context) {
 	}
 
 	var form SupplierUpdateForm
-	if err := c.ShouldBind(&form); err != nil {
-		c.String(http.StatusBadRequest, err.Error())
-		return
-	}
-
 	repo := &repositories.SupplierRepository{DB: config.DB}
 	service := &services.SupplierService{Repo: repo}
+
+	if err := c.ShouldBind(&form); err != nil {
+		// Jika validasi form gagal saat update, kirim error ke view di atas tabel data
+		data, _ := service.GetSuppliers()
+
+		Render(c, "supplier/index.html", gin.H{
+			"Title":     "Supplier Page",
+			"Page":      "supplier",
+			"suppliers": data,
+			"Error":     "Nama supplier wajib diisi",
+		})
+		return
+	}
 
 	supplier := models.Supplier{
 		SupplierID:   form.SupplierID,
