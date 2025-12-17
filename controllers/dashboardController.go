@@ -11,3 +11,9 @@ func DashboardIndex(c *gin.Context) {
 	})
 
 }
+
+func HomeIndex(c *gin.Context) {
+	Render(c, "home.html", gin.H{
+		"Title": "Home Page",
+	})
+}

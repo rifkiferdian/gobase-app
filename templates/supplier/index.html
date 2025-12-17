@@ -3,6 +3,70 @@
 {{ end }}
 
 {{ define "supplier_content" }}
-<h1>supplier</h1>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ducimus sapiente quod mollitia tempore doloremque. </p>
+
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 class="mb-sm-0 font-size-18">SUPPLIER</h4>
+
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a href="javascript: void(0);">Tables</a></li>
+                    <li class="breadcrumb-item active">Data Supplier</li>
+                </ol>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+
+    <div class="col-xl-10">
+        <div class="d-flex mb-2 justify-content-end">
+            <button type="button" class="btn btn-info waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#myModal">Tambah</button>
+        </div>
+        <div class="card">
+            <div class="card-body">
+                <h4 class="card-title">Bordered table</h4>
+                <p class="card-title-desc">Add <code>.table-bordered</code> for borders on all sides of the table and cells.</p>    
+                
+                <div class="table-responsive">
+                    <table class="table table-bordered mb-0">
+
+                        <thead>
+                            <tr>
+                                <th>#</th>
+                                <th>Nama</th>
+                                <th>Diskripsi</th>
+                                <th>Status</th>
+                                <th>Aksi</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {{ range .suppliers }}
+                            <tr>
+                                <th scope="row">{{ .SupplierID }}</th>
+                                <td>{{ .SupplierName }}</td>
+                                <td>{{ .Description }}</td>
+                                <td>
+                                    {{ if .Active }}Aktif{{ else }}Nonaktif{{ end }}
+                                </td>
+                                <td style="font-size: large;">
+                                    <a class="waves-effect"><i class="bx bxs-pencil"></i></a>
+                                    <a style="color: red;" class="waves-effect"><i class="bx bx-trash"></i></a>
+                                </td>
+                            </tr>
+                            {{ else }}
+                            <tr>
+                                <td colspan="5" class="text-center">Tidak ada data supplier</td>
+                            </tr>
+                            {{ end }}
+                        </tbody>
+                    </table>
+                </div>
+
+            </div>
+        </div>
+    </div>
+    
 {{ end }}
