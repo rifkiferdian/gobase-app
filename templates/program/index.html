@@ -1,8 +1,227 @@
 {{ define "program/index.html" }}
-    {{ template "layout/base.html" . }}
+	{{ template "layout/base.html" . }}
 {{ end }}
 
 {{ define "program_content" }}
-<h1>Program</h1>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ducimus sapiente quod mollitia tempore doloremque. </p>
+
+<div class="row">
+	<div class="col-12">
+		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
+			<h4 class="mb-sm-0 font-size-18">PROGRAM</h4>
+
+			<div class="page-title-right">
+				<ol class="breadcrumb m-0">
+					<li class="breadcrumb-item"><a href="javascript: void(0);">Tables</a></li>
+					<li class="breadcrumb-item active">Data Program</li>
+				</ol>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="col-xl-12">
+	<div class="d-flex mb-2 justify-content-end">
+		<button type="button" class="btn btn-info waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#addProgramModal">Tambah</button>
+	</div>
+	<div class="card">
+		<div class="card-body">
+			<h4 class="card-title">Data Program</h4>
+			<p class="card-title-desc">Daftar program promosi untuk item hadiah.</p>
+
+			{{ if .Error }}
+			<div class="alert alert-danger" role="alert">
+				{{ .Error }}
+			</div>
+			{{ end }}
+
+			<div class="table-responsive">
+				<table class="table table-sm m-0">
+					<thead>
+						<tr>
+							<th>#</th>
+							<th>Nama Program</th>
+							<th>Item</th>
+							<th>Tanggal Mulai</th>
+							<th>Tanggal Selesai</th>
+							<th>Aksi</th>
+						</tr>
+					</thead>
+					<tbody>
+						{{ range .programs }}
+						<tr>
+							<th scope="row">{{ .ProgramID }}</th>
+							<td>{{ .ProgramName }}</td>
+							<td>{{ .ItemName }}</td>
+							<td>{{ .StartDate }}</td>
+							<td>{{ .EndDate }}</td>
+							<td style="font-size: large;">
+								<a href="#" class="waves-effect btnEditProgram"
+								   data-id="{{ .ProgramID }}"
+								   data-name="{{ .ProgramName }}"
+								   data-item-id="{{ .ItemID }}"
+								   data-start-date="{{ .StartDate }}"
+								   data-end-date="{{ .EndDate }}">
+									<i class="bx bxs-pencil"></i>
+								</a>
+								<a href="/programs/delete/{{ .ProgramID }}" style="color: red;" class="waves-effect btnDeleteProgram"><i class="bx bx-trash"></i></a>
+							</td>
+						</tr>
+						{{ else }}
+						<tr>
+							<td colspan="6" class="text-center">Tidak ada data program</td>
+						</tr>
+						{{ end }}
+					</tbody>
+				</table>
+			</div>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Tambah Program -->
+<div class="modal fade" id="addProgramModal" tabindex="-1" aria-labelledby="addProgramModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<form method="post" action="/programs">
+				<div class="modal-header">
+					<h5 class="modal-title" id="addProgramModalLabel">Tambah Program</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="mb-3">
+						<label for="programName" class="form-label">Nama Program</label>
+						<input type="text" class="form-control" id="programName" name="program_name" placeholder="Masukkan nama program" required>
+					</div>
+					<div class="mb-3">
+						<label for="programItem" class="form-label">Item</label>
+						<select class="form-select" id="programItem" name="item_id" required>
+							<option value="">-- Pilih Item --</option>
+							{{ range .items }}
+							<option value="{{ .ItemID }}">{{ .ItemName }}</option>
+							{{ end }}
+						</select>
+					</div>
+					<div class="mb-3">
+						<label for="startDate" class="form-label">Tanggal Mulai</label>
+						<input type="date" class="form-control" id="startDate" name="start_date" required>
+					</div>
+					<div class="mb-3">
+						<label for="endDate" class="form-label">Tanggal Selesai</label>
+						<input type="date" class="form-control" id="endDate" name="end_date" required>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+					<button type="submit" class="btn btn-primary">Simpan</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<!-- Modal Edit Program -->
+<div class="modal fade" id="editProgramModal" tabindex="-1" aria-labelledby="editProgramModalLabel" aria-hidden="true">
+	<div class="modal-dialog modal-dialog-centered">
+		<div class="modal-content">
+			<form method="post" action="/programs/update">
+				<input type="hidden" name="program_id" id="editProgramId">
+				<div class="modal-header">
+					<h5 class="modal-title" id="editProgramModalLabel">Edit Program</h5>
+					<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+				</div>
+				<div class="modal-body">
+					<div class="mb-3">
+						<label for="editProgramName" class="form-label">Nama Program</label>
+						<input type="text" class="form-control" id="editProgramName" name="program_name" placeholder="Masukkan nama program" required>
+					</div>
+					<div class="mb-3">
+						<label for="editProgramItem" class="form-label">Item</label>
+						<select class="form-select" id="editProgramItem" name="item_id" required>
+							<option value="">-- Pilih Item --</option>
+							{{ range .items }}
+							<option value="{{ .ItemID }}">{{ .ItemName }}</option>
+							{{ end }}
+						</select>
+					</div>
+					<div class="mb-3">
+						<label for="editStartDate" class="form-label">Tanggal Mulai</label>
+						<input type="date" class="form-control" id="editStartDate" name="start_date" required>
+					</div>
+					<div class="mb-3">
+						<label for="editEndDate" class="form-label">Tanggal Selesai</label>
+						<input type="date" class="form-control" id="editEndDate" name="end_date" required>
+					</div>
+				</div>
+				<div class="modal-footer">
+					<button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+					<button type="submit" class="btn btn-primary">Update</button>
+				</div>
+			</form>
+		</div>
+	</div>
+</div>
+
+<script>
+	// Handle click untuk semua tombol delete program
+	document.querySelectorAll('.btnDeleteProgram').forEach(function (btn) {
+		btn.addEventListener('click', function (event) {
+			event.preventDefault();
+
+			Swal.fire({
+				title: "Are you sure?",
+				text: "Data program akan dihapus dan tidak bisa dikembalikan!",
+				icon: "warning",
+				showCancelButton: true,
+				confirmButtonColor: "#3085d6",
+				cancelButtonColor: "#d33",
+				confirmButtonText: "Yes, delete it!"
+			}).then((result) => {
+				if (result.isConfirmed) {
+					const url = btn.getAttribute('href');
+					if (url) {
+						window.location.href = url;
+					}
+				}
+			});
+		});
+	});
+
+	// Handle click untuk semua tombol edit program
+	document.querySelectorAll('.btnEditProgram').forEach(function (btn) {
+		btn.addEventListener('click', function (event) {
+			event.preventDefault();
+
+			var id = btn.getAttribute('data-id');
+			var name = btn.getAttribute('data-name');
+			var itemId = btn.getAttribute('data-item-id');
+			var startDate = btn.getAttribute('data-start-date');
+			var endDate = btn.getAttribute('data-end-date');
+
+			var modalEl = document.getElementById('editProgramModal');
+			if (!modalEl) return;
+
+			var idInput = modalEl.querySelector('input[name="program_id"]');
+			var nameInput = modalEl.querySelector('input[name="program_name"]');
+			var itemSelect = modalEl.querySelector('select[name="item_id"]');
+			var startInput = modalEl.querySelector('input[name="start_date"]');
+			var endInput = modalEl.querySelector('input[name="end_date"]');
+
+			if (idInput) idInput.value = id || '';
+			if (nameInput) nameInput.value = name || '';
+			if (itemSelect) itemSelect.value = itemId || '';
+			if (startInput) startInput.value = startDate || '';
+			if (endInput) endInput.value = endDate || '';
+
+			if (typeof bootstrap !== 'undefined') {
+				var modal = new bootstrap.Modal(modalEl);
+				modal.show();
+			} else {
+				// fallback kalau objek bootstrap tidak tersedia
+				modalEl.classList.add('show');
+				modalEl.style.display = 'block';
+			}
+		});
+	});
+</script>
+
 {{ end }}
