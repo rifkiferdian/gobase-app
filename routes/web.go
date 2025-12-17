@@ -21,6 +21,9 @@ func RegisterWebRoutes(r *gin.Engine) {
 	{
 		auth.GET("/dashboard", controllers.DashboardIndex)
 		auth.GET("/suppliers", controllers.SupplierIndex)
+		auth.POST("/suppliers", controllers.SupplierStore)
+		auth.POST("/suppliers/update", controllers.SupplierUpdate)
+		auth.GET("/suppliers/delete/:id", controllers.SupplierDelete)
 		auth.GET("/items", controllers.ItemIndex)
 		auth.GET("/programs", controllers.ProgramIndex)
 

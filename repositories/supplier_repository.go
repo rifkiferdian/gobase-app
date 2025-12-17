@@ -37,3 +37,28 @@ func (r *SupplierRepository) GetAll() ([]models.Supplier, error) {
 
 	return suppliers, nil
 }
+
+func (r *SupplierRepository) Create(s models.Supplier) error {
+	_, err := r.DB.Exec(`
+		INSERT INTO suppliers (supplier_name, active, description)
+		VALUES (?, ?, ?)
+	`, s.SupplierName, s.Active, s.Description)
+	return err
+}
+
+func (r *SupplierRepository) Delete(id int) error {
+	_, err := r.DB.Exec(`
+		DELETE FROM suppliers
+		WHERE suppliers_id = ?
+	`, id)
+	return err
+}
+
+func (r *SupplierRepository) Update(s models.Supplier) error {
+	_, err := r.DB.Exec(`
+		UPDATE suppliers
+		SET supplier_name = ?, active = ?, description = ?
+		WHERE suppliers_id = ?
+	`, s.SupplierName, s.Active, s.Description, s.SupplierID)
+	return err
+}

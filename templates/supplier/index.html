@@ -27,11 +27,11 @@
         </div>
         <div class="card">
             <div class="card-body">
-                <h4 class="card-title">Bordered table</h4>
+                <h4 class="card-title">Data Supplier</h4>
                 <p class="card-title-desc">Add <code>.table-bordered</code> for borders on all sides of the table and cells.</p>    
                 
                 <div class="table-responsive">
-                    <table class="table table-bordered mb-0">
+                    <table class="table table-sm m-0">
 
                         <thead>
                             <tr>
@@ -52,8 +52,14 @@
                                     {{ if .Active }}Aktif{{ else }}Nonaktif{{ end }}
                                 </td>
                                 <td style="font-size: large;">
-                                    <a class="waves-effect"><i class="bx bxs-pencil"></i></a>
-                                    <a style="color: red;" class="waves-effect"><i class="bx bx-trash"></i></a>
+                                    <a href="#" class="waves-effect btnEdit"
+                                       data-id="{{ .SupplierID }}"
+                                       data-name="{{ .SupplierName }}"
+                                       data-description="{{ .Description }}"
+                                       data-active="{{ .Active }}">
+                                        <i class="bx bxs-pencil"></i>
+                                    </a>
+                                    <a href="/suppliers/delete/{{ .SupplierID }}" style="color: red;" class="waves-effect btnDelete"><i class="bx bx-trash"></i></a>
                                 </td>
                             </tr>
                             {{ else }}
@@ -68,5 +74,130 @@
             </div>
         </div>
     </div>
+
+    <!-- Modal Tambah Supplier -->
+    <div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="myModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="post" action="/suppliers">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="myModalLabel">Tambah Supplier</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="supplierName" class="form-label">Nama Supplier</label>
+                            <input type="text" class="form-control" id="supplierName" name="supplier_name" placeholder="Masukkan nama supplier" >
+                        </div>
+                        <div class="mb-3">
+                            <label for="supplierDescription" class="form-label">Deskripsi</label>
+                            <textarea class="form-control" id="supplierDescription" name="description" rows="3" placeholder="Masukkan deskripsi supplier"></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="supplierActive" name="active" value="1" checked>
+                            <label class="form-check-label" for="supplierActive">Aktif</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Edit Supplier -->
+    <div class="modal fade" id="editSupplierModal" tabindex="-1" aria-labelledby="editSupplierModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <form method="post" action="/suppliers/update">
+                    <input type="hidden" name="supplier_id" id="editSupplierId">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="editSupplierModalLabel">Edit Supplier</h5>
+                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label for="editSupplierName" class="form-label">Nama Supplier</label>
+                            <input type="text" class="form-control" id="editSupplierName" name="supplier_name" placeholder="Masukkan nama supplier" required>
+                        </div>
+                        <div class="mb-3">
+                            <label for="editSupplierDescription" class="form-label">Deskripsi</label>
+                            <textarea class="form-control" id="editSupplierDescription" name="description" rows="3" placeholder="Masukkan deskripsi supplier"></textarea>
+                        </div>
+                        <div class="form-check mb-3">
+                            <input type="checkbox" class="form-check-input" id="editSupplierActive" name="active" value="1">
+                            <label class="form-check-label" for="editSupplierActive">Aktif</label>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Batal</button>
+                        <button type="submit" class="btn btn-primary">Update</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Handle click for all delete buttons
+        document.querySelectorAll('.btnDelete').forEach(function (btn) {
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                Swal.fire({
+                    title: "Are you sure?",
+                    text: "You won't be able to revert this!",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonColor: "#3085d6",
+                    cancelButtonColor: "#d33",
+                    confirmButtonText: "Yes, delete it!"
+                }).then((result) => {
+                    if (result.isConfirmed) {
+                        const url = btn.getAttribute('href');
+                        if (url) {
+                            window.location.href = url;
+                        }
+                    }
+                });
+            });
+        });
+
+        // Handle click for all edit buttons
+        document.querySelectorAll('.btnEdit').forEach(function (btn) {
+            btn.addEventListener('click', function (event) {
+                event.preventDefault();
+
+                var id = btn.getAttribute('data-id');
+                var name = btn.getAttribute('data-name');
+                var description = btn.getAttribute('data-description') || '';
+                var active = btn.getAttribute('data-active');
+
+                var modalEl = document.getElementById('editSupplierModal');
+                if (!modalEl) return;
+
+                var idInput = modalEl.querySelector('input[name="supplier_id"]');
+                var nameInput = modalEl.querySelector('input[name="supplier_name"]');
+                var descInput = modalEl.querySelector('textarea[name="description"]');
+                var activeInput = modalEl.querySelector('input[name="active"]');
+
+                if (idInput) idInput.value = id || '';
+                if (nameInput) nameInput.value = name || '';
+                if (descInput) descInput.value = description;
+                if (activeInput) activeInput.checked = active && active !== '0';
+
+                if (typeof bootstrap !== 'undefined') {
+                    var modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                } else {
+                    // fallback kalau objek bootstrap tidak tersedia
+                    modalEl.classList.add('show');
+                    modalEl.style.display = 'block';
+                }
+            });
+        });
+    </script>
     
 {{ end }}
