@@ -14,17 +14,53 @@ import (
 
 // ItemInIndex menampilkan halaman listing stok barang masuk.
 func ItemInIndex(c *gin.Context) {
+	// Ambil parameter page dari query string, default 1
+	pageStr := c.Query("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	const pageSize = 10
+
 	stockRepo := &repositories.StockInRepository{DB: config.DB}
 	stockService := &services.StockInService{Repo: stockRepo}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
-
-	stockIns, err := stockService.GetStockIns()
+	// Ambil data stok masuk dengan pagination
+	stockIns, total, err := stockService.GetStockInsPaginated(page, pageSize)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
+	// Hitung total halaman
+	totalPages := 0
+	if total > 0 {
+		if total%pageSize == 0 {
+			totalPages = total / pageSize
+		} else {
+			totalPages = (total / pageSize) + 1
+		}
+	}
+
+	// Siapkan slice untuk nomor halaman (1..totalPages)
+	pages := []int{}
+	for i := 1; i <= totalPages; i++ {
+		pages = append(pages, i)
+	}
+
+	// Hitung halaman sebelumnya dan berikutnya untuk tombol Prev/Next
+	prevPage := page - 1
+	if prevPage < 1 {
+		prevPage = 1
+	}
+
+	nextPage := page + 1
+	if totalPages > 0 && nextPage > totalPages {
+		nextPage = totalPages
+	}
+
+	itemRepo := &repositories.ItemRepository{DB: config.DB}
 	items, err := itemRepo.GetAll()
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
@@ -32,10 +68,15 @@ func ItemInIndex(c *gin.Context) {
 	}
 
 	Render(c, "item/item_in.html", gin.H{
-		"Title":    "Barang Masuk",
-		"Page":     "item_in",
-		"stockIns": stockIns,
-		"items":    items,
+		"Title":       "Barang Masuk",
+		"Page":        "item_in",
+		"stockIns":    stockIns,
+		"items":       items,
+		"CurrentPage": page,
+		"TotalPages":  totalPages,
+		"Pages":       pages,
+		"PrevPage":    prevPage,
+		"NextPage":    nextPage,
 	})
 }
 

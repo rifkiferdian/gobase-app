@@ -68,6 +68,80 @@ func (r *StockInRepository) GetAll() ([]models.StockIn, error) {
 	return stockIns, nil
 }
 
+// Count mengembalikan jumlah seluruh data stok masuk.
+func (r *StockInRepository) Count() (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COUNT(*) FROM stock_in
+	`)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// GetPaginated mengambil data stok masuk dengan pagination menggunakan LIMIT dan OFFSET.
+// Data yang diambil sudah termasuk join dengan tabel items, suppliers, dan users.
+func (r *StockInRepository) GetPaginated(limit, offset int) ([]models.StockIn, error) {
+	rows, err := r.DB.Query(`
+		SELECT si.id,
+		       si.user_id,
+		       u.name,
+		       si.item_id,
+		       i.item_name,
+		       s.supplier_name,
+		       si.qty,
+		       si.received_at,
+		       si.details
+		FROM stock_in si
+		JOIN users u ON u.id = si.user_id
+		JOIN items i ON i.item_id = si.item_id
+		JOIN suppliers s ON s.suppliers_id = i.supplier_id
+		ORDER BY si.received_at DESC
+		LIMIT ? OFFSET ?
+	`, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stockIns []models.StockIn
+
+	for rows.Next() {
+		var s models.StockIn
+		if err := rows.Scan(
+			&s.ID,
+			&s.UserID,
+			&s.UserName,
+			&s.ItemID,
+			&s.ItemName,
+			&s.SupplierName,
+			&s.Qty,
+			&s.ReceivedAt,
+			&s.Description,
+		); err != nil {
+			return nil, err
+		}
+
+		// Parsing string datetime dari database ke format tampilan dan format date untuk form
+		if t, err := time.Parse("2006-01-02 15:04:05", s.ReceivedAt); err == nil {
+			// Untuk input <input type="date"> butuh format YYYY-MM-DD
+			s.ReceivedAt = t.Format("2006-01-02")
+			// Untuk tampilan di tabel: dd-mm-YYYY HH:MM:SS
+			s.ReceivedAtDisplay = t.Format("02-01-2006 15:04:05")
+		} else {
+			// Fallback kalau parsing gagal: pakai string apa adanya
+			s.ReceivedAtDisplay = s.ReceivedAt
+		}
+
+		stockIns = append(stockIns, s)
+	}
+
+	return stockIns, nil
+}
+
 func (r *StockInRepository) Create(s models.StockIn) error {
 	if s.ReceivedAt == "" {
 		_, err := r.DB.Exec(`
