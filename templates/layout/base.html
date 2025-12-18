@@ -40,15 +40,17 @@
         <div class="main-content">
             <div class="page-content">
                 <div class="container-fluid">
-                    {{ if eq .Page "dashboard" }}
-                        {{ template "dashboard_content" . }}
-                    {{ else if eq .Page "supplier" }}
-                        {{ template "supplier_content" . }}
-                    {{ else if eq .Page "item" }}
-                        {{ template "item_content" . }}
-                    {{ else if eq .Page "program" }}
-                        {{ template "program_content" . }}
-                    {{ end }}
+					{{ if eq .Page "dashboard" }}
+						{{ template "dashboard_content" . }}
+					{{ else if eq .Page "supplier" }}
+						{{ template "supplier_content" . }}
+					{{ else if eq .Page "item" }}
+						{{ template "item_content" . }}
+					{{ else if eq .Page "program" }}
+						{{ template "program_content" . }}
+					{{ else if eq .Page "item_in" }}
+						{{ template "item_in_content" . }}
+					{{ end }}
                 </div>
             </div>
             {{ template "footer" . }}
