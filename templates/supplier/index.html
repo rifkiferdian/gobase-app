@@ -28,7 +28,7 @@
         <div class="card">
             <div class="card-body">
                 <h4 class="card-title">Data Supplier</h4>
-                <p class="card-title-desc">Add <code>.table-bordered</code> for borders on all sides of the table and cells.</p>    
+                <p class="card-title-desc">Daftar suplier item barang hadiah yang di berikan</p>    
 
                 {{ if .Error }}
                 <div class="alert alert-danger" role="alert">
@@ -77,7 +77,39 @@
                     </table>
                 </div>
 
+                
             </div>
+            <div class="card-footer">
+                {{ if gt .TotalPages 1 }}
+                <nav aria-label="Page navigation example">
+                    <ul class="pagination justify-content-center">
+                        <!-- Tombol Previous -->
+                        <li class="page-item {{ if le .CurrentPage 1 }}disabled{{ end }}">
+                            <a class="page-link" href="/suppliers?page={{ .PrevPage }}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                                <span class="sr-only">Previous</span>
+                            </a>
+                        </li>
+
+                        <!-- Nomor halaman -->
+                        {{ range .Pages }}
+                        <li class="page-item {{ if eq . $.CurrentPage }}active{{ end }}">
+                            <a class="page-link" href="/suppliers?page={{ . }}">{{ . }}</a>
+                        </li>
+                        {{ end }}
+
+                        <!-- Tombol Next -->
+                        <li class="page-item {{ if ge .CurrentPage .TotalPages }}disabled{{ end }}">
+                            <a class="page-link" href="/suppliers?page={{ .NextPage }}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                                <span class="sr-only">Next</span>
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+                {{ end }}
+            </div>
+            
         </div>
     </div>
 

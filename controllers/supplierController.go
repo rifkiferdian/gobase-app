@@ -16,19 +16,60 @@ type SupplierController struct {
 }
 
 func SupplierIndex(c *gin.Context) {
+	// Ambil parameter page dari query string, default 1
+	pageStr := c.Query("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	const pageSize = 10
+
 	repo := &repositories.SupplierRepository{DB: config.DB}
 	service := &services.SupplierService{Repo: repo}
 
-	data, err := service.GetSuppliers()
+	data, total, err := service.GetSuppliersPaginated(page, pageSize)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
+	// Hitung total halaman
+	totalPages := 0
+	if total > 0 {
+		if total%pageSize == 0 {
+			totalPages = total / pageSize
+		} else {
+			totalPages = (total / pageSize) + 1
+		}
+	}
+
+	// Siapkan slice untuk nomor halaman (1..totalPages)
+	pages := []int{}
+	for i := 1; i <= totalPages; i++ {
+		pages = append(pages, i)
+	}
+
+	// Hitung halaman sebelumnya dan berikutnya untuk tombol Prev/Next
+	prevPage := page - 1
+	if prevPage < 1 {
+		prevPage = 1
+	}
+
+	nextPage := page + 1
+	if totalPages > 0 && nextPage > totalPages {
+		nextPage = totalPages
+	}
+
 	Render(c, "supplier/index.html", gin.H{
-		"Title":     "Supplier Page",
-		"Page":      "supplier",
-		"suppliers": data,
+		"Title":       "Supplier Page",
+		"Page":        "supplier",
+		"suppliers":   data,
+		"CurrentPage": page,
+		"TotalPages":  totalPages,
+		"Pages":       pages,
+		"PrevPage":    prevPage,
+		"NextPage":    nextPage,
 	})
 }
 
