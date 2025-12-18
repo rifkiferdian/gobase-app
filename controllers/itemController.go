@@ -13,9 +13,53 @@ import (
 
 // ItemIndex menampilkan halaman listing item.
 func ItemIndex(c *gin.Context) {
+	// Ambil parameter page dari query string, default 1
+	pageStr := c.Query("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	const pageSize = 10
+
 	itemRepo := &repositories.ItemRepository{DB: config.DB}
 	itemService := &services.ItemService{Repo: itemRepo}
 
+	// Ambil data item dengan pagination
+	items, total, err := itemService.GetItemsPaginated(page, pageSize)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Hitung total halaman
+	totalPages := 0
+	if total > 0 {
+		if total%pageSize == 0 {
+			totalPages = total / pageSize
+		} else {
+			totalPages = (total / pageSize) + 1
+		}
+	}
+
+	// Siapkan slice untuk nomor halaman (1..totalPages)
+	pages := []int{}
+	for i := 1; i <= totalPages; i++ {
+		pages = append(pages, i)
+	}
+
+	// Hitung halaman sebelumnya dan berikutnya untuk tombol Prev/Next
+	prevPage := page - 1
+	if prevPage < 1 {
+		prevPage = 1
+	}
+
+	nextPage := page + 1
+	if totalPages > 0 && nextPage > totalPages {
+		nextPage = totalPages
+	}
+
+	// Supplier tetap diambil semua untuk kebutuhan dropdown
 	supplierRepo := &repositories.SupplierRepository{DB: config.DB}
 	suppliers, err := supplierRepo.GetAll()
 	if err != nil {
@@ -23,17 +67,16 @@ func ItemIndex(c *gin.Context) {
 		return
 	}
 
-	items, err := itemService.GetItems()
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-
 	Render(c, "item/index.html", gin.H{
-		"Title":     "Item Page",
-		"Page":      "item",
-		"items":     items,
-		"suppliers": suppliers,
+		"Title":       "Item Page",
+		"Page":        "item",
+		"items":       items,
+		"suppliers":   suppliers,
+		"CurrentPage": page,
+		"TotalPages":  totalPages,
+		"Pages":       pages,
+		"PrevPage":    prevPage,
+		"NextPage":    nextPage,
 	})
 }
 
