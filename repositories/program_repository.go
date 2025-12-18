@@ -46,6 +46,60 @@ func (r *ProgramRepository) GetAll() ([]models.Program, error) {
 	return programs, nil
 }
 
+// Count mengembalikan jumlah seluruh data program.
+func (r *ProgramRepository) Count() (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COUNT(*) FROM programs
+	`)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// GetPaginated mengambil data program dengan pagination menggunakan LIMIT dan OFFSET.
+// Data yang diambil sudah termasuk join dengan tabel items untuk mendapatkan nama item.
+func (r *ProgramRepository) GetPaginated(limit, offset int) ([]models.Program, error) {
+	rows, err := r.DB.Query(`
+		SELECT p.program_id,
+		       p.program_name,
+		       p.item_id,
+		       i.item_name,
+		       DATE_FORMAT(p.start_date, '%Y-%m-%d') AS start_date,
+		       DATE_FORMAT(p.end_date, '%Y-%m-%d') AS end_date
+		FROM programs p
+		JOIN items i ON i.item_id = p.item_id
+		ORDER BY p.program_id DESC
+		LIMIT ? OFFSET ?
+	`, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var programs []models.Program
+
+	for rows.Next() {
+		var p models.Program
+		if err := rows.Scan(
+			&p.ProgramID,
+			&p.ProgramName,
+			&p.ItemID,
+			&p.ItemName,
+			&p.StartDate,
+			&p.EndDate,
+		); err != nil {
+			return nil, err
+		}
+		programs = append(programs, p)
+	}
+
+	return programs, nil
+}
+
 func (r *ProgramRepository) Create(p models.Program) error {
 	_, err := r.DB.Exec(`
 		INSERT INTO programs (program_name, item_id, start_date, end_date)

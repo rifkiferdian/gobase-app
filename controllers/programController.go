@@ -13,17 +13,55 @@ import (
 
 // ProgramIndex menampilkan halaman listing program.
 func ProgramIndex(c *gin.Context) {
+	// Ambil parameter page dari query string, default 1
+	pageStr := c.Query("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	const pageSize = 10
+
 	programRepo := &repositories.ProgramRepository{DB: config.DB}
 	programService := &services.ProgramService{Repo: programRepo}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
-	itemService := &services.ItemService{Repo: itemRepo}
-
-	programs, err := programService.GetPrograms()
+	// Ambil data program dengan pagination
+	programs, total, err := programService.GetProgramsPaginated(page, pageSize)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
+
+	// Hitung total halaman
+	totalPages := 0
+	if total > 0 {
+		if total%pageSize == 0 {
+			totalPages = total / pageSize
+		} else {
+			totalPages = (total / pageSize) + 1
+		}
+	}
+
+	// Siapkan slice untuk nomor halaman (1..totalPages)
+	pages := []int{}
+	for i := 1; i <= totalPages; i++ {
+		pages = append(pages, i)
+	}
+
+	// Hitung halaman sebelumnya dan berikutnya untuk tombol Prev/Next
+	prevPage := page - 1
+	if prevPage < 1 {
+		prevPage = 1
+	}
+
+	nextPage := page + 1
+	if totalPages > 0 && nextPage > totalPages {
+		nextPage = totalPages
+	}
+
+	// Item tetap diambil semua untuk kebutuhan dropdown
+	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	itemService := &services.ItemService{Repo: itemRepo}
 
 	items, err := itemService.GetItems()
 	if err != nil {
@@ -32,10 +70,15 @@ func ProgramIndex(c *gin.Context) {
 	}
 
 	Render(c, "program/index.html", gin.H{
-		"Title":    "Program Page",
-		"Page":     "program",
-		"programs": programs,
-		"items":    items,
+		"Title":       "Program Page",
+		"Page":        "program",
+		"programs":    programs,
+		"items":       items,
+		"CurrentPage": page,
+		"TotalPages":  totalPages,
+		"Pages":       pages,
+		"PrevPage":    prevPage,
+		"NextPage":    nextPage,
 	})
 }
 
