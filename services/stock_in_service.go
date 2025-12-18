@@ -13,6 +13,13 @@ func (s *StockInService) GetStockIns() ([]models.StockIn, error) {
 	return s.Repo.GetAll()
 }
 
+// SearchStockIns mengembalikan data stok masuk yang difilter berdasarkan
+// nama barang dan tanggal penerimaan (opsional keduanya).
+// Jika kedua parameter kosong, fungsi akan mengembalikan seluruh data.
+func (s *StockInService) SearchStockIns(itemName, date string) ([]models.StockIn, error) {
+	return s.Repo.Search(itemName, date)
+}
+
 // GetStockInsPaginated mengembalikan data stok masuk berdasarkan halaman dan ukuran halaman (pageSize).
 // Fungsi ini juga mengembalikan total data stok masuk untuk keperluan perhitungan total halaman.
 func (s *StockInService) GetStockInsPaginated(page, pageSize int) ([]models.StockIn, int, error) {

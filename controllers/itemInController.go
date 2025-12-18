@@ -26,7 +26,42 @@ func ItemInIndex(c *gin.Context) {
 	stockRepo := &repositories.StockInRepository{DB: config.DB}
 	stockService := &services.StockInService{Repo: stockRepo}
 
-	// Ambil data stok masuk dengan pagination
+	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	items, err := itemRepo.GetAll()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	// Ambil parameter filter pencarian
+	itemName := c.Query("item_name")
+	date := c.Query("date")
+
+	// Jika ada filter, gunakan pencarian tanpa pagination
+	if itemName != "" || date != "" {
+		stockIns, err := stockService.SearchStockIns(itemName, date)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		Render(c, "item/item_in.html", gin.H{
+			"Title":          "Barang Masuk",
+			"Page":           "item_in",
+			"stockIns":       stockIns,
+			"items":          items,
+			"CurrentPage":    1,
+			"TotalPages":     1,
+			"Pages":          []int{1},
+			"PrevPage":       1,
+			"NextPage":       1,
+			"FilterItemName": itemName,
+			"FilterDate":     date,
+		})
+		return
+	}
+
+	// Tanpa filter, gunakan pagination standar
 	stockIns, total, err := stockService.GetStockInsPaginated(page, pageSize)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
@@ -60,23 +95,18 @@ func ItemInIndex(c *gin.Context) {
 		nextPage = totalPages
 	}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
-	items, err := itemRepo.GetAll()
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
-		return
-	}
-
 	Render(c, "item/item_in.html", gin.H{
-		"Title":       "Barang Masuk",
-		"Page":        "item_in",
-		"stockIns":    stockIns,
-		"items":       items,
-		"CurrentPage": page,
-		"TotalPages":  totalPages,
-		"Pages":       pages,
-		"PrevPage":    prevPage,
-		"NextPage":    nextPage,
+		"Title":          "Barang Masuk",
+		"Page":           "item_in",
+		"stockIns":       stockIns,
+		"items":          items,
+		"CurrentPage":    page,
+		"TotalPages":     totalPages,
+		"Pages":          pages,
+		"PrevPage":       prevPage,
+		"NextPage":       nextPage,
+		"FilterItemName": itemName,
+		"FilterDate":     date,
 	})
 }
 
