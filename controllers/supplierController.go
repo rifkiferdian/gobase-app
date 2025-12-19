@@ -28,6 +28,31 @@ func SupplierIndex(c *gin.Context) {
 	repo := &repositories.SupplierRepository{DB: config.DB}
 	service := &services.SupplierService{Repo: repo}
 
+	// Ambil parameter filter pencarian
+	filterName := c.Query("supplier_name")
+
+	// Jika ada kata kunci pencarian, gunakan search tanpa pagination
+	if filterName != "" {
+		data, err := service.SearchSuppliersByName(filterName)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		Render(c, "supplier/index.html", gin.H{
+			"Title":              "Supplier Page",
+			"Page":               "supplier",
+			"suppliers":          data,
+			"CurrentPage":        1,
+			"TotalPages":         1,
+			"Pages":              []int{1},
+			"PrevPage":           1,
+			"NextPage":           1,
+			"FilterSupplierName": filterName,
+		})
+		return
+	}
+
 	data, total, err := service.GetSuppliersPaginated(page, pageSize)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
@@ -62,14 +87,15 @@ func SupplierIndex(c *gin.Context) {
 	}
 
 	Render(c, "supplier/index.html", gin.H{
-		"Title":       "Supplier Page",
-		"Page":        "supplier",
-		"suppliers":   data,
-		"CurrentPage": page,
-		"TotalPages":  totalPages,
-		"Pages":       pages,
-		"PrevPage":    prevPage,
-		"NextPage":    nextPage,
+		"Title":              "Supplier Page",
+		"Page":               "supplier",
+		"suppliers":          data,
+		"CurrentPage":        page,
+		"TotalPages":         totalPages,
+		"Pages":              pages,
+		"PrevPage":           prevPage,
+		"NextPage":           nextPage,
+		"FilterSupplierName": filterName,
 	})
 }
 

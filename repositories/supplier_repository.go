@@ -38,6 +38,37 @@ func (r *SupplierRepository) GetAll() ([]models.Supplier, error) {
 	return suppliers, nil
 }
 
+// SearchByName mengambil data supplier yang namanya mengandung kata kunci tertentu.
+func (r *SupplierRepository) SearchByName(name string) ([]models.Supplier, error) {
+	rows, err := r.DB.Query(`
+		SELECT suppliers_id, supplier_name, active, description
+		FROM suppliers
+		WHERE supplier_name LIKE ?
+		ORDER BY suppliers_id DESC
+	`, "%"+name+"%")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var suppliers []models.Supplier
+
+	for rows.Next() {
+		var s models.Supplier
+		if err := rows.Scan(
+			&s.SupplierID,
+			&s.SupplierName,
+			&s.Active,
+			&s.Description,
+		); err != nil {
+			return nil, err
+		}
+		suppliers = append(suppliers, s)
+	}
+
+	return suppliers, nil
+}
+
 // Count mengembalikan jumlah seluruh data supplier.
 func (r *SupplierRepository) Count() (int, error) {
 	row := r.DB.QueryRow(`

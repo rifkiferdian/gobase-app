@@ -13,6 +13,11 @@ func (s *SupplierService) GetSuppliers() ([]models.Supplier, error) {
 	return s.Repo.GetAll()
 }
 
+// SearchSuppliersByName mengembalikan data supplier berdasarkan kata kunci nama.
+func (s *SupplierService) SearchSuppliersByName(name string) ([]models.Supplier, error) {
+	return s.Repo.SearchByName(name)
+}
+
 // GetSuppliersPaginated mengembalikan data supplier berdasarkan halaman dan ukuran halaman (pageSize).
 // Fungsi ini juga mengembalikan total data supplier untuk keperluan perhitungan total halaman.
 func (s *SupplierService) GetSuppliersPaginated(page, pageSize int) ([]models.Supplier, int, error) {

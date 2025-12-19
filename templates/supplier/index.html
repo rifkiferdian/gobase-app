@@ -30,6 +30,19 @@
                 <h4 class="card-title">Data Supplier</h4>
                 <p class="card-title-desc">Daftar suplier item barang hadiah yang di berikan</p>    
 
+                <form method="get" action="/suppliers" class="row row-cols-lg-auto g-3 align-items-center mb-3">
+                    <div class="col-12">
+                        <label class="visually-hidden" for="supplierNameSearch">Nama Supplier</label>
+                        <div class="input-group">
+                            <div class="input-group-text">#</div>
+                            <input type="text" class="form-control" id="supplierNameSearch" name="supplier_name" value="{{ .FilterSupplierName }}" placeholder="Cari Nama Supplier">
+                        </div>
+                    </div>
+                    <div class="col-12">
+                        <button type="submit" class="btn btn-primary w-md">Cari</button>
+                    </div>
+                </form>
+
                 {{ if .Error }}
                 <div class="alert alert-danger" role="alert">
                     {{ .Error }}
