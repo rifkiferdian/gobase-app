@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"stok-hadiah/config"
@@ -8,6 +9,7 @@ import (
 	"stok-hadiah/repositories"
 	"stok-hadiah/services"
 	"strconv"
+	"sync"
 
 	"github.com/gin-gonic/gin"
 )
@@ -27,9 +29,113 @@ func ItemInIndex(c *gin.Context) {
 	stockService := &services.StockInService{Repo: stockRepo}
 
 	itemRepo := &repositories.ItemRepository{DB: config.DB}
-	items, err := itemRepo.GetAll()
-	if err != nil {
-		c.String(http.StatusInternalServerError, err.Error())
+
+	// =========================
+	// Goroutine: items + statistik
+	// =========================
+	ctx, cancel := context.WithCancel(c.Request.Context())
+	defer cancel()
+
+	var (
+		items []models.Item // sesuaikan tipe item kamu
+
+		totalQty          int
+		totalTransactions int
+		todayQty          int
+		todayTransactions int
+
+		itemsErr, errTotalQty, errTotalTrans, errTodayQty, errTodayTrans error
+	)
+
+	var wg sync.WaitGroup
+	wg.Add(5)
+
+	go func() {
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		items, itemsErr = itemRepo.GetAll()
+		if itemsErr != nil {
+			cancel()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		totalQty, errTotalQty = stockService.TotalQty()
+		if errTotalQty != nil {
+			cancel()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		totalTransactions, errTotalTrans = stockService.TotalTransactions()
+		if errTotalTrans != nil {
+			cancel()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		todayQty, errTodayQty = stockService.TodayQty()
+		if errTodayQty != nil {
+			cancel()
+		}
+	}()
+
+	go func() {
+		defer wg.Done()
+		select {
+		case <-ctx.Done():
+			return
+		default:
+		}
+		todayTransactions, errTodayTrans = stockService.TodayTransactions()
+		if errTodayTrans != nil {
+			cancel()
+		}
+	}()
+
+	wg.Wait()
+
+	// Cek error setelah semua selesai
+	if itemsErr != nil {
+		c.String(http.StatusInternalServerError, itemsErr.Error())
+		return
+	}
+	if errTotalQty != nil {
+		c.String(http.StatusInternalServerError, errTotalQty.Error())
+		return
+	}
+	if errTotalTrans != nil {
+		c.String(http.StatusInternalServerError, errTotalTrans.Error())
+		return
+	}
+	if errTodayQty != nil {
+		c.String(http.StatusInternalServerError, errTodayQty.Error())
+		return
+	}
+	if errTodayTrans != nil {
+		c.String(http.StatusInternalServerError, errTodayTrans.Error())
 		return
 	}
 
@@ -50,6 +156,10 @@ func ItemInIndex(c *gin.Context) {
 			"Page":           "item_in",
 			"stockIns":       stockIns,
 			"items":          items,
+			"TotalQty":       totalQty,
+			"TotalTrans":     totalTransactions,
+			"TodayQty":       todayQty,
+			"TodayTrans":     todayTransactions,
 			"CurrentPage":    1,
 			"TotalPages":     1,
 			"Pages":          []int{1},
@@ -79,7 +189,7 @@ func ItemInIndex(c *gin.Context) {
 	}
 
 	// Siapkan slice untuk nomor halaman (1..totalPages)
-	pages := []int{}
+	pages := make([]int, 0, totalPages)
 	for i := 1; i <= totalPages; i++ {
 		pages = append(pages, i)
 	}
@@ -100,6 +210,10 @@ func ItemInIndex(c *gin.Context) {
 		"Page":           "item_in",
 		"stockIns":       stockIns,
 		"items":          items,
+		"TotalQty":       totalQty,
+		"TotalTrans":     totalTransactions,
+		"TodayQty":       todayQty,
+		"TodayTrans":     todayTransactions,
 		"CurrentPage":    page,
 		"TotalPages":     totalPages,
 		"Pages":          pages,
@@ -129,13 +243,21 @@ func ItemInStore(c *gin.Context) {
 		// Jika validasi form gagal, kirim error ke view di atas tabel data
 		stockIns, _ := stockService.GetStockIns()
 		items, _ := itemRepo.GetAll()
+		totalQty, _ := stockService.TotalQty()
+		totalTransactions, _ := stockService.TotalTransactions()
+		todayQty, _ := stockService.TodayQty()
+		todayTransactions, _ := stockService.TodayTransactions()
 
 		Render(c, "item/item_in.html", gin.H{
-			"Title":    "Barang Masuk",
-			"Page":     "item_in",
-			"stockIns": stockIns,
-			"items":    items,
-			"Error":    "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
+			"Title":      "Barang Masuk",
+			"Page":       "item_in",
+			"stockIns":   stockIns,
+			"items":      items,
+			"TotalQty":   totalQty,
+			"TotalTrans": totalTransactions,
+			"TodayQty":   todayQty,
+			"TodayTrans": todayTransactions,
+			"Error":      "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
 		})
 		return
 	}
@@ -181,13 +303,21 @@ func ItemInUpdate(c *gin.Context) {
 	if err := c.ShouldBind(&form); err != nil || form.Qty <= 0 {
 		stockIns, _ := stockService.GetStockIns()
 		items, _ := itemRepo.GetAll()
+		totalQty, _ := stockService.TotalQty()
+		totalTransactions, _ := stockService.TotalTransactions()
+		todayQty, _ := stockService.TodayQty()
+		todayTransactions, _ := stockService.TodayTransactions()
 
 		Render(c, "item/item_in.html", gin.H{
-			"Title":    "Barang Masuk",
-			"Page":     "item_in",
-			"stockIns": stockIns,
-			"items":    items,
-			"Error":    "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
+			"Title":      "Barang Masuk",
+			"Page":       "item_in",
+			"stockIns":   stockIns,
+			"items":      items,
+			"TotalQty":   totalQty,
+			"TotalTrans": totalTransactions,
+			"TodayQty":   todayQty,
+			"TodayTrans": todayTransactions,
+			"Error":      "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
 		})
 		return
 	}

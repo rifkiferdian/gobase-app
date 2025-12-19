@@ -56,3 +56,19 @@ func (s *StockInService) UpdateStockIn(in models.StockIn) error {
 func (s *StockInService) DeleteStockIn(id int) error {
 	return s.Repo.Delete(id)
 }
+
+func (s *StockInService) TotalQty() (int, error) {
+	return s.Repo.SumQty()
+}
+
+func (s *StockInService) TotalTransactions() (int, error) {
+	return s.Repo.Count()
+}
+
+func (s *StockInService) TodayTransactions() (int, error) {
+	return s.Repo.CountToday()
+}
+
+func (s *StockInService) TodayQty() (int, error) {
+	return s.Repo.SumTodayQty()
+}

@@ -158,6 +158,48 @@ func (r *StockInRepository) Count() (int, error) {
 	return total, nil
 }
 
+// SumQty menghitung total quantity seluruh data stok masuk.
+func (r *StockInRepository) SumQty() (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COALESCE(SUM(qty), 0) FROM stock_in
+	`)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// CountToday menghitung total transaksi stok masuk untuk hari ini.
+func (r *StockInRepository) CountToday() (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COUNT(*) FROM stock_in WHERE DATE(received_at) = CURDATE()
+	`)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// SumTodayQty menghitung total quantity stok masuk untuk hari ini.
+func (r *StockInRepository) SumTodayQty() (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COALESCE(SUM(qty), 0) FROM stock_in WHERE DATE(received_at) = CURDATE()
+	`)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
 // GetPaginated mengambil data stok masuk dengan pagination menggunakan LIMIT dan OFFSET.
 // Data yang diambil sudah termasuk join dengan tabel items, suppliers, dan users.
 func (r *StockInRepository) GetPaginated(limit, offset int) ([]models.StockIn, error) {
