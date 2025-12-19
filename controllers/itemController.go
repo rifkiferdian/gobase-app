@@ -25,6 +25,41 @@ func ItemIndex(c *gin.Context) {
 	itemRepo := &repositories.ItemRepository{DB: config.DB}
 	itemService := &services.ItemService{Repo: itemRepo}
 
+	// Ambil filter pencarian
+	filterName := c.Query("item_name")
+	filterCategory := c.Query("category")
+
+	// Jika ada filter pencarian, gunakan search tanpa pagination
+	if filterName != "" || filterCategory != "" {
+		items, err := itemService.SearchItems(filterName, filterCategory)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		supplierRepo := &repositories.SupplierRepository{DB: config.DB}
+		suppliers, err := supplierRepo.GetAll()
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		Render(c, "item/index.html", gin.H{
+			"Title":          "Item Page",
+			"Page":           "item",
+			"items":          items,
+			"suppliers":      suppliers,
+			"CurrentPage":    1,
+			"TotalPages":     1,
+			"Pages":          []int{1},
+			"PrevPage":       1,
+			"NextPage":       1,
+			"FilterItemName": filterName,
+			"FilterCategory": filterCategory,
+		})
+		return
+	}
+
 	// Ambil data item dengan pagination
 	items, total, err := itemService.GetItemsPaginated(page, pageSize)
 	if err != nil {
@@ -68,15 +103,17 @@ func ItemIndex(c *gin.Context) {
 	}
 
 	Render(c, "item/index.html", gin.H{
-		"Title":       "Item Page",
-		"Page":        "item",
-		"items":       items,
-		"suppliers":   suppliers,
-		"CurrentPage": page,
-		"TotalPages":  totalPages,
-		"Pages":       pages,
-		"PrevPage":    prevPage,
-		"NextPage":    nextPage,
+		"Title":          "Item Page",
+		"Page":           "item",
+		"items":          items,
+		"suppliers":      suppliers,
+		"CurrentPage":    page,
+		"TotalPages":     totalPages,
+		"Pages":          pages,
+		"PrevPage":       prevPage,
+		"NextPage":       nextPage,
+		"FilterItemName": filterName,
+		"FilterCategory": filterCategory,
 	})
 }
 

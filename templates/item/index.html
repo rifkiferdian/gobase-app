@@ -28,6 +28,28 @@
 			<h4 class="card-title">Data Item</h4>
 			<p class="card-title-desc">Daftar item hadiah beserta kategori, supplier dan stok.</p>
 
+			<form method="get" action="/items" class="row row-cols-lg-auto g-3 align-items-center mb-3">
+				<div class="col-12">
+					<label class="visually-hidden" for="itemNameSearch">Nama Item</label>
+					<div class="input-group">
+						<div class="input-group-text">#</div>
+						<input type="text" class="form-control" id="itemNameSearch" name="item_name" value="{{ .FilterItemName }}" placeholder="Cari Nama Item">
+					</div>
+				</div>
+				<div class="col-12">
+					<label class="visually-hidden" for="categorySearch">Kategori</label>
+					<select class="form-select" id="categorySearch" name="category">
+						<option value="">Semua Kategori</option>
+						<option value="FOOD" {{ if eq .FilterCategory "FOOD" }}selected{{ end }}>FOOD</option>
+						<option value="NON FOOD" {{ if eq .FilterCategory "NON FOOD" }}selected{{ end }}>NON FOOD</option>
+						<option value="DEPT STORE" {{ if eq .FilterCategory "DEPT STORE" }}selected{{ end }}>DEPT STORE</option>
+					</select>
+				</div>
+				<div class="col-12">
+					<button type="submit" class="btn btn-primary w-md">Cari</button>
+				</div>
+			</form>
+
 			{{ if .Error }}
 			<div class="alert alert-danger" role="alert">
 				{{ .Error }}
