@@ -28,6 +28,27 @@
 			<h4 class="card-title">Data Program</h4>
 			<p class="card-title-desc">Daftar program promosi untuk item hadiah.</p>
 
+			<form method="get" action="/programs" class="row row-cols-lg-auto g-3 align-items-center mb-3">
+				<div class="col-12">
+					<label class="visually-hidden" for="programNameSearch">Nama Program</label>
+					<div class="input-group">
+						<div class="input-group-text">#</div>
+						<input type="text" class="form-control" id="programNameSearch" name="program_name" value="{{ .FilterProgramName }}" placeholder="Cari Nama Program">
+					</div>
+				</div>
+				<div class="col-12">
+					<label class="visually-hidden" for="startDateSearch">Tanggal Mulai</label>
+					<input type="date" class="form-control" id="startDateSearch" name="start_date" value="{{ .FilterStartDate }}">
+				</div>
+				<div class="col-12">
+					<label class="visually-hidden" for="endDateSearch">Tanggal Selesai</label>
+					<input type="date" class="form-control" id="endDateSearch" name="end_date" value="{{ .FilterEndDate }}">
+				</div>
+				<div class="col-12">
+					<button type="submit" class="btn btn-primary w-md">Cari</button>
+				</div>
+			</form>
+
 			{{ if .Error }}
 			<div class="alert alert-danger" role="alert">
 				{{ .Error }}

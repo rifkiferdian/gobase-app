@@ -13,6 +13,11 @@ func (s *ProgramService) GetPrograms() ([]models.Program, error) {
 	return s.Repo.GetAll()
 }
 
+// SearchPrograms mencari program berdasarkan nama dan/atau rentang tanggal.
+func (s *ProgramService) SearchPrograms(name, startDate, endDate string) ([]models.Program, error) {
+	return s.Repo.Search(name, startDate, endDate)
+}
+
 // GetProgramsPaginated mengembalikan data program berdasarkan halaman dan ukuran halaman (pageSize).
 // Fungsi ini juga mengembalikan total data program untuk keperluan perhitungan total halaman.
 func (s *ProgramService) GetProgramsPaginated(page, pageSize int) ([]models.Program, int, error) {

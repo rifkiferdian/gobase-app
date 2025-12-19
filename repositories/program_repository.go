@@ -46,6 +46,64 @@ func (r *ProgramRepository) GetAll() ([]models.Program, error) {
 	return programs, nil
 }
 
+// Search mengambil data program berdasarkan kata kunci nama program dan rentang tanggal mulai/selesai.
+func (r *ProgramRepository) Search(name, startDate, endDate string) ([]models.Program, error) {
+	query := `
+		SELECT p.program_id,
+		       p.program_name,
+		       p.item_id,
+		       i.item_name,
+		       DATE_FORMAT(p.start_date, '%d-%m-%Y') AS start_date,
+		       DATE_FORMAT(p.end_date, '%d-%m-%Y') AS end_date
+		FROM programs p
+		JOIN items i ON i.item_id = p.item_id
+		WHERE 1=1`
+
+	args := []interface{}{}
+
+	if name != "" {
+		query += " AND p.program_name LIKE ?"
+		args = append(args, "%"+name+"%")
+	}
+
+	if startDate != "" {
+		query += " AND DATE(p.start_date) >= ?"
+		args = append(args, startDate)
+	}
+
+	if endDate != "" {
+		query += " AND DATE(p.end_date) <= ?"
+		args = append(args, endDate)
+	}
+
+	query += " ORDER BY p.program_id DESC"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var programs []models.Program
+
+	for rows.Next() {
+		var p models.Program
+		if err := rows.Scan(
+			&p.ProgramID,
+			&p.ProgramName,
+			&p.ItemID,
+			&p.ItemName,
+			&p.StartDate,
+			&p.EndDate,
+		); err != nil {
+			return nil, err
+		}
+		programs = append(programs, p)
+	}
+
+	return programs, nil
+}
+
 // Count mengembalikan jumlah seluruh data program.
 func (r *ProgramRepository) Count() (int, error) {
 	row := r.DB.QueryRow(`
@@ -68,8 +126,8 @@ func (r *ProgramRepository) GetPaginated(limit, offset int) ([]models.Program, e
 		       p.program_name,
 		       p.item_id,
 		       i.item_name,
-		       DATE_FORMAT(p.start_date, '%Y-%m-%d') AS start_date,
-		       DATE_FORMAT(p.end_date, '%Y-%m-%d') AS end_date
+		       DATE_FORMAT(p.start_date, '%d-%m-%Y') AS start_date,
+		       DATE_FORMAT(p.end_date, '%d-%m-%Y') AS end_date
 		FROM programs p
 		JOIN items i ON i.item_id = p.item_id
 		ORDER BY p.program_id DESC

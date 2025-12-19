@@ -25,6 +25,46 @@ func ProgramIndex(c *gin.Context) {
 	programRepo := &repositories.ProgramRepository{DB: config.DB}
 	programService := &services.ProgramService{Repo: programRepo}
 
+	// Ambil filter pencarian
+	filterName := c.Query("program_name")
+	filterStartDate := c.Query("start_date")
+	filterEndDate := c.Query("end_date")
+
+	// Jika ada filter pencarian, gunakan search tanpa pagination
+	if filterName != "" || filterStartDate != "" || filterEndDate != "" {
+		programs, err := programService.SearchPrograms(filterName, filterStartDate, filterEndDate)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		// Item tetap diambil semua untuk kebutuhan dropdown
+		itemRepo := &repositories.ItemRepository{DB: config.DB}
+		itemService := &services.ItemService{Repo: itemRepo}
+
+		items, err := itemService.GetItems()
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
+		Render(c, "program/index.html", gin.H{
+			"Title":             "Program Page",
+			"Page":              "program",
+			"programs":          programs,
+			"items":             items,
+			"CurrentPage":       1,
+			"TotalPages":        1,
+			"Pages":             []int{1},
+			"PrevPage":          1,
+			"NextPage":          1,
+			"FilterProgramName": filterName,
+			"FilterStartDate":   filterStartDate,
+			"FilterEndDate":     filterEndDate,
+		})
+		return
+	}
+
 	// Ambil data program dengan pagination
 	programs, total, err := programService.GetProgramsPaginated(page, pageSize)
 	if err != nil {
@@ -70,15 +110,18 @@ func ProgramIndex(c *gin.Context) {
 	}
 
 	Render(c, "program/index.html", gin.H{
-		"Title":       "Program Page",
-		"Page":        "program",
-		"programs":    programs,
-		"items":       items,
-		"CurrentPage": page,
-		"TotalPages":  totalPages,
-		"Pages":       pages,
-		"PrevPage":    prevPage,
-		"NextPage":    nextPage,
+		"Title":             "Program Page",
+		"Page":              "program",
+		"programs":          programs,
+		"items":             items,
+		"CurrentPage":       page,
+		"TotalPages":        totalPages,
+		"Pages":             pages,
+		"PrevPage":          prevPage,
+		"NextPage":          nextPage,
+		"FilterProgramName": filterName,
+		"FilterStartDate":   filterStartDate,
+		"FilterEndDate":     filterEndDate,
 	})
 }
 
