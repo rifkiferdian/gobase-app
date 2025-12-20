@@ -11,6 +11,33 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// fetchProgramMetrics menghitung total program, total aktif hari ini, dan total nonaktif hari ini.
+func fetchProgramMetrics(service *services.ProgramService, knownTotal *int) (int, int, int, error) {
+	var total int
+	var err error
+
+	if knownTotal != nil {
+		total = *knownTotal
+	} else {
+		total, err = service.CountPrograms()
+		if err != nil {
+			return 0, 0, 0, err
+		}
+	}
+
+	activeToday, err := service.CountProgramsActiveToday()
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	inactiveToday, err := service.CountProgramsInactiveToday()
+	if err != nil {
+		return 0, 0, 0, err
+	}
+
+	return total, activeToday, inactiveToday, nil
+}
+
 // ProgramIndex menampilkan halaman listing program.
 func ProgramIndex(c *gin.Context) {
 	// Ambil parameter page dari query string, default 1
@@ -38,6 +65,12 @@ func ProgramIndex(c *gin.Context) {
 			return
 		}
 
+		totalPrograms, activeToday, inactiveToday, err := fetchProgramMetrics(programService, nil)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
 		// Item tetap diambil semua untuk kebutuhan dropdown
 		itemRepo := &repositories.ItemRepository{DB: config.DB}
 		itemService := &services.ItemService{Repo: itemRepo}
@@ -53,6 +86,9 @@ func ProgramIndex(c *gin.Context) {
 			"Page":              "program",
 			"programs":          programs,
 			"items":             items,
+			"TotalPrograms":     totalPrograms,
+			"ActiveToday":       activeToday,
+			"InactiveToday":     inactiveToday,
 			"CurrentPage":       1,
 			"TotalPages":        1,
 			"Pages":             []int{1},
@@ -67,6 +103,12 @@ func ProgramIndex(c *gin.Context) {
 
 	// Ambil data program dengan pagination
 	programs, total, err := programService.GetProgramsPaginated(page, pageSize)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalPrograms, activeToday, inactiveToday, err := fetchProgramMetrics(programService, &total)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
@@ -114,6 +156,9 @@ func ProgramIndex(c *gin.Context) {
 		"Page":              "program",
 		"programs":          programs,
 		"items":             items,
+		"TotalPrograms":     totalPrograms,
+		"ActiveToday":       activeToday,
+		"InactiveToday":     inactiveToday,
 		"CurrentPage":       page,
 		"TotalPages":        totalPages,
 		"Pages":             pages,
@@ -145,13 +190,17 @@ func ProgramStore(c *gin.Context) {
 		// Jika validasi form gagal, kirim error ke view
 		programs, _ := programService.GetPrograms()
 		items, _ := itemService.GetItems()
+		totalPrograms, activeToday, inactiveToday, _ := fetchProgramMetrics(programService, nil)
 
 		Render(c, "program/index.html", gin.H{
-			"Title":    "Program Page",
-			"Page":     "program",
-			"programs": programs,
-			"items":    items,
-			"Error":    "Nama program, item, tanggal mulai dan tanggal selesai wajib diisi",
+			"Title":         "Program Page",
+			"Page":          "program",
+			"programs":      programs,
+			"items":         items,
+			"TotalPrograms": totalPrograms,
+			"ActiveToday":   activeToday,
+			"InactiveToday": inactiveToday,
+			"Error":         "Nama program, item, tanggal mulai dan tanggal selesai wajib diisi",
 		})
 		return
 	}
@@ -191,13 +240,17 @@ func ProgramUpdate(c *gin.Context) {
 	if err := c.ShouldBind(&form); err != nil {
 		programs, _ := programService.GetPrograms()
 		items, _ := itemService.GetItems()
+		totalPrograms, activeToday, inactiveToday, _ := fetchProgramMetrics(programService, nil)
 
 		Render(c, "program/index.html", gin.H{
-			"Title":    "Program Page",
-			"Page":     "program",
-			"programs": programs,
-			"items":    items,
-			"Error":    "Nama program, item, tanggal mulai dan tanggal selesai wajib diisi",
+			"Title":         "Program Page",
+			"Page":          "program",
+			"programs":      programs,
+			"items":         items,
+			"TotalPrograms": totalPrograms,
+			"ActiveToday":   activeToday,
+			"InactiveToday": inactiveToday,
+			"Error":         "Nama program, item, tanggal mulai dan tanggal selesai wajib diisi",
 		})
 		return
 	}

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"html/template"
 	"log"
 	"os"
 	"stok-hadiah/config"
@@ -23,6 +24,13 @@ func main() {
 
 	// Initialize Gin engine
 	r := gin.Default()
+
+	// Custom template functions tambah
+	r.SetFuncMap(template.FuncMap{
+		"no": func(a, b int) int {
+			return a + b
+		},
+	})
 
 	// Templates & static files
 	r.LoadHTMLGlob("templates/**/*")

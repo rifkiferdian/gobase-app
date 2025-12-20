@@ -18,6 +18,11 @@ func (s *SupplierService) SearchSuppliersByName(name string) ([]models.Supplier,
 	return s.Repo.SearchByName(name)
 }
 
+// CountSuppliers mengembalikan total supplier yang tersimpan.
+func (s *SupplierService) CountSuppliers() (int, error) {
+	return s.Repo.Count()
+}
+
 // GetSuppliersPaginated mengembalikan data supplier berdasarkan halaman dan ukuran halaman (pageSize).
 // Fungsi ini juga mengembalikan total data supplier untuk keperluan perhitungan total halaman.
 func (s *SupplierService) GetSuppliersPaginated(page, pageSize int) ([]models.Supplier, int, error) {

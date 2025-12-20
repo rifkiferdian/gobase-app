@@ -20,8 +20,31 @@
     </div>
 </div>
 
+<div class="row">
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Jumlah Supplier</p>
+						<h4 class="mb-0">{{ .TotalSuppliers }}</h4>
+					</div>
 
-    <div class="col-xl-10">
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+							<span class="avatar-title">
+								<i class="bx bx-group font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+</div>
+
+    <div class="col-xl-12">
         <div class="d-flex mb-2 justify-content-end">
             <button type="button" class="btn btn-info waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#myModal">Tambah</button>
         </div>
@@ -62,23 +85,26 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {{ range .suppliers }}
+                            {{ range $i, $s := .suppliers }}
                             <tr>
-                                <th scope="row">{{ .SupplierID }}</th>
-                                <td>{{ .SupplierName }}</td>
-                                <td>{{ .Description }}</td>
-                                <td>
-                                    {{ if .Active }}Aktif{{ else }}Nonaktif{{ end }}
-                                </td>
+                                <th scope="row">{{ no $i 1 }}</th>
+                                <td>{{ $s.SupplierName }}</td>
+                                <td>{{ $s.Description }}</td>
+                                <td>{{ if $s.Active }}Aktif{{ else }}Nonaktif{{ end }}</td>
                                 <td style="font-size: large;">
                                     <a href="#" class="waves-effect btnEdit"
-                                       data-id="{{ .SupplierID }}"
-                                       data-name="{{ .SupplierName }}"
-                                       data-description="{{ .Description }}"
-                                       data-active="{{ .Active }}">
+                                    data-id="{{ $s.SupplierID }}"
+                                    data-name="{{ $s.SupplierName }}"
+                                    data-description="{{ $s.Description }}"
+                                    data-active="{{ if $s.Active }}1{{ else }}0{{ end }}">
                                         <i class="bx bxs-pencil"></i>
                                     </a>
-                                    <a href="/suppliers/delete/{{ .SupplierID }}" style="color: red;" class="waves-effect btnDelete"><i class="bx bx-trash"></i></a>
+
+                                    <a href="/suppliers/delete/{{ $s.SupplierID }}"
+                                    style="color: red;"
+                                    class="waves-effect btnDelete">
+                                        <i class="bx bx-trash"></i>
+                                    </a>
                                 </td>
                             </tr>
                             {{ else }}
@@ -86,6 +112,7 @@
                                 <td colspan="5" class="text-center">Tidak ada data supplier</td>
                             </tr>
                             {{ end }}
+
                         </tbody>
                     </table>
                 </div>

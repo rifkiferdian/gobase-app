@@ -11,6 +11,38 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// fetchItemMetrics mengambil total item dan total per kategori untuk ditampilkan di kartu statistik.
+func fetchItemMetrics(itemService *services.ItemService, knownTotal *int) (int, int, int, int, error) {
+	var totalItems int
+	var err error
+
+	if knownTotal != nil {
+		totalItems = *knownTotal
+	} else {
+		totalItems, err = itemService.CountItems()
+		if err != nil {
+			return 0, 0, 0, 0, err
+		}
+	}
+
+	totalFood, err := itemService.CountItemsByCategory("FOOD")
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	totalNonFood, err := itemService.CountItemsByCategory("NON FOOD")
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	totalDeptStore, err := itemService.CountItemsByCategory("DEPT STORE")
+	if err != nil {
+		return 0, 0, 0, 0, err
+	}
+
+	return totalItems, totalFood, totalNonFood, totalDeptStore, nil
+}
+
 // ItemIndex menampilkan halaman listing item.
 func ItemIndex(c *gin.Context) {
 	// Ambil parameter page dari query string, default 1
@@ -44,11 +76,21 @@ func ItemIndex(c *gin.Context) {
 			return
 		}
 
+		totalItems, totalFood, totalNonFood, totalDeptStore, err := fetchItemMetrics(itemService, nil)
+		if err != nil {
+			c.String(http.StatusInternalServerError, err.Error())
+			return
+		}
+
 		Render(c, "item/index.html", gin.H{
 			"Title":          "Item Page",
 			"Page":           "item",
 			"items":          items,
 			"suppliers":      suppliers,
+			"TotalItems":     totalItems,
+			"TotalFood":      totalFood,
+			"TotalNonFood":   totalNonFood,
+			"TotalDeptStore": totalDeptStore,
 			"CurrentPage":    1,
 			"TotalPages":     1,
 			"Pages":          []int{1},
@@ -62,6 +104,12 @@ func ItemIndex(c *gin.Context) {
 
 	// Ambil data item dengan pagination
 	items, total, err := itemService.GetItemsPaginated(page, pageSize)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalItems, totalFood, totalNonFood, totalDeptStore, err := fetchItemMetrics(itemService, &total)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
@@ -107,6 +155,10 @@ func ItemIndex(c *gin.Context) {
 		"Page":           "item",
 		"items":          items,
 		"suppliers":      suppliers,
+		"TotalItems":     totalItems,
+		"TotalFood":      totalFood,
+		"TotalNonFood":   totalNonFood,
+		"TotalDeptStore": totalDeptStore,
 		"CurrentPage":    page,
 		"TotalPages":     totalPages,
 		"Pages":          pages,
@@ -136,13 +188,18 @@ func ItemStore(c *gin.Context) {
 		// Jika validasi form gagal, kirim error ke view di atas tabel data
 		items, _ := itemService.GetItems()
 		suppliers, _ := supplierRepo.GetAll()
+		totalItems, totalFood, totalNonFood, totalDeptStore, _ := fetchItemMetrics(itemService, nil)
 
 		Render(c, "item/index.html", gin.H{
-			"Title":     "Item Page",
-			"Page":      "item",
-			"items":     items,
-			"suppliers": suppliers,
-			"Error":     "Nama item, kategori, dan supplier wajib diisi",
+			"Title":          "Item Page",
+			"Page":           "item",
+			"items":          items,
+			"suppliers":      suppliers,
+			"TotalItems":     totalItems,
+			"TotalFood":      totalFood,
+			"TotalNonFood":   totalNonFood,
+			"TotalDeptStore": totalDeptStore,
+			"Error":          "Nama item, kategori, dan supplier wajib diisi",
 		})
 		return
 	}
@@ -181,13 +238,18 @@ func ItemUpdate(c *gin.Context) {
 	if err := c.ShouldBind(&form); err != nil {
 		items, _ := itemService.GetItems()
 		suppliers, _ := supplierRepo.GetAll()
+		totalItems, totalFood, totalNonFood, totalDeptStore, _ := fetchItemMetrics(itemService, nil)
 
 		Render(c, "item/index.html", gin.H{
-			"Title":     "Item Page",
-			"Page":      "item",
-			"items":     items,
-			"suppliers": suppliers,
-			"Error":     "Nama item, kategori, dan supplier wajib diisi",
+			"Title":          "Item Page",
+			"Page":           "item",
+			"items":          items,
+			"suppliers":      suppliers,
+			"TotalItems":     totalItems,
+			"TotalFood":      totalFood,
+			"TotalNonFood":   totalNonFood,
+			"TotalDeptStore": totalDeptStore,
+			"Error":          "Nama item, kategori, dan supplier wajib diisi",
 		})
 		return
 	}

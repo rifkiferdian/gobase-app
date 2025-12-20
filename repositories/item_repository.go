@@ -114,6 +114,21 @@ func (r *ItemRepository) Count() (int, error) {
 	return total, nil
 }
 
+// CountByCategory menghitung jumlah item berdasarkan kategori (case-insensitive).
+func (r *ItemRepository) CountByCategory(category string) (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COUNT(*) FROM items
+		WHERE UPPER(category) = UPPER(?)
+	`, category)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
 // GetPaginated mengambil data item dengan pagination menggunakan LIMIT dan OFFSET.
 // Data yang diambil sudah termasuk join dengan tabel suppliers untuk mendapatkan nama supplier.
 func (r *ItemRepository) GetPaginated(limit, offset int) ([]models.Item, error) {

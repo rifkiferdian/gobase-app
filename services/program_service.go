@@ -18,6 +18,21 @@ func (s *ProgramService) SearchPrograms(name, startDate, endDate string) ([]mode
 	return s.Repo.Search(name, startDate, endDate)
 }
 
+// CountPrograms mengembalikan jumlah seluruh program.
+func (s *ProgramService) CountPrograms() (int, error) {
+	return s.Repo.Count()
+}
+
+// CountProgramsActiveToday mengembalikan jumlah program yang aktif hari ini.
+func (s *ProgramService) CountProgramsActiveToday() (int, error) {
+	return s.Repo.CountActiveToday()
+}
+
+// CountProgramsInactiveToday mengembalikan jumlah program yang tidak aktif hari ini.
+func (s *ProgramService) CountProgramsInactiveToday() (int, error) {
+	return s.Repo.CountInactiveToday()
+}
+
 // GetProgramsPaginated mengembalikan data program berdasarkan halaman dan ukuran halaman (pageSize).
 // Fungsi ini juga mengembalikan total data program untuk keperluan perhitungan total halaman.
 func (s *ProgramService) GetProgramsPaginated(page, pageSize int) ([]models.Program, int, error) {

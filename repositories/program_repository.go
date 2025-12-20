@@ -118,6 +118,39 @@ func (r *ProgramRepository) Count() (int, error) {
 	return total, nil
 }
 
+// CountActiveToday menghitung jumlah program yang aktif pada tanggal hari ini (start_date..end_date inclusive).
+func (r *ProgramRepository) CountActiveToday() (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM programs
+		WHERE CURDATE() BETWEEN DATE(start_date) AND DATE(end_date)
+	`)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// CountInactiveToday menghitung jumlah program yang tidak aktif pada tanggal hari ini.
+// Ini termasuk yang sudah berakhir maupun yang belum dimulai.
+func (r *ProgramRepository) CountInactiveToday() (int, error) {
+	row := r.DB.QueryRow(`
+		SELECT COUNT(*)
+		FROM programs
+		WHERE CURDATE() NOT BETWEEN DATE(start_date) AND DATE(end_date)
+	`)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
 // GetPaginated mengambil data program dengan pagination menggunakan LIMIT dan OFFSET.
 // Data yang diambil sudah termasuk join dengan tabel items untuk mendapatkan nama item.
 func (r *ProgramRepository) GetPaginated(limit, offset int) ([]models.Program, error) {

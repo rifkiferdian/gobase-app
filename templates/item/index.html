@@ -19,7 +19,94 @@
 	</div>
 </div>
 
-<div class="col-xl-10">
+<div class="row">
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Barang Hadiah</p>
+						<h4 class="mb-0">{{ .TotalItems }}</h4>
+					</div>
+
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+							<span class="avatar-title">
+								<i class="bx bx-gift font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Kategori FOOD</p>
+						<h4 class="mb-0">{{ .TotalFood }}</h4>
+					</div>
+
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+							<span class="avatar-title bg-warning">
+								<i class="bx bx-restaurant font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Kategori Non FOOD</p>
+						<h4 class="mb-0">{{ .TotalNonFood }}</h4>
+					</div>
+
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+							<span class="avatar-title bg-warning">
+								<i class="bx bx-package font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Kategori Dept Store</p>
+						<h4 class="mb-0">{{ .TotalDeptStore }}</h4>
+					</div>
+
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-warning">
+							<span class="avatar-title bg-warning">
+								<i class="bx bx-store font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+</div>
+
+<div class="col-xl-12">
 	<div class="d-flex mb-2 justify-content-end">
 		<button type="button" class="btn btn-info waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#addItemModal">Tambah</button>
 	</div>
@@ -73,16 +160,16 @@
 						<tr>
 							<th scope="row">{{ .ItemID }}</th>
 							<td>{{ .ItemName }}</td>
-						<td>{{ .Category }}</td>
-						<td>{{ .SupplierName }}</td>
-						<td>{{ .Description }}</td>
+							<td>{{ .Category }}</td>
+							<td>{{ .SupplierName }}</td>
+							<td>{{ .Description }}</td>
 							<td style="font-size: large;">
 								<a href="#" class="waves-effect btnEditItem"
-								   data-id="{{ .ItemID }}"
-								   data-name="{{ .ItemName }}"
-								   data-category="{{ .Category }}"
-								   data-supplier-id="{{ .SupplierID }}"
-								   data-description="{{ .Description }}">
+								data-id="{{ .ItemID }}"
+								data-name="{{ .ItemName }}"
+								data-category="{{ .Category }}"
+								data-supplier-id="{{ .SupplierID }}"
+								data-description="{{ .Description }}">
 									<i class="bx bxs-pencil"></i>
 								</a>
 								<a href="/items/delete/{{ .ItemID }}" style="color: red;" class="waves-effect btnDeleteItem"><i class="bx bx-trash"></i></a>

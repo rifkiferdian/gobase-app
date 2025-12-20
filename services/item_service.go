@@ -18,6 +18,16 @@ func (s *ItemService) SearchItems(name, category string) ([]models.Item, error) 
 	return s.Repo.Search(name, category)
 }
 
+// CountItems mengembalikan jumlah seluruh item.
+func (s *ItemService) CountItems() (int, error) {
+	return s.Repo.Count()
+}
+
+// CountItemsByCategory mengembalikan jumlah item pada kategori tertentu.
+func (s *ItemService) CountItemsByCategory(category string) (int, error) {
+	return s.Repo.CountByCategory(category)
+}
+
 // GetItemsPaginated mengembalikan data item berdasarkan halaman dan ukuran halaman (pageSize).
 // Fungsi ini juga mengembalikan total data item untuk keperluan perhitungan total halaman.
 func (s *ItemService) GetItemsPaginated(page, pageSize int) ([]models.Item, int, error) {

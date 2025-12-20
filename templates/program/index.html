@@ -19,7 +19,74 @@
 	</div>
 </div>
 
-<div class="col-xl-10">
+<div class="row">
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Jumlah Program</p>
+						<h4 class="mb-0">{{ .TotalPrograms }}</h4>
+					</div>
+
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+							<span class="avatar-title">
+								<i class="bx bx-calendar-event font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Jumlah Aktif sekarang</p>
+						<h4 class="mb-0">{{ .ActiveToday }}</h4>
+					</div>
+
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+							<span class="avatar-title">
+								<i class="bx bx-check-circle font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<div class="col-md-3">
+		<div class="card mini-stats-wid">
+			<div class="card-body">
+				<div class="d-flex">
+					<div class="flex-grow-1">
+						<p class="text-muted fw-medium">Jumlah Non Aktif</p>
+						<h4 class="mb-0">{{ .InactiveToday }}</h4>
+					</div>
+
+					<div class="flex-shrink-0 align-self-center">
+						<div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+							<span class="avatar-title">
+								<i class="bx bx-block font-size-24"></i>
+							</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</div>
+	
+</div>
+
+
+<div class="col-xl-12">
 	<div class="d-flex mb-2 justify-content-end">
 		<button type="button" class="btn btn-info waves-effect waves-light" data-bs-toggle="modal" data-bs-target="#addProgramModal">Tambah</button>
 	</div>
