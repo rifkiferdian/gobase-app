@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="en"
+      data-layout-width="boxed"
+      data-topbar="dark"
+      data-preloader="disable"
+      data-card-layout="borderless"
+      data-bs-theme="light"
+      data-topbar-image="pattern-1">
+    <head>
+        <meta charset="utf-8" />
+        <!-- penting untuk responsive di HP -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>
+            {{ if .Title }}
+                {{ .Title }}
+            {{ else }}
+                Stock Hadiah App
+            {{ end }}
+        </title>
+
+        <!-- Bootstrap Css -->
+        <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+        <!-- Icons Css -->
+        <link href="/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <!-- App Css-->
+        <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+
+        <!-- Plugin js (kalau perlu di-head) -->
+        <script src="/assets/js/plugin.js"></script>
+    </head>
+    <body data-sidebar="dark">
+        <div id="layout-wrapper">
+            {{ template "header" . }}
+            {{ template "sidebar" . }}
+        </div>
+
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid">
+					<div class="row">
+                        <div class="col-12">
+                            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                <h4 class="mb-sm-0 font-size-18">Users</h4>
+
+                                <div class="page-title-right">
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="#">Settings</a></li>
+                                        <li class="breadcrumb-item active">Users</li>
+                                    </ol>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-12"> 
+                            <div class="card"> 
+                                <div class="card-header d-flex justify-content-between align-items-center">
+                                    <h5 class="mb-0">Daftar User</h5>
+                                    <button type="button" class="btn btn-primary waves-effect btn-label waves-light" disabled>
+                                        <i class="bx bx-plus label-icon"></i> New User
+                                    </button>
+                                </div>
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-responsive">
+                                            <thead class="table-light">
+                                                <tr>
+                                                    <th style="width: 50px;">#</th>
+                                                    <th>Username</th>
+                                                    <th>Nama</th>
+                                                    <th>Email</th>
+                                                    <th>Role</th>
+                                                    <th>Store ID</th>
+                                                    <th>Status</th>
+                                                    <th>Created At</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{ range $i, $user := .users }}
+                                                <tr>
+                                                    <td>{{ no $i 1 }}</td>
+                                                    <td>{{ $user.Username }}</td>
+                                                    <td>{{ $user.Name }}</td>
+                                                    <td>{{ $user.Email }}</td>
+                                                    <td><h5><span class=" badge badge-soft-info">{{ $user.RoleDisplay }}</span></h5></td>
+                                                    <td>{{ $user.StoreDisplay }}</td>
+                                                    <td><h5>
+                                                        {{ if eq $user.Status "active" }}
+                                                            <span class="badge badge-soft-success">{{ $user.StatusLabel }}</span>
+                                                        {{ else }}
+                                                            <span class="badge badge-soft-secondary">{{ $user.StatusLabel }}</span>
+                                                        {{ end }}
+                                                        </h5>
+                                                    </td>
+                                                    <td>{{ $user.CreatedAtDisplay }}</td>
+                                                </tr>
+                                                {{ else }}
+                                                <tr>
+                                                    <td colspan="8" class="text-center">Belum ada data user</td>
+                                                </tr>
+                                                {{ end }}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div> 
+                        </div> 
+                    </div>
+                </div>
+            </div>
+            {{ template "footer" . }}
+        </div>
+
+        <!-- JAVASCRIPT -->
+        <script src="/assets/libs/jquery/jquery.min.js"></script>
+        <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="/assets/libs/metismenu/metisMenu.min.js"></script>
+        <script src="/assets/libs/simplebar/simplebar.min.js"></script>
+        <script src="/assets/libs/node-waves/waves.min.js"></script>
+
+        <!-- apexcharts -->
+        <script src="/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+        <!-- dashboard init -->
+        <script src="/assets/js/pages/dashboard.init.js"></script>
+
+        <!-- Sweet Alerts js -->
+        <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+        <!-- Sweet alert init js-->
+        <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+
+        <!-- App js -->
+        <script src="/assets/js/app.js"></script>
+    </body>
+</html>

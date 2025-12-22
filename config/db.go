@@ -14,7 +14,8 @@ func Connect() {
 
 	var err error
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s",
+	// enable parseTime so DATETIME/TIMESTAMP scan into time.Time instead of []byte
+	dsn := fmt.Sprintf("%s:%s@tcp(%s:%s)/%s?parseTime=true",
 		os.Getenv("DB_USER"),
 		os.Getenv("DB_PASS"),
 		os.Getenv("DB_HOST"),
