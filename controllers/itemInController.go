@@ -365,16 +365,50 @@ func getCurrentUserID(c *gin.Context) (int, error) {
 		return 0, errors.New("user not found in context")
 	}
 
-	username, ok := userVal.(string)
-	if !ok {
-		return 0, errors.New("invalid user value in context")
+	// Prefer user_id from session payload to avoid extra DB hits.
+	switch v := userVal.(type) {
+	case models.SessionUser:
+		return v.UserID, nil
+	case map[string]interface{}:
+		if idVal, ok := v["user_id"]; ok {
+			switch id := idVal.(type) {
+			case int:
+				return id, nil
+			case int64:
+				return int(id), nil
+			case float64:
+				return int(id), nil
+			}
+		}
+		if uname, ok := v["username"].(string); ok && uname != "" {
+			return fetchUserIDByUsername(uname)
+		}
+	case gin.H:
+		if idVal, ok := v["user_id"]; ok {
+			switch id := idVal.(type) {
+			case int:
+				return id, nil
+			case int64:
+				return int(id), nil
+			case float64:
+				return int(id), nil
+			}
+		}
+		if uname, ok := v["username"].(string); ok && uname != "" {
+			return fetchUserIDByUsername(uname)
+		}
+	case string:
+		return fetchUserIDByUsername(v)
 	}
 
+	return 0, errors.New("invalid user value in context")
+}
+
+func fetchUserIDByUsername(username string) (int, error) {
 	var id int
 	err := config.DB.QueryRow("SELECT id FROM users WHERE username = ?", username).Scan(&id)
 	if err != nil {
 		return 0, err
 	}
-
 	return id, nil
 }

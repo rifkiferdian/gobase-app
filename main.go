@@ -1,11 +1,15 @@
 package main
 
 import (
+	"encoding/gob"
 	"html/template"
 	"log"
+	"net/http"
 	"os"
 	"stok-hadiah/config"
+	"stok-hadiah/models"
 	"stok-hadiah/routes"
+	"strings"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-contrib/sessions/cookie"
@@ -36,8 +40,21 @@ func main() {
 	r.LoadHTMLGlob("templates/**/*")
 	r.Static("/assets", "./assets")
 
+	useSecureCookie := strings.ToLower(os.Getenv("APP_SECURE_COOKIE")) == "true"
+
+	// Register custom session payload for gob encoder used by cookie store.
+	gob.Register(models.SessionUser{})
+
 	// SESSION - must be registered BEFORE routes that use sessions
 	store := cookie.NewStore([]byte("secret-key"))
+	store.Options(sessions.Options{
+		Path:     "/",
+		MaxAge:   60 * 60 * 8, // 8 jam
+		HttpOnly: true,
+		// Secure harus false saat akses lokal HTTP; aktifkan otomatis jika APP_ENV=production atau APP_SECURE_COOKIE=true.
+		Secure:   useSecureCookie,
+		SameSite: http.SameSiteLaxMode,
+	})
 	r.Use(sessions.Sessions("mysession", store))
 
 	// Register application routes
