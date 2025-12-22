@@ -27,3 +27,27 @@ func RoleIndex(c *gin.Context) {
 	})
 
 }
+
+func RoleFormIndex(c *gin.Context) {
+	permissionRepo := &repositories.PermissionRepository{DB: config.DB}
+	permissionService := &services.PermissionService{Repo: permissionRepo}
+
+	permissionGroups, err := permissionService.GetGroupedPermissions()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalPermissions := 0
+	for _, group := range permissionGroups {
+		totalPermissions += len(group.Permissions)
+	}
+
+	Render(c, "role_form.html", gin.H{
+		"Title":            "Form Role",
+		"Page":             "roleForm",
+		"PermissionGroups": permissionGroups,
+		"TotalPermissions": totalPermissions,
+	})
+
+}

@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en"
+      data-layout-width="boxed"
+      data-topbar="dark"
+      data-preloader="disable"
+      data-card-layout="borderless"
+      data-bs-theme="light"
+      data-topbar-image="pattern-1">
+    <head>
+        <meta charset="utf-8" />
+        <!-- penting untuk responsive di HP -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>
+            {{ if .Title }}
+                {{ .Title }}
+            {{ else }}
+                Stock Hadiah App
+            {{ end }}
+        </title>
+
+        <!-- Bootstrap Css -->
+        <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+        <!-- Icons Css -->
+        <link href="/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <!-- App Css-->
+        <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+
+        <!-- Plugin js (kalau perlu di-head) -->
+        <script src="/assets/js/plugin.js"></script>
+    </head>
+    <body data-sidebar="dark">
+        <div id="layout-wrapper">
+            {{ template "header" . }}
+            {{ template "sidebar" . }}
+        </div>
+
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid">
+					<div class="row">
+                        <div class="col-12">
+                            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                <h4 class="mb-sm-0 font-size-18">Roles</h4>
+
+                                <div class="page-title-right">
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="#">Settings</a></li>
+                                        <li class="breadcrumb-item active">Roles</li>
+                                    </ol>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    <form class="row gy-2 gx-3 align-items-center" wire:submit.prevent="save">
+                                        <div class="row">
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="role-name" class="form-label">Name <span style="color: red">*</span></label>
+                                                    <input type="text" class="form-control " id="role-name" placeholder="e.g. admin">
+                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="guard-name" class="form-label">Guard Name</label>
+                                                    <input type="text" class="form-control " id="guard-name" value="web" placeholder="web">
+                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                                </div>
+
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <div class="form-check form-switch form-switch-lg mb-1" dir="ltr">
+                                                        <input class="form-check-input" type="checkbox" id="switch-select-all" >
+                                                        <label class="form-check-label" for="switch-select-all">Select All</label>
+                                                    </div>
+                                                    <p class="mb-0">Enables/Disables all Permissions for this role</p>
+                                                </div>
+                                            </div>
+                                        </div>
+
+                                        <div class="d-flex justify-content-end">
+                                            <a href="#" class="btn btn-light me-2">Cancel</a>
+                                            <button type="submit" class="btn btn-primary">
+                                                <span><i class="bx bx-save me-1"></i> Save</span>
+                                                <span><span class="spinner-border spinner-border-sm me-1"></span> Saving...</span>
+                                            </button>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-lg-12">
+                            <div class="card shadow">
+                                <div class="card-body">
+                                    
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h5 class="mb-0">Permissions</h5>
+                                        <small class="text-muted">Selected: 0 / {{ .TotalPermissions }}</small>
+                                    </div>
+
+                                    <div class="accordion accordion-flush" id="accordionPermissions">
+                                        {{ range $index, $group := .PermissionGroups }}
+                                        {{ $headingID := printf "heading_%s" $group.Key }}
+                                        {{ $collapseID := printf "collapse_%s" $group.Key }}
+                                        <div class="accordion-item">
+                                            <h2 class="accordion-header" id="{{ $headingID }}">
+                                                <button style="background-color: gainsboro;" class="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $collapseID }}" aria-expanded="true" aria-controls="{{ $collapseID }}">
+                                                    <b class="text-capitalize">{{ $group.Label }}</b>
+                                                    <span class="ms-2 text-muted">({{ len $group.Permissions }} perms)</span>
+                                                </button>
+                                            </h2>
+                                            <div id="{{ $collapseID }}" class="accordion-collapse collapse show" aria-labelledby="{{ $headingID }}">
+                                                <div class="accordion-body">
+                                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                                        <div class="form-check form-switch m-0">
+                                                            <input class="form-check-input" type="checkbox" id="group_{{ $group.Key }}">
+                                                            <label style="color: black" class="form-check-label" for="group_{{ $group.Key }}">Select all</label>
+                                                        </div>
+                                                    </div>
+                                                    <div class="row">
+                                                        {{ range $permIndex, $perm := $group.Permissions }}
+                                                        <div class="col-lg-6">
+                                                            <div class="form-check form-check-warning mb-3">
+                                                                <input class="form-check-input" type="checkbox" id="perm_{{ $perm.ID }}" value="{{ $perm.Name }}">
+                                                                <label style="color: black" class="form-check-label" for="perm_{{ $perm.ID }}">
+                                                                    {{ $perm.Name }}
+                                                                </label>
+                                                            </div>
+                                                        </div>
+                                                        {{ end }}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                        {{ else }}
+                                        <p class="text-muted mb-0">Belum ada permission tersedia.</p>
+                                        {{ end }}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            {{ template "footer" . }}
+        </div>
+
+        <!-- JAVASCRIPT -->
+        <script src="/assets/libs/jquery/jquery.min.js"></script>
+        <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="/assets/libs/metismenu/metisMenu.min.js"></script>
+        <script src="/assets/libs/simplebar/simplebar.min.js"></script>
+        <script src="/assets/libs/node-waves/waves.min.js"></script>
+
+        <!-- apexcharts -->
+        <script src="/assets/libs/apexcharts/apexcharts.min.js"></script>
+
+        <!-- dashboard init -->
+        <script src="/assets/js/pages/dashboard.init.js"></script>
+
+        <!-- Sweet Alerts js -->
+        <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+        <!-- Sweet alert init js-->
+        <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+
+        <!-- App js -->
+        <script src="/assets/js/app.js"></script>
+    </body>
+</html>
