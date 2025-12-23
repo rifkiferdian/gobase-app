@@ -49,8 +49,25 @@ func ProgramIndex(c *gin.Context) {
 
 	const pageSize = 10
 
-	programRepo := &repositories.ProgramRepository{DB: config.DB}
+	filterStoreStr := c.Query("store_id")
+	var filterStoreIDPtr *int
+	filterStoreID := 0
+	if id, err := strconv.Atoi(filterStoreStr); err == nil && id > 0 {
+		filterStoreID = id
+		filterStoreIDPtr = &filterStoreID
+	}
+
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	programRepo := &repositories.ProgramRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		FilterStoreID:      filterStoreIDPtr,
+		EnforceStoreFilter: true,
+	}
 	programService := &services.ProgramService{Repo: programRepo}
+
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	// Ambil filter pencarian
 	filterName := c.Query("program_name")
@@ -72,7 +89,11 @@ func ProgramIndex(c *gin.Context) {
 		}
 
 		// Item tetap diambil semua untuk kebutuhan dropdown
-		itemRepo := &repositories.ItemRepository{DB: config.DB}
+		itemRepo := &repositories.ItemRepository{
+			DB:                 config.DB,
+			StoreIDs:           allowedStoreIDs,
+			EnforceStoreFilter: true,
+		}
 		itemService := &services.ItemService{Repo: itemRepo}
 
 		items, err := itemService.GetItems()
@@ -86,6 +107,7 @@ func ProgramIndex(c *gin.Context) {
 			"Page":              "program",
 			"programs":          programs,
 			"items":             items,
+			"stores":            stores,
 			"TotalPrograms":     totalPrograms,
 			"ActiveToday":       activeToday,
 			"InactiveToday":     inactiveToday,
@@ -97,6 +119,7 @@ func ProgramIndex(c *gin.Context) {
 			"FilterProgramName": filterName,
 			"FilterStartDate":   filterStartDate,
 			"FilterEndDate":     filterEndDate,
+			"FilterStoreID":     filterStoreID,
 		})
 		return
 	}
@@ -142,7 +165,11 @@ func ProgramIndex(c *gin.Context) {
 	}
 
 	// Item tetap diambil semua untuk kebutuhan dropdown
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	itemService := &services.ItemService{Repo: itemRepo}
 
 	items, err := itemService.GetItems()
@@ -156,6 +183,7 @@ func ProgramIndex(c *gin.Context) {
 		"Page":              "program",
 		"programs":          programs,
 		"items":             items,
+		"stores":            stores,
 		"TotalPrograms":     totalPrograms,
 		"ActiveToday":       activeToday,
 		"InactiveToday":     inactiveToday,
@@ -167,6 +195,7 @@ func ProgramIndex(c *gin.Context) {
 		"FilterProgramName": filterName,
 		"FilterStartDate":   filterStartDate,
 		"FilterEndDate":     filterEndDate,
+		"FilterStoreID":     filterStoreID,
 	})
 }
 
@@ -175,16 +204,34 @@ func ProgramStore(c *gin.Context) {
 	type ProgramForm struct {
 		ProgramName string `form:"program_name" binding:"required"`
 		ItemID      int    `form:"item_id" binding:"required"`
+		StoreID     int    `form:"store_id"`
 		StartDate   string `form:"start_date" binding:"required"`
 		EndDate     string `form:"end_date" binding:"required"`
 	}
 
 	var form ProgramForm
-	programRepo := &repositories.ProgramRepository{DB: config.DB}
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk membuat program")
+		return
+	}
+	storeID := allowedStoreIDs[0]
+
+	programRepo := &repositories.ProgramRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	programService := &services.ProgramService{Repo: programRepo}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	itemService := &services.ItemService{Repo: itemRepo}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	if err := c.ShouldBind(&form); err != nil {
 		// Jika validasi form gagal, kirim error ke view
@@ -197,6 +244,7 @@ func ProgramStore(c *gin.Context) {
 			"Page":          "program",
 			"programs":      programs,
 			"items":         items,
+			"stores":        stores,
 			"TotalPrograms": totalPrograms,
 			"ActiveToday":   activeToday,
 			"InactiveToday": inactiveToday,
@@ -205,9 +253,19 @@ func ProgramStore(c *gin.Context) {
 		return
 	}
 
+	if form.StoreID > 0 {
+		for _, id := range allowedStoreIDs {
+			if id == form.StoreID {
+				storeID = form.StoreID
+				break
+			}
+		}
+	}
+
 	program := models.Program{
 		ProgramName: form.ProgramName,
 		ItemID:      form.ItemID,
+		StoreID:     storeID,
 		StartDate:   form.StartDate,
 		EndDate:     form.EndDate,
 	}
@@ -226,16 +284,33 @@ func ProgramUpdate(c *gin.Context) {
 		ProgramID   int    `form:"program_id" binding:"required"`
 		ProgramName string `form:"program_name" binding:"required"`
 		ItemID      int    `form:"item_id" binding:"required"`
+		StoreID     int    `form:"store_id"`
 		StartDate   string `form:"start_date" binding:"required"`
 		EndDate     string `form:"end_date" binding:"required"`
 	}
 
 	var form ProgramUpdateForm
-	programRepo := &repositories.ProgramRepository{DB: config.DB}
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk mengubah program")
+		return
+	}
+
+	programRepo := &repositories.ProgramRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	programService := &services.ProgramService{Repo: programRepo}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	itemService := &services.ItemService{Repo: itemRepo}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	if err := c.ShouldBind(&form); err != nil {
 		programs, _ := programService.GetPrograms()
@@ -247,6 +322,7 @@ func ProgramUpdate(c *gin.Context) {
 			"Page":          "program",
 			"programs":      programs,
 			"items":         items,
+			"stores":        stores,
 			"TotalPrograms": totalPrograms,
 			"ActiveToday":   activeToday,
 			"InactiveToday": inactiveToday,
@@ -254,11 +330,27 @@ func ProgramUpdate(c *gin.Context) {
 		})
 		return
 	}
+	if form.StoreID == 0 {
+		form.StoreID = allowedStoreIDs[0]
+	}
+
+	// pastikan store yang dikirim termasuk yang diizinkan
+	isAllowedStore := false
+	for _, id := range allowedStoreIDs {
+		if id == form.StoreID {
+			isAllowedStore = true
+			break
+		}
+	}
+	if !isAllowedStore {
+		form.StoreID = allowedStoreIDs[0]
+	}
 
 	program := models.Program{
 		ProgramID:   form.ProgramID,
 		ProgramName: form.ProgramName,
 		ItemID:      form.ItemID,
+		StoreID:     form.StoreID,
 		StartDate:   form.StartDate,
 		EndDate:     form.EndDate,
 	}
