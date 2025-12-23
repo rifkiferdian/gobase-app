@@ -21,13 +21,12 @@ func (r *ProgramRepository) GetAll() ([]models.Program, error) {
 		       p.program_name,
 		       p.item_id,
 		       i.item_name,
-		       p.store_id,
 		       st.store_name,
 		       DATE_FORMAT(p.start_date, '%Y-%m-%d') AS start_date,
 		       DATE_FORMAT(p.end_date, '%Y-%m-%d') AS end_date
 		FROM programs p
 		JOIN items i ON i.item_id = p.item_id
-		LEFT JOIN stores st ON st.store_id = p.store_id
+		LEFT JOIN stores st ON st.store_id = i.store_id
 	`
 	query, skip := r.appendStoreFilter(query, &args, false)
 	if skip {
@@ -49,7 +48,6 @@ func (r *ProgramRepository) GetAll() ([]models.Program, error) {
 			&p.ProgramName,
 			&p.ItemID,
 			&p.ItemName,
-			&p.StoreID,
 			&p.StoreName,
 			&p.StartDate,
 			&p.EndDate,
@@ -69,13 +67,12 @@ func (r *ProgramRepository) Search(name, startDate, endDate string) ([]models.Pr
 		       p.program_name,
 		       p.item_id,
 		       i.item_name,
-		       p.store_id,
 		       st.store_name,
 		       DATE_FORMAT(p.start_date, '%d-%m-%Y') AS start_date,
 		       DATE_FORMAT(p.end_date, '%d-%m-%Y') AS end_date
 		FROM programs p
 		JOIN items i ON i.item_id = p.item_id
-		LEFT JOIN stores st ON st.store_id = p.store_id
+		LEFT JOIN stores st ON st.store_id = i.store_id
 		WHERE 1=1`
 
 	args := []interface{}{}
@@ -117,7 +114,6 @@ func (r *ProgramRepository) Search(name, startDate, endDate string) ([]models.Pr
 			&p.ProgramName,
 			&p.ItemID,
 			&p.ItemName,
-			&p.StoreID,
 			&p.StoreName,
 			&p.StartDate,
 			&p.EndDate,
@@ -135,6 +131,7 @@ func (r *ProgramRepository) Count() (int, error) {
 	args := []interface{}{}
 	query, skip := r.appendStoreFilter(`
 		SELECT COUNT(*) FROM programs p
+		JOIN items i ON i.item_id = p.item_id
 	`, &args, false)
 	if skip {
 		return 0, nil
@@ -156,6 +153,7 @@ func (r *ProgramRepository) CountActiveToday() (int, error) {
 	query, skip := r.appendStoreFilter(`
 		SELECT COUNT(*)
 		FROM programs p
+		JOIN items i ON i.item_id = p.item_id
 		WHERE CURDATE() BETWEEN DATE(p.start_date) AND DATE(p.end_date)
 	`, &args, true)
 	if skip {
@@ -179,6 +177,7 @@ func (r *ProgramRepository) CountInactiveToday() (int, error) {
 	query, skip := r.appendStoreFilter(`
 		SELECT COUNT(*)
 		FROM programs p
+		JOIN items i ON i.item_id = p.item_id
 		WHERE CURDATE() NOT BETWEEN DATE(p.start_date) AND DATE(p.end_date)
 	`, &args, true)
 	if skip {
@@ -204,13 +203,12 @@ func (r *ProgramRepository) GetPaginated(limit, offset int) ([]models.Program, e
 		       p.program_name,
 		       p.item_id,
 		       i.item_name,
-		       p.store_id,
 		       st.store_name,
 		       DATE_FORMAT(p.start_date, '%d-%m-%Y') AS start_date,
 		       DATE_FORMAT(p.end_date, '%d-%m-%Y') AS end_date
 		FROM programs p
 		JOIN items i ON i.item_id = p.item_id
-		LEFT JOIN stores st ON st.store_id = p.store_id
+		LEFT JOIN stores st ON st.store_id = i.store_id
 	`
 	query, skip := r.appendStoreFilter(query, &args, false)
 	if skip {
@@ -237,7 +235,6 @@ func (r *ProgramRepository) GetPaginated(limit, offset int) ([]models.Program, e
 			&p.ProgramName,
 			&p.ItemID,
 			&p.ItemName,
-			&p.StoreID,
 			&p.StoreName,
 			&p.StartDate,
 			&p.EndDate,
@@ -252,9 +249,9 @@ func (r *ProgramRepository) GetPaginated(limit, offset int) ([]models.Program, e
 
 func (r *ProgramRepository) Create(p models.Program) error {
 	_, err := r.DB.Exec(`
-		INSERT INTO programs (program_name, item_id, store_id, start_date, end_date)
-		VALUES (?, ?, ?, ?, ?)
-	`, p.ProgramName, p.ItemID, p.StoreID, p.StartDate, p.EndDate)
+		INSERT INTO programs (program_name, item_id, start_date, end_date)
+		VALUES (?, ?, ?, ?)
+	`, p.ProgramName, p.ItemID, p.StartDate, p.EndDate)
 	return err
 }
 
@@ -263,11 +260,10 @@ func (r *ProgramRepository) Update(p models.Program) error {
 		UPDATE programs
 		SET program_name = ?,
 		    item_id = ?,
-		    store_id = ?,
 		    start_date = ?,
 		    end_date = ?
 		WHERE program_id = ?
-	`, p.ProgramName, p.ItemID, p.StoreID, p.StartDate, p.EndDate, p.ProgramID)
+	`, p.ProgramName, p.ItemID, p.StartDate, p.EndDate, p.ProgramID)
 	return err
 }
 
@@ -297,7 +293,7 @@ func (r *ProgramRepository) appendStoreFilter(query string, args *[]interface{},
 		if hasWhere {
 			keyword = " AND "
 		}
-		query += keyword + "p.store_id IN (" + strings.Join(placeholders, ",") + ")"
+		query += keyword + "i.store_id IN (" + strings.Join(placeholders, ",") + ")"
 		hasWhere = true
 	}
 
@@ -306,7 +302,7 @@ func (r *ProgramRepository) appendStoreFilter(query string, args *[]interface{},
 		if hasWhere {
 			keyword = " AND "
 		}
-		query += keyword + "p.store_id = ?"
+		query += keyword + "i.store_id = ?"
 		*args = append(*args, *r.FilterStoreID)
 	}
 

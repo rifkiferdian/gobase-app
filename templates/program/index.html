@@ -158,7 +158,6 @@
 								   data-id="{{ .ProgramID }}"
 								   data-name="{{ .ProgramName }}"
 								   data-item-id="{{ .ItemID }}"
-								   data-store-id="{{ .StoreID }}"
 								   data-start-date="{{ .StartDate }}"
 								   data-end-date="{{ .EndDate }}">
 									<i class="bx bxs-pencil"></i>
@@ -231,7 +230,6 @@
 							{{ end }}
 						</select>
 					</div>
-					<input type="hidden" name="store_id" id="programStoreID" data-default-store="{{ if gt (len .stores) 0 }}{{ (index .stores 0).StoreID }}{{ end }}" value="{{ if gt .FilterStoreID 0 }}{{ .FilterStoreID }}{{ end }}">
 					<div class="mb-3">
 						<label for="startDate" class="form-label">Tanggal Mulai</label>
 						<input type="date" class="form-control" id="startDate" name="start_date" required>
@@ -274,7 +272,6 @@
 							{{ end }}
 						</select>
 					</div>
-					<input type="hidden" name="store_id" id="editProgramStoreId" data-default-store="{{ if gt (len .stores) 0 }}{{ (index .stores 0).StoreID }}{{ end }}">
 					<div class="mb-3">
 						<label for="editStartDate" class="form-label">Tanggal Mulai</label>
 						<input type="date" class="form-control" id="editStartDate" name="start_date" required>
@@ -326,7 +323,6 @@
 			var id = btn.getAttribute('data-id');
 			var name = btn.getAttribute('data-name');
 			var itemId = btn.getAttribute('data-item-id');
-			var storeId = btn.getAttribute('data-store-id');
 			var startDate = btn.getAttribute('data-start-date');
 			var endDate = btn.getAttribute('data-end-date');
 
@@ -336,14 +332,12 @@
 			var idInput = modalEl.querySelector('input[name="program_id"]');
 			var nameInput = modalEl.querySelector('input[name="program_name"]');
 			var itemSelect = modalEl.querySelector('select[name="item_id"]');
-			var storeInput = modalEl.querySelector('input[name="store_id"]');
 			var startInput = modalEl.querySelector('input[name="start_date"]');
 			var endInput = modalEl.querySelector('input[name="end_date"]');
 
 			if (idInput) idInput.value = id || '';
 			if (nameInput) nameInput.value = name || '';
 			if (itemSelect) itemSelect.value = itemId || '';
-			if (storeInput) storeInput.value = storeId || storeInput.getAttribute('data-default-store') || '';
 			if (startInput) startInput.value = startDate || '';
 			if (endInput) endInput.value = endDate || '';
 
@@ -357,15 +351,6 @@
 			}
 		});
 	});
-
-	// Set default store id on add form if empty
-	(function () {
-		var storeInput = document.getElementById('programStoreID');
-		if (!storeInput) return;
-		if (!storeInput.value) {
-			storeInput.value = storeInput.getAttribute('data-default-store') || '';
-		}
-	})();
 </script>
 
 {{ end }}

@@ -204,7 +204,6 @@ func ProgramStore(c *gin.Context) {
 	type ProgramForm struct {
 		ProgramName string `form:"program_name" binding:"required"`
 		ItemID      int    `form:"item_id" binding:"required"`
-		StoreID     int    `form:"store_id"`
 		StartDate   string `form:"start_date" binding:"required"`
 		EndDate     string `form:"end_date" binding:"required"`
 	}
@@ -215,7 +214,6 @@ func ProgramStore(c *gin.Context) {
 		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk membuat program")
 		return
 	}
-	storeID := allowedStoreIDs[0]
 
 	programRepo := &repositories.ProgramRepository{
 		DB:                 config.DB,
@@ -253,19 +251,27 @@ func ProgramStore(c *gin.Context) {
 		return
 	}
 
-	if form.StoreID > 0 {
-		for _, id := range allowedStoreIDs {
-			if id == form.StoreID {
-				storeID = form.StoreID
-				break
-			}
+	items, err := itemService.GetItems()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	isAllowedItem := false
+	for _, it := range items {
+		if it.ItemID == form.ItemID {
+			isAllowedItem = true
+			break
 		}
+	}
+	if !isAllowedItem {
+		c.String(http.StatusForbidden, "Item tidak tersedia untuk store yang diizinkan")
+		return
 	}
 
 	program := models.Program{
 		ProgramName: form.ProgramName,
 		ItemID:      form.ItemID,
-		StoreID:     storeID,
 		StartDate:   form.StartDate,
 		EndDate:     form.EndDate,
 	}
@@ -284,7 +290,6 @@ func ProgramUpdate(c *gin.Context) {
 		ProgramID   int    `form:"program_id" binding:"required"`
 		ProgramName string `form:"program_name" binding:"required"`
 		ItemID      int    `form:"item_id" binding:"required"`
-		StoreID     int    `form:"store_id"`
 		StartDate   string `form:"start_date" binding:"required"`
 		EndDate     string `form:"end_date" binding:"required"`
 	}
@@ -330,27 +335,29 @@ func ProgramUpdate(c *gin.Context) {
 		})
 		return
 	}
-	if form.StoreID == 0 {
-		form.StoreID = allowedStoreIDs[0]
+
+	items, err := itemService.GetItems()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
 	}
 
-	// pastikan store yang dikirim termasuk yang diizinkan
-	isAllowedStore := false
-	for _, id := range allowedStoreIDs {
-		if id == form.StoreID {
-			isAllowedStore = true
+	isAllowedItem := false
+	for _, it := range items {
+		if it.ItemID == form.ItemID {
+			isAllowedItem = true
 			break
 		}
 	}
-	if !isAllowedStore {
-		form.StoreID = allowedStoreIDs[0]
+	if !isAllowedItem {
+		c.String(http.StatusForbidden, "Item tidak tersedia untuk store yang diizinkan")
+		return
 	}
 
 	program := models.Program{
 		ProgramID:   form.ProgramID,
 		ProgramName: form.ProgramName,
 		ItemID:      form.ItemID,
-		StoreID:     form.StoreID,
 		StartDate:   form.StartDate,
 		EndDate:     form.EndDate,
 	}

@@ -8,7 +8,6 @@ type Program struct {
 	ProgramName string
 	ItemID      int
 	ItemName    string
-	StoreID     int
 	StoreName   string
 	StartDate   string
 	EndDate     string

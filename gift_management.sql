@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 20, 2025 at 04:37 AM
+-- Generation Time: Dec 23, 2025 at 08:54 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -43,8 +43,9 @@ CREATE TABLE `items` (
 --
 
 INSERT INTO `items` (`item_id`, `store_id`, `item_name`, `category`, `supplier_id`, `description`, `created_at`, `updated_at`) VALUES
-(1, 1, 'Mie Ayam', 'FOOD', 1, 'qweqwe', '2025-12-15 05:01:54', '2025-12-19 04:02:11'),
-(3, 1, 'asd', 'NON FOOD', 1, 'wqewew', '2025-12-17 06:32:38', '2025-12-20 01:58:20');
+(1, 1, 'Mie Ayam', 'FOOD', 1, 'qweqwe', '2025-12-15 05:01:54', '2025-12-23 07:30:15'),
+(3, 1, 'asd', 'NON FOOD', 1, 'wqewew', '2025-12-17 06:32:38', '2025-12-20 01:58:20'),
+(4, 2, 'ayam', 'FOOD', 1, '', '2025-12-23 07:37:06', '2025-12-23 07:37:06');
 
 -- --------------------------------------------------------
 
@@ -126,7 +127,6 @@ CREATE TABLE `programs` (
   `item_id` int(11) NOT NULL,
   `start_date` date NOT NULL,
   `end_date` date NOT NULL,
-  `store_id` int(11) NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -135,9 +135,12 @@ CREATE TABLE `programs` (
 -- Dumping data for table `programs`
 --
 
-INSERT INTO `programs` (`program_id`, `program_name`, `item_id`, `start_date`, `end_date`, `store_id`, `created_at`, `updated_at`) VALUES
-(1, 'Beli 1 gratis', 1, '2025-12-15', '2025-12-16', 1, '2025-12-15 05:14:52', '2025-12-19 04:02:18'),
-(2, 'Beli 2 bayar...', 1, '2025-12-15', '2025-12-16', 1, '2025-12-15 05:16:18', '2025-12-19 04:02:21');
+INSERT INTO `programs` (`program_id`, `program_name`, `item_id`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES
+(1, 'Beli 1 gratis', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:14:52', '2025-12-19 04:02:18'),
+(2, 'Beli 2 bayar...', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:16:18', '2025-12-19 04:02:21'),
+(4, '324423', 1, '2025-12-23', '2025-12-24', '2025-12-23 07:32:47', '2025-12-23 07:32:47'),
+(6, '212332', 4, '2025-12-23', '2025-12-24', '2025-12-23 07:49:54', '2025-12-23 07:49:54'),
+(7, '12312', 4, '2025-12-24', '2025-12-24', '2025-12-23 07:52:03', '2025-12-23 07:52:03');
 
 -- --------------------------------------------------------
 
@@ -308,6 +311,7 @@ INSERT INTO `suppliers` (`suppliers_id`, `supplier_name`, `description`, `active
 
 CREATE TABLE `users` (
   `id` int(11) NOT NULL,
+  `nip` int(11) NOT NULL,
   `username` varchar(255) NOT NULL,
   `password` varchar(255) NOT NULL,
   `name` varchar(255) NOT NULL,
@@ -322,8 +326,8 @@ CREATE TABLE `users` (
 -- Dumping data for table `users`
 --
 
-INSERT INTO `users` (`id`, `username`, `password`, `name`, `email`, `status`, `store_id`, `created_at`, `updated_at`) VALUES
-(1, 'admin', '$2a$10$40RBc0BSgXiHRSrFm.fwQ.iMotcVkzFnVIwKQR6IOKo2GmdB2UXbq', 'Admin', 'admin@mannakampus.com', 'active', '[1,2,3,4,5,6,7]', '2025-11-25 07:42:56', '2025-12-20 03:26:45');
+INSERT INTO `users` (`id`, `nip`, `username`, `password`, `name`, `email`, `status`, `store_id`, `created_at`, `updated_at`) VALUES
+(1, 250192, 'admin', '$2a$10$40RBc0BSgXiHRSrFm.fwQ.iMotcVkzFnVIwKQR6IOKo2GmdB2UXbq', 'Admin Rifki', 'admin@mannakampus.com', 'active', '[1,2,3,4,5,6,7]', '2025-11-25 07:42:56', '2025-12-23 06:17:34');
 
 --
 -- Indexes for dumped tables
@@ -365,8 +369,7 @@ ALTER TABLE `permissions`
 --
 ALTER TABLE `programs`
   ADD PRIMARY KEY (`program_id`),
-  ADD KEY `item_id` (`item_id`),
-  ADD KEY `store_id` (`store_id`);
+  ADD KEY `item_id` (`item_id`);
 
 --
 -- Indexes for table `roles`
@@ -419,8 +422,10 @@ ALTER TABLE `users`
   ADD PRIMARY KEY (`id`),
   ADD UNIQUE KEY `username` (`username`),
   ADD UNIQUE KEY `username_2` (`username`),
+  ADD UNIQUE KEY `nip` (`nip`),
   ADD UNIQUE KEY `email` (`email`) USING BTREE,
-  ADD KEY `store_id` (`store_id`(768));
+  ADD KEY `store_id` (`store_id`(768)),
+  ADD KEY `nip_2` (`nip`);
 
 --
 -- AUTO_INCREMENT for dumped tables
@@ -430,7 +435,7 @@ ALTER TABLE `users`
 -- AUTO_INCREMENT for table `items`
 --
 ALTER TABLE `items`
-  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `item_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `permissions`
@@ -442,7 +447,7 @@ ALTER TABLE `permissions`
 -- AUTO_INCREMENT for table `programs`
 --
 ALTER TABLE `programs`
-  MODIFY `program_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `program_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -472,7 +477,7 @@ ALTER TABLE `stores`
 -- AUTO_INCREMENT for table `suppliers`
 --
 ALTER TABLE `suppliers`
-  MODIFY `suppliers_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
+  MODIFY `suppliers_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=16;
 
 --
 -- AUTO_INCREMENT for table `users`
@@ -507,8 +512,7 @@ ALTER TABLE `model_has_roles`
 -- Constraints for table `programs`
 --
 ALTER TABLE `programs`
-  ADD CONSTRAINT `programs_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON DELETE CASCADE,
-  ADD CONSTRAINT `programs_ibfk_2` FOREIGN KEY (`store_id`) REFERENCES `stores` (`store_id`) ON DELETE CASCADE;
+  ADD CONSTRAINT `programs_ibfk_1` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON DELETE CASCADE;
 
 --
 -- Constraints for table `role_has_permissions`
