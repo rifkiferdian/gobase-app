@@ -133,6 +133,15 @@
 					</select>
 				</div>
 				<div class="col-12">
+					<label class="visually-hidden" for="storeSearch">Store</label>
+					<select class="form-select" id="storeSearch" name="store_id">
+						<option value="">Semua Store</option>
+						{{ range .stores }}
+						<option value="{{ .StoreID }}" {{ if eq $.FilterStoreID .StoreID }}selected{{ end }}>{{ .StoreName }}</option>
+						{{ end }}
+					</select>
+				</div>
+				<div class="col-12">
 					<button type="submit" class="btn btn-primary w-md">Cari</button>
 				</div>
 			</form>
@@ -150,8 +159,10 @@
 							<th>#</th>
 							<th>Nama Item</th>
 							<th>Kategori</th>
-						<th>Supplier</th>
-						<th>Deskripsi</th>
+							<th>Supplier</th>
+							<th>Store</th>
+							<th>Deskripsi</th>
+							<th>Dibuat</th>
 							<th>Aksi</th>
 						</tr>
 					</thead>
@@ -162,7 +173,9 @@
 							<td>{{ .ItemName }}</td>
 							<td>{{ .Category }}</td>
 							<td>{{ .SupplierName }}</td>
+							<td>{{ .StoreName }}</td>
 							<td>{{ .Description }}</td>
+							<td>{{ .CreatedAt }}</td>
 							<td style="font-size: large;">
 								<a href="#" class="waves-effect btnEditItem"
 								data-id="{{ .ItemID }}"
@@ -177,7 +190,7 @@
 						</tr>
 						{{ else }}
 						<tr>
-							<td colspan="7" class="text-center">Tidak ada data item</td>
+							<td colspan="8" class="text-center">Tidak ada data item</td>
 						</tr>
 						{{ end }}
 					</tbody>

@@ -1,0 +1,49 @@
+package repositories
+
+import (
+	"database/sql"
+	"stok-hadiah/models"
+	"strings"
+)
+
+type StoreRepository struct {
+	DB *sql.DB
+}
+
+// GetByIDs mengambil daftar store berdasarkan id yang diberikan.
+func (r *StoreRepository) GetByIDs(ids []int) ([]models.Store, error) {
+	if len(ids) == 0 {
+		return []models.Store{}, nil
+	}
+
+	placeholders := make([]string, len(ids))
+	args := make([]interface{}, len(ids))
+	for i, id := range ids {
+		placeholders[i] = "?"
+		args[i] = id
+	}
+
+	query := `
+		SELECT store_id, store_name
+		FROM stores
+		WHERE store_id IN (` + strings.Join(placeholders, ",") + `)
+		ORDER BY store_name
+	`
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stores []models.Store
+	for rows.Next() {
+		var s models.Store
+		if err := rows.Scan(&s.StoreID, &s.StoreName); err != nil {
+			return nil, err
+		}
+		stores = append(stores, s)
+	}
+
+	return stores, nil
+}

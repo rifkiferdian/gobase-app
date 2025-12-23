@@ -1,13 +1,16 @@
 package controllers
 
 import (
+	"encoding/json"
 	"net/http"
 	"stok-hadiah/config"
 	"stok-hadiah/models"
 	"stok-hadiah/repositories"
 	"stok-hadiah/services"
 	"strconv"
+	"strings"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -43,6 +46,44 @@ func fetchItemMetrics(itemService *services.ItemService, knownTotal *int) (int, 
 	return totalItems, totalFood, totalNonFood, totalDeptStore, nil
 }
 
+// parseStoreIDsFromString mencoba membaca store_id yang disimpan di session (JSON array atau dipisahkan koma).
+func parseStoreIDsFromString(storeIDStr string) []int {
+	storeIDStr = strings.TrimSpace(storeIDStr)
+	if storeIDStr == "" {
+		return []int{}
+	}
+
+	var ids []int
+	if err := json.Unmarshal([]byte(storeIDStr), &ids); err == nil {
+		return ids
+	}
+
+	parts := strings.Split(storeIDStr, ",")
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		if id, err := strconv.Atoi(p); err == nil {
+			ids = append(ids, id)
+		}
+	}
+	return ids
+}
+
+// getAllowedStoreIDs mengambil daftar store id dari session user.
+func getAllowedStoreIDs(c *gin.Context) []int {
+	session := sessions.Default(c)
+	userAny := session.Get("user")
+	if userAny == nil {
+		return []int{}
+	}
+	if su, ok := userAny.(models.SessionUser); ok {
+		return parseStoreIDsFromString(su.StoreID)
+	}
+	return []int{}
+}
+
 // ItemIndex menampilkan halaman listing item.
 func ItemIndex(c *gin.Context) {
 	// Ambil parameter page dari query string, default 1
@@ -54,8 +95,25 @@ func ItemIndex(c *gin.Context) {
 
 	const pageSize = 10
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	// Ambil filter store dari query
+	filterStoreStr := c.Query("store_id")
+	var filterStoreIDPtr *int
+	filterStoreID := 0
+	if id, err := strconv.Atoi(filterStoreStr); err == nil && id > 0 {
+		filterStoreID = id
+		filterStoreIDPtr = &filterStoreID
+	}
+
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		FilterStoreID:      filterStoreIDPtr,
+		EnforceStoreFilter: true,
+	}
 	itemService := &services.ItemService{Repo: itemRepo}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	// Ambil filter pencarian
 	filterName := c.Query("item_name")
@@ -87,6 +145,7 @@ func ItemIndex(c *gin.Context) {
 			"Page":           "item",
 			"items":          items,
 			"suppliers":      suppliers,
+			"stores":         stores,
 			"TotalItems":     totalItems,
 			"TotalFood":      totalFood,
 			"TotalNonFood":   totalNonFood,
@@ -98,6 +157,7 @@ func ItemIndex(c *gin.Context) {
 			"NextPage":       1,
 			"FilterItemName": filterName,
 			"FilterCategory": filterCategory,
+			"FilterStoreID":  filterStoreID,
 		})
 		return
 	}
@@ -155,6 +215,7 @@ func ItemIndex(c *gin.Context) {
 		"Page":           "item",
 		"items":          items,
 		"suppliers":      suppliers,
+		"stores":         stores,
 		"TotalItems":     totalItems,
 		"TotalFood":      totalFood,
 		"TotalNonFood":   totalNonFood,
@@ -166,6 +227,7 @@ func ItemIndex(c *gin.Context) {
 		"NextPage":       nextPage,
 		"FilterItemName": filterName,
 		"FilterCategory": filterCategory,
+		"FilterStoreID":  filterStoreID,
 	})
 }
 
@@ -179,10 +241,17 @@ func ItemStore(c *gin.Context) {
 	}
 
 	var form ItemForm
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	itemService := &services.ItemService{Repo: itemRepo}
 
 	supplierRepo := &repositories.SupplierRepository{DB: config.DB}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	if err := c.ShouldBind(&form); err != nil {
 		// Jika validasi form gagal, kirim error ke view di atas tabel data
@@ -195,6 +264,7 @@ func ItemStore(c *gin.Context) {
 			"Page":           "item",
 			"items":          items,
 			"suppliers":      suppliers,
+			"stores":         stores,
 			"TotalItems":     totalItems,
 			"TotalFood":      totalFood,
 			"TotalNonFood":   totalNonFood,
@@ -230,10 +300,17 @@ func ItemUpdate(c *gin.Context) {
 	}
 
 	var form ItemUpdateForm
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	itemService := &services.ItemService{Repo: itemRepo}
 
 	supplierRepo := &repositories.SupplierRepository{DB: config.DB}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	if err := c.ShouldBind(&form); err != nil {
 		items, _ := itemService.GetItems()
@@ -245,6 +322,7 @@ func ItemUpdate(c *gin.Context) {
 			"Page":           "item",
 			"items":          items,
 			"suppliers":      suppliers,
+			"stores":         stores,
 			"TotalItems":     totalItems,
 			"TotalFood":      totalFood,
 			"TotalNonFood":   totalNonFood,

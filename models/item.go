@@ -8,5 +8,8 @@ type Item struct {
 	Category     string
 	SupplierID   int
 	SupplierName string
+	StoreID      int
+	StoreName    string
 	Description  string
+	CreatedAt    string
 }
