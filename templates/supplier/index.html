@@ -80,6 +80,7 @@
                                 <th>#</th>
                                 <th>Nama</th>
                                 <th>Diskripsi</th>
+                                <th>Dibuat</th>
                                 <th>Status</th>
                                 <th>Aksi</th>
                             </tr>
@@ -90,6 +91,7 @@
                                 <th scope="row">{{ no $i 1 }}</th>
                                 <td>{{ $s.SupplierName }}</td>
                                 <td>{{ $s.Description }}</td>
+                                <td>{{ $s.CreatedAt }}</td>
                                 <td>{{ if $s.Active }}Aktif{{ else }}Nonaktif{{ end }}</td>
                                 <td style="font-size: large;">
                                     <a href="#" class="waves-effect btnEdit"
@@ -109,7 +111,7 @@
                             </tr>
                             {{ else }}
                             <tr>
-                                <td colspan="5" class="text-center">Tidak ada data supplier</td>
+                                <td colspan="6" class="text-center">Tidak ada data supplier</td>
                             </tr>
                             {{ end }}
 

@@ -5,4 +5,5 @@ type Supplier struct {
 	SupplierName string
 	Active       int
 	Description  string
+	CreatedAt    string
 }

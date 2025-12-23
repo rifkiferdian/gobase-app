@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"stok-hadiah/models"
+	"time"
 )
 
 type SupplierRepository struct {
@@ -11,8 +12,8 @@ type SupplierRepository struct {
 
 func (r *SupplierRepository) GetAll() ([]models.Supplier, error) {
 	rows, err := r.DB.Query(`
-		SELECT suppliers_id, supplier_name, active, description
-		FROM suppliers
+		SELECT s.suppliers_id, s.supplier_name, s.active, s.description, s.created_at
+		FROM suppliers s
 	`)
 	if err != nil {
 		return nil, err
@@ -22,16 +23,21 @@ func (r *SupplierRepository) GetAll() ([]models.Supplier, error) {
 	var suppliers []models.Supplier
 
 	for rows.Next() {
-		var s models.Supplier
+		var (
+			s         models.Supplier
+			createdAt time.Time
+		)
 		err := rows.Scan(
 			&s.SupplierID,
 			&s.SupplierName,
 			&s.Active,
 			&s.Description,
+			&createdAt,
 		)
 		if err != nil {
 			return nil, err
 		}
+		s.CreatedAt = createdAt.Format("2006-01-02 15:04:05")
 		suppliers = append(suppliers, s)
 	}
 
@@ -41,10 +47,10 @@ func (r *SupplierRepository) GetAll() ([]models.Supplier, error) {
 // SearchByName mengambil data supplier yang namanya mengandung kata kunci tertentu.
 func (r *SupplierRepository) SearchByName(name string) ([]models.Supplier, error) {
 	rows, err := r.DB.Query(`
-		SELECT suppliers_id, supplier_name, active, description
-		FROM suppliers
-		WHERE supplier_name LIKE ?
-		ORDER BY suppliers_id DESC
+		SELECT s.suppliers_id, s.supplier_name, s.active, s.description, s.created_at
+		FROM suppliers s
+		WHERE s.supplier_name LIKE ?
+		ORDER BY s.suppliers_id DESC
 	`, "%"+name+"%")
 	if err != nil {
 		return nil, err
@@ -54,15 +60,20 @@ func (r *SupplierRepository) SearchByName(name string) ([]models.Supplier, error
 	var suppliers []models.Supplier
 
 	for rows.Next() {
-		var s models.Supplier
+		var (
+			s         models.Supplier
+			createdAt time.Time
+		)
 		if err := rows.Scan(
 			&s.SupplierID,
 			&s.SupplierName,
 			&s.Active,
 			&s.Description,
+			&createdAt,
 		); err != nil {
 			return nil, err
 		}
+		s.CreatedAt = createdAt.Format("2006-01-02 15:04:05")
 		suppliers = append(suppliers, s)
 	}
 
@@ -86,9 +97,9 @@ func (r *SupplierRepository) Count() (int, error) {
 // GetPaginated mengambil data supplier dengan pagination menggunakan LIMIT dan OFFSET.
 func (r *SupplierRepository) GetPaginated(limit, offset int) ([]models.Supplier, error) {
 	rows, err := r.DB.Query(`
-		SELECT suppliers_id, supplier_name, active, description
-		FROM suppliers
-		ORDER BY suppliers_id DESC
+		SELECT s.suppliers_id, s.supplier_name, s.active, s.description, s.created_at
+		FROM suppliers s
+		ORDER BY s.suppliers_id DESC
 		LIMIT ? OFFSET ?
 	`, limit, offset)
 	if err != nil {
@@ -99,15 +110,20 @@ func (r *SupplierRepository) GetPaginated(limit, offset int) ([]models.Supplier,
 	var suppliers []models.Supplier
 
 	for rows.Next() {
-		var s models.Supplier
+		var (
+			s         models.Supplier
+			createdAt time.Time
+		)
 		if err := rows.Scan(
 			&s.SupplierID,
 			&s.SupplierName,
 			&s.Active,
 			&s.Description,
+			&createdAt,
 		); err != nil {
 			return nil, err
 		}
+		s.CreatedAt = createdAt.Format("02-01-2006 15:04:05")
 		suppliers = append(suppliers, s)
 	}
 
