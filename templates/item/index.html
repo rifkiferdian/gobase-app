@@ -182,6 +182,7 @@
 								data-name="{{ .ItemName }}"
 								data-category="{{ .Category }}"
 								data-supplier-id="{{ .SupplierID }}"
+								data-store-id="{{ .StoreID }}"
 								data-description="{{ .Description }}">
 									<i class="bx bxs-pencil"></i>
 								</a>
@@ -263,6 +264,15 @@
 						</select>
 					</div>
 					<div class="mb-3">
+						<label for="itemStore" class="form-label">Store</label>
+						<select class="form-select" id="itemStore" name="store_id" data-default-store="{{ if gt (len .stores) 0 }}{{ (index .stores 0).StoreID }}{{ end }}" required>
+							<option value="">-- Pilih Store --</option>
+							{{ range .stores }}
+							<option value="{{ .StoreID }}">{{ .StoreName }}</option>
+							{{ end }}
+						</select>
+					</div>
+					<div class="mb-3">
 						<label for="itemDescription" class="form-label">Deskripsi</label>
 						<textarea class="form-control" id="itemDescription" name="description" rows="3" placeholder="Masukkan deskripsi item"></textarea>
 					</div>
@@ -306,6 +316,15 @@
 							<option value="">-- Pilih Supplier --</option>
 							{{ range .suppliers }}
 							<option value="{{ .SupplierID }}">{{ .SupplierName }}</option>
+							{{ end }}
+						</select>
+					</div>
+					<div class="mb-3">
+						<label for="editItemStore" class="form-label">Store</label>
+						<select class="form-select" id="editItemStore" name="store_id" data-default-store="{{ if gt (len .stores) 0 }}{{ (index .stores 0).StoreID }}{{ end }}" required>
+							<option value="">-- Pilih Store --</option>
+							{{ range .stores }}
+							<option value="{{ .StoreID }}">{{ .StoreName }}</option>
 							{{ end }}
 						</select>
 					</div>
@@ -357,6 +376,7 @@
 			var name = btn.getAttribute('data-name');
 			var category = btn.getAttribute('data-category');
 			var supplierId = btn.getAttribute('data-supplier-id');
+			var storeId = btn.getAttribute('data-store-id');
 			var description = btn.getAttribute('data-description') || '';
 
 			var modalEl = document.getElementById('editItemModal');
@@ -366,12 +386,15 @@
 			var nameInput = modalEl.querySelector('input[name="item_name"]');
 			var categorySelect = modalEl.querySelector('select[name="category"]');
 			var supplierSelect = modalEl.querySelector('select[name="supplier_id"]');
+			var storeSelect = modalEl.querySelector('select[name="store_id"]');
 			var descInput = modalEl.querySelector('textarea[name="description"]');
+			var defaultStore = storeSelect ? storeSelect.getAttribute('data-default-store') : '';
 
 			if (idInput) idInput.value = id || '';
 			if (nameInput) nameInput.value = name || '';
 			if (categorySelect) categorySelect.value = category || '';
 			if (supplierSelect) supplierSelect.value = supplierId || '';
+			if (storeSelect) storeSelect.value = storeId || defaultStore || '';
 			if (descInput) descInput.value = description;
 
 			if (typeof bootstrap !== 'undefined') {
@@ -384,6 +407,15 @@
 			}
 		});
 	});
+
+	// Set default store id on add form if empty
+	(function () {
+		var storeSelect = document.getElementById('itemStore');
+		if (!storeSelect) return;
+		if (!storeSelect.value) {
+			storeSelect.value = storeSelect.getAttribute('data-default-store') || '';
+		}
+	})();
 </script>
 
 {{ end }}

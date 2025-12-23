@@ -244,9 +244,9 @@ func (r *ItemRepository) GetPaginated(limit, offset int) ([]models.Item, error) 
 
 func (r *ItemRepository) Create(i models.Item) error {
 	_, err := r.DB.Exec(`
-		INSERT INTO items (item_name, category, supplier_id, description)
-		VALUES (?, ?, ?, ?)
-	`, i.ItemName, i.Category, i.SupplierID, i.Description)
+		INSERT INTO items (item_name, category, supplier_id, store_id, description)
+		VALUES (?, ?, ?, ?, ?)
+	`, i.ItemName, i.Category, i.SupplierID, i.StoreID, i.Description)
 	return err
 }
 
@@ -256,9 +256,10 @@ func (r *ItemRepository) Update(i models.Item) error {
 		SET item_name = ?,
 		    category = ?,
 		    supplier_id = ?,
+		    store_id = ?,
 		    description = ?
 		WHERE item_id = ?
-	`, i.ItemName, i.Category, i.SupplierID, i.Description, i.ItemID)
+	`, i.ItemName, i.Category, i.SupplierID, i.StoreID, i.Description, i.ItemID)
 	return err
 }
 

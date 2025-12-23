@@ -196,11 +196,16 @@ func ItemStore(c *gin.Context) {
 		ItemName    string `form:"item_name" binding:"required"`
 		Category    string `form:"category" binding:"required"`
 		SupplierID  int    `form:"supplier_id" binding:"required"`
+		StoreID     int    `form:"store_id" binding:"required"`
 		Description string `form:"description"`
 	}
 
 	var form ItemForm
 	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk membuat item")
+		return
+	}
 	itemRepo := &repositories.ItemRepository{
 		DB:                 config.DB,
 		StoreIDs:           allowedStoreIDs,
@@ -228,15 +233,26 @@ func ItemStore(c *gin.Context) {
 			"TotalFood":      totalFood,
 			"TotalNonFood":   totalNonFood,
 			"TotalDeptStore": totalDeptStore,
-			"Error":          "Nama item, kategori, dan supplier wajib diisi",
+			"Error":          "Nama item, kategori, supplier, dan store wajib diisi",
 		})
 		return
+	}
+
+	storeID := allowedStoreIDs[0]
+	if form.StoreID > 0 {
+		for _, id := range allowedStoreIDs {
+			if id == form.StoreID {
+				storeID = form.StoreID
+				break
+			}
+		}
 	}
 
 	item := models.Item{
 		ItemName:    form.ItemName,
 		Category:    form.Category,
 		SupplierID:  form.SupplierID,
+		StoreID:     storeID,
 		Description: form.Description,
 	}
 
@@ -255,11 +271,16 @@ func ItemUpdate(c *gin.Context) {
 		ItemName    string `form:"item_name" binding:"required"`
 		Category    string `form:"category" binding:"required"`
 		SupplierID  int    `form:"supplier_id" binding:"required"`
+		StoreID     int    `form:"store_id" binding:"required"`
 		Description string `form:"description"`
 	}
 
 	var form ItemUpdateForm
 	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk mengubah item")
+		return
+	}
 	itemRepo := &repositories.ItemRepository{
 		DB:                 config.DB,
 		StoreIDs:           allowedStoreIDs,
@@ -286,9 +307,24 @@ func ItemUpdate(c *gin.Context) {
 			"TotalFood":      totalFood,
 			"TotalNonFood":   totalNonFood,
 			"TotalDeptStore": totalDeptStore,
-			"Error":          "Nama item, kategori, dan supplier wajib diisi",
+			"Error":          "Nama item, kategori, supplier, dan store wajib diisi",
 		})
 		return
+	}
+
+	if form.StoreID == 0 {
+		form.StoreID = allowedStoreIDs[0]
+	}
+
+	isAllowedStore := false
+	for _, id := range allowedStoreIDs {
+		if id == form.StoreID {
+			isAllowedStore = true
+			break
+		}
+	}
+	if !isAllowedStore {
+		form.StoreID = allowedStoreIDs[0]
 	}
 
 	item := models.Item{
@@ -296,6 +332,7 @@ func ItemUpdate(c *gin.Context) {
 		ItemName:    form.ItemName,
 		Category:    form.Category,
 		SupplierID:  form.SupplierID,
+		StoreID:     form.StoreID,
 		Description: form.Description,
 	}
 
