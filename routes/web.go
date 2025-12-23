@@ -17,7 +17,7 @@ func RegisterWebRoutes(r *gin.Engine) {
 	r.GET("/logout", controllers.Logout)
 
 	auth := r.Group("/")
-	auth.Use(middleware.AuthRequired())
+	auth.Use(middleware.AuthRequired(), middleware.PermissionContext())
 	{
 		auth.GET("/dashboard", controllers.DashboardIndex)
 

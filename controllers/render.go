@@ -9,9 +9,6 @@ import (
 )
 
 func Render(c *gin.Context, name string, data gin.H) {
-	if data == nil {
-		data = gin.H{}
-	}
 
 	session := sessions.Default(c)
 	if u := session.Get("user"); u != nil {
@@ -36,6 +33,17 @@ func Render(c *gin.Context, name string, data gin.H) {
 			}
 		}
 	}
+
+	// ambil permissions dari context
+	permsAny, _ := c.Get("Permissions")
+	perms, _ := permsAny.(map[string]bool)
+
+	if data == nil {
+		data = gin.H{}
+	}
+
+	// inject global data (biar semua halaman dapat)
+	data["Permissions"] = perms
 
 	c.HTML(http.StatusOK, name, data)
 }

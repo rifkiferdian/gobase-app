@@ -55,3 +55,36 @@ func UserHasPermission(userID int, perm string) (bool, error) {
 
 	return false, err // error lain
 }
+
+func GetUserPermissions(userID int) (map[string]bool, error) {
+	perms := make(map[string]bool)
+
+	rows, err := config.DB.Query(`
+		SELECT DISTINCT p.name
+		FROM permissions p
+		JOIN role_has_permissions rhp ON rhp.permission_id = p.id
+		JOIN model_has_roles mhr ON mhr.role_id = rhp.role_id
+		WHERE mhr.model_id = ? AND mhr.model_type = ?
+
+		UNION
+
+		SELECT DISTINCT p2.name
+		FROM permissions p2
+		JOIN model_has_permissions mhp ON mhp.permission_id = p2.id
+		WHERE mhp.model_id = ? AND mhp.model_type = ?
+	`, userID, userModelType, userID, userModelType)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, err
+		}
+		perms[name] = true
+	}
+
+	return perms, nil
+}

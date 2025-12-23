@@ -28,18 +28,22 @@
                     </ul>
                 </li>
                 <li class="menu-title" key="t-menu">User</li>
+                {{ if index .Permissions "user_management_access" }}
                 <li class="">
                     <a href="/users" class="waves-effect">
                         <i class="bx bx-user"></i>
                         <span key="t-users">Users</span>
                     </a>
                 </li>
+                {{ end }}
+                {{ if index .Permissions "role_management_access" }}
                 <li class="">
                     <a href="/role" class="waves-effect">
                         <i class="bx bx-task"></i>
                         <span key="t-users">Roles</span>
                     </a>
                 </li>
+                {{ end }}
                 <li class="menu-title" key="t-pages">APPS</li>
 
                 <li>

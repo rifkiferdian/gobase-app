@@ -135,3 +135,21 @@ func normalizeID(val interface{}) int {
 		return 0
 	}
 }
+
+func PermissionContext() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		sess := sessions.Default(c)
+		userID := extractUserID(sess)
+
+		if userID > 0 {
+			perms, err := services.GetUserPermissions(userID)
+			if err == nil {
+				c.Set("Permissions", perms) // simpan di context (dipakai di render)
+			}
+		}
+
+		c.Next()
+	}
+}
+
+
