@@ -21,7 +21,7 @@ func RegisterWebRoutes(r *gin.Engine) {
 	{
 		auth.GET("/dashboard", controllers.DashboardIndex)
 
-		auth.GET("/users", controllers.UserIndex)
+		auth.GET("/users", middleware.RequirePermission("user_management_access"), controllers.UserIndex)
 		auth.GET("/role", controllers.RoleIndex)
 		auth.GET("/roleForm", controllers.RoleFormIndex)
 

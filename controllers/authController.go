@@ -93,6 +93,8 @@ func LoginPost(c *gin.Context) {
 		Role:            dbRole.String,
 		IsAuthenticated: true,
 	})
+	// simpan id user secara eksplisit agar mudah dipakai middleware permission
+	session.Set("user_id", userID)
 	if err := session.Save(); err != nil {
 		c.HTML(500, "login.html", gin.H{
 			"Title": "Login User",
