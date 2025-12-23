@@ -20,6 +20,7 @@ func Render(c *gin.Context, name string, data gin.H) {
 				"name":             val.Name,
 				"username":         val.Username,
 				"role":             val.Role,
+				"store_id":         val.StoreID,
 				"is_authenticated": val.IsAuthenticated,
 			}
 		case map[string]interface{}:

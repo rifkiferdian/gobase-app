@@ -38,12 +38,13 @@ func LoginPost(c *gin.Context) {
 	// fmt.Println("DEBUG:", string(hashedPassword))
 
 	var (
-		userID int
-		dbUser string
-		dbName string
-		dbPass string
-		dbNip  sql.NullString
-		dbRole sql.NullString
+		userID  int
+		dbUser  string
+		dbName  string
+		dbPass  string
+		dbNip   sql.NullString
+		dbRole  sql.NullString
+		dbStore sql.NullString
 	)
 	err := config.DB.QueryRow(`
 		SELECT 
@@ -52,13 +53,14 @@ func LoginPost(c *gin.Context) {
 			u.name,
 			u.password,
 			COALESCE(u.nip, '') AS nip,
-			COALESCE(r.name, '') AS role
+			COALESCE(r.name, '') AS role,
+			COALESCE(u.store_id, '') AS store_id
 		FROM users u
 		LEFT JOIN model_has_roles mhr ON mhr.model_id = u.id 
 		LEFT JOIN roles r ON r.id = mhr.role_id
 		WHERE u.username = ?
 	`, username).
-		Scan(&userID, &dbUser, &dbName, &dbPass, &dbNip, &dbRole)
+		Scan(&userID, &dbUser, &dbName, &dbPass, &dbNip, &dbRole, &dbStore)
 
 	if err == sql.ErrNoRows {
 		c.HTML(200, "login.html", gin.H{
@@ -91,6 +93,7 @@ func LoginPost(c *gin.Context) {
 		Name:            dbName,
 		Username:        dbUser,
 		Role:            dbRole.String,
+		StoreID:         dbStore.String,
 		IsAuthenticated: true,
 	})
 	// simpan id user secara eksplisit agar mudah dipakai middleware permission

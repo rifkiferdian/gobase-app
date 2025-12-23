@@ -7,5 +7,6 @@ type SessionUser struct {
 	Name            string
 	Username        string
 	Role            string
+	StoreID         string
 	IsAuthenticated bool
 }
