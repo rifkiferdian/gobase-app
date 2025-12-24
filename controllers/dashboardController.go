@@ -1,18 +1,15 @@
 package controllers
 
 import (
-	"fmt"
-
-	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
 func DashboardIndex(c *gin.Context) {
 
 	// debug session
-	sess := sessions.Default(c)
-	fmt.Println("DEBUG user_id:", sess.Get("user_id"))
-	fmt.Println("DEBUG user:", sess.Get("user"))
+	// sess := sessions.Default(c)
+	// fmt.Println("DEBUG user_id:", sess.Get("user_id"))
+	// fmt.Println("DEBUG user:", sess.Get("user"))
 
 	Render(c, "dashboard/index.html", gin.H{
 		"Title": "Dashboard User",

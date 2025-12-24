@@ -145,24 +145,24 @@
 						</tr>
 					</thead>
 					<tbody>
-						{{ range .programs }}
+						{{ range $i, $p := .programs }}
 						<tr>
-							<th scope="row">{{ .ProgramID }}</th>
-							<td>{{ .ProgramName }}</td>
-							<td>{{ .ItemName }}</td>
-							<td>{{ .StoreName }}</td>
-							<td>{{ .StartDate }}</td>
-							<td>{{ .EndDate }}</td>
+							<th scope="row">{{ no $i 1 }}</th>
+							<td>{{ $p.ProgramName }}</td>
+							<td>{{ $p.ItemName }}</td>
+							<td>{{ $p.StoreName }}</td>
+							<td>{{ $p.StartDate }}</td>
+							<td>{{ $p.EndDate }}</td>
 							<td style="font-size: large;">
 								<a href="#" class="waves-effect btnEditProgram"
-								   data-id="{{ .ProgramID }}"
-								   data-name="{{ .ProgramName }}"
-								   data-item-id="{{ .ItemID }}"
-								   data-start-date="{{ .StartDate }}"
-								   data-end-date="{{ .EndDate }}">
+								   data-id="{{ $p.ProgramID }}"
+								   data-name="{{ $p.ProgramName }}"
+								   data-item-id="{{ $p.ItemID }}"
+								   data-start-date="{{ $p.StartDate }}"
+								   data-end-date="{{ $p.EndDate }}">
 									<i class="bx bxs-pencil"></i>
 								</a>
-								<a href="/programs/delete/{{ .ProgramID }}" style="color: red;" class="waves-effect btnDeleteProgram"><i class="bx bx-trash"></i></a>
+								<a href="/programs/delete/{{ $p.ProgramID }}" style="color: red;" class="waves-effect btnDeleteProgram"><i class="bx bx-trash"></i></a>
 							</td>
 						</tr>
 						{{ else }}

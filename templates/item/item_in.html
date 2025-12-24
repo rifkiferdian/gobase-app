@@ -166,26 +166,26 @@
 						</tr>
 					</thead>
 					<tbody>
-						{{ range .stockIns }}
+						{{ range $i, $s := .stockIns }}
 						<tr>
-							<th scope="row">{{ .ID }}</th>
-							<td>{{ .ItemName }}</td>
-							<td>{{ .StoreName }}</td>
-							<td>{{ .SupplierName }}</td>
-							<td>{{ .Qty }}</td>
-							<td>{{ .ReceivedAtDisplay }}</td>
-							<td>{{ .Description }}</td>
-							<td>{{ .UserName }}</td>
+							<th scope="row">{{ no $i 1 }}</th>
+							<td>{{ $s.ItemName }}</td>
+							<td>{{ $s.StoreName }}</td>
+							<td>{{ $s.SupplierName }}</td>
+							<td><b>{{ $s.Qty }}</b></td>
+							<td>{{ $s.ReceivedAtDisplay }}</td>
+							<td>{{ $s.Description }}</td>
+							<td>{{ $s.UserName }}</td>
 							<td style="font-size: large;">
 								<a href="#" class="waves-effect btnEditStockIn"
-								   data-id="{{ .ID }}"
-								   data-item-id="{{ .ItemID }}"
-								   data-qty="{{ .Qty }}"
-								   data-date="{{ .ReceivedAt }}"
-								   data-description="{{ .Description }}">
+								   data-id="{{ $s.ID }}"
+								   data-item-id="{{ $s.ItemID }}"
+								   data-qty="{{ $s.Qty }}"
+								   data-date="{{ $s.ReceivedAt }}"
+								   data-description="{{ $s.Description }}">
 									<i class="bx bxs-pencil"></i>
 								</a>
-								<a href="/item-in/delete/{{ .ID }}" style="color: red;" class="waves-effect btnDeleteStockIn"><i class="bx bx-trash"></i></a>
+								<a href="/item-in/delete/{{ $s.ID }}" style="color: red;" class="waves-effect btnDeleteStockIn"><i class="bx bx-trash"></i></a>
 							</td>
 						</tr>
 						{{ else }}
