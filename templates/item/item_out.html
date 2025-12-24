@@ -27,6 +27,30 @@
         <!-- App Css-->
         <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
 
+        <link href="/assets/libs/select2/css/select2.min.css" rel="stylesheet" type="text/css" />
+        <style>
+            /* Allow long supplier names to wrap instead of being truncated in Select2 */
+            .select2-container .select2-selection--single {
+                height: auto;
+                min-height: 38px;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                white-space: normal;
+                line-height: 2.8;
+                word-break: break-word;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 100%;
+            }
+
+            .supplier-select {
+                min-width: 240px;
+                width: 100%;
+            }
+        </style>
+
         <!-- Plugin js (kalau perlu di-head) -->
         <script src="/assets/js/plugin.js"></script>
     </head>
@@ -59,12 +83,12 @@
                         <div class="col-xl-8">
                             <div class="card">
                                 <div class="card-body">
-                                    <form method="get" action="/items" class="row row-cols-lg-auto g-3 align-items-center mb-3">
+                                    <form method="get" action="/item-out" class="row row-cols-lg-auto g-3 align-items-center mb-3">
                                         <div class="col-12">
                                             <label class="visually-hidden" for="itemNameSearch">Nama Item</label>
                                             <div class="input-group">
                                                 <div class="input-group-text">#</div>
-                                                <input type="text" class="form-control" id="itemNameSearch" name="item_name" placeholder="Cari Nama Item">
+                                                <input type="text" class="form-control" id="itemNameSearch" name="item_name" value="{{ .FilterItemName }}" placeholder="Cari Nama Item">
                                             </div>
                                         </div>
                                         <div class="col-12">
@@ -77,9 +101,12 @@
                                             </select>
                                         </div>
                                         <div class="col-12">
-                                            <label class="visually-hidden" for="storeSearch">Supplier</label>
-                                            <select class="form-select" id="storeSearch" name="store_id">
+                                            <label class="visually-hidden" for="supplierSearch">Supplier</label>
+                                            <select class="form-select select2" id="supplierSearch" name="supplier_id">
                                                 <option value="">Semua Supplier</option>
+                                                {{ range .suppliers }}
+                                                <option value="{{ .SupplierID }}" {{ if eq $.FilterSupplierID .SupplierID }}selected{{ end }}>{{ .SupplierName }}</option>
+                                                {{ end }}
                                             </select>
                                         </div>
                                         <div class="col-12">
@@ -92,62 +119,49 @@
                                                 <tr>
                                                     <th>Product</th>
                                                     <th>Product Desc</th>
-                                                    <th>Price</th>
-                                                    <th>Quantity</th>
-                                                    <th colspan="2">Sisa</th>
+                                                    <th>QTY In</th>
+                                                    <th>Item Out</th>
+                                                    <th>Sisa</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                {{ range .items }}
                                                 <tr class="product">
                                                     <td>
-                                                        <img src="assets/images/img-manna-kampus/logoold.webp" alt="product-img" title="product-img" class="avatar-md">
+                                                        <img src="/assets/images/img-manna-kampus/logoold.webp" alt="product-img" title="product-img" class="avatar-md">
                                                     </td>
                                                     <td>
-                                                        <h5 class="font-size-14 text-truncate">Green color T-shirt</h5>
-                                                        <p class="mb-0">Supplier : <span class="fw-medium">PT ABC</span></p>
+                                                        <h5 class="font-size-14 text-truncate">{{ .ItemName }}</h5>
+                                                        <p class="mb-0">Supplier : <span class="fw-medium">{{ .SupplierName }}</span></p>
+                                                        <p class="mb-0 text-muted">Kategori : {{ .Category }}</p>
+                                                        {{ if .StoreName }}<p class="mb-0 text-muted">Store : {{ .StoreName }}</p>{{ end }}
+                                                        {{ if .Description }}<p class="mb-0 text-muted">{{ .Description }}</p>{{ end }}
                                                     </td>
-                                                    <td><span class="product-price">15</span></td>
+                                                    <td><span class="product-price">{{ .QtyIn }}</span></td>
                                                     <td>
                                                         <div class="me-3" style="width: 120px;">
                                                             <div class="input-group  bootstrap-touchspin bootstrap-touchspin-injected">
-                                                                <input type="text" value="3" class="product-quantity form-control" name="demo_vertical">
+                                                                <span class="input-group-addon bootstrap-touchspin-vertical-button-wrapper">
+                                                                    <span class="input-group-btn-vertical">
+                                                                    <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-down " type="button">−</button>
+                                                                    </span>
+                                                                </span>
+                                                                <input type="text" value="02" class="product-quantity form-control" name="qty[{{ .ItemID }}]" aria-label="Jumlah yang akan dikeluarkan untuk {{ .ItemName }}">
                                                                 <span class="input-group-addon bootstrap-touchspin-vertical-button-wrapper">
                                                                     <span class="input-group-btn-vertical">
                                                                     <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-up " type="button">+</button>
-                                                                    <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-down " type="button">−</button>
                                                                     </span>
-                                                            </span>
-                                                    
+                                                                </span>
                                                             </div>
                                                         </div>
                                                     </td>
-                                                    <td><span class="product-line-price">12</span></td>
+                                                    <td><span class="product-line-price">{{ .Remaining }}</span></td>
                                                 </tr>
-                                                <tr class="product">
-                                                    <td>
-                                                        <img src="assets/images/img-manna-kampus/logoold.webp" alt="product-img" title="product-img" class="avatar-md">
-                                                    </td>
-                                                    <td>
-                                                        <h5 class="font-size-14 text-truncate">Saos ABC 500 gr</h5>
-                                                        <p class="mb-0">Supplier : <span class="fw-medium">PT ABC</span></p>
-                                                    </td>
-                                                    <td><span class="product-price">15</span></td>
-                                                    <td>
-                                                        <div class="me-3" style="width: 120px;">
-                                                            <div class="input-group  bootstrap-touchspin bootstrap-touchspin-injected">
-                                                                <input type="text" value="0" class="product-quantity form-control" name="demo_vertical">
-                                                                <span class="input-group-addon bootstrap-touchspin-vertical-button-wrapper">
-                                                                    <span class="input-group-btn-vertical">
-                                                                    <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-up " type="button">+</button>
-                                                                    <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-down " type="button">−</button>
-                                                                    </span>
-                                                            </span>
-                                                    
-                                                            </div>
-                                                        </div>
-                                                    </td>
-                                                    <td><span class="product-line-price">15</span></td>
+                                                {{ else }}
+                                                <tr>
+                                                    <td colspan="5" class="text-center">Tidak ada item yang tersedia</td>
                                                 </tr>
+                                                {{ end }}
                                             </tbody>
                                         </table>
                                     </div>
@@ -228,9 +242,6 @@
         <script src="/assets/libs/simplebar/simplebar.min.js"></script>
         <script src="/assets/libs/node-waves/waves.min.js"></script>
 
-        <!-- apexcharts -->
-        <script src="/assets/libs/apexcharts/apexcharts.min.js"></script>
-
         <!-- dashboard init -->
         <script src="/assets/js/pages/dashboard.init.js"></script>
 
@@ -239,6 +250,10 @@
 
         <!-- Sweet alert init js-->
         <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+
+        <script src="/assets/libs/select2/js/select2.min.js"></script>
+        <!-- form advanced init -->
+        <script src="/assets/js/pages/form-advanced.init.js"></script>
 
         <!-- App js -->
         <script src="/assets/js/app.js"></script>
