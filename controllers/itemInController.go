@@ -25,10 +25,45 @@ func ItemInIndex(c *gin.Context) {
 
 	const pageSize = 10
 
-	stockRepo := &repositories.StockInRepository{DB: config.DB}
+	filterStoreStr := c.Query("store_id")
+	var filterStoreIDPtr *int
+	filterStoreID := 0
+	if id, err := strconv.Atoi(filterStoreStr); err == nil && id > 0 {
+		filterStoreID = id
+		filterStoreIDPtr = &filterStoreID
+	}
+
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	if filterStoreIDPtr != nil {
+		isAllowedStore := false
+		for _, id := range allowedStoreIDs {
+			if id == filterStoreID {
+				isAllowedStore = true
+				break
+			}
+		}
+		if !isAllowedStore {
+			filterStoreIDPtr = nil
+			filterStoreID = 0
+		}
+	}
+
+	stockRepo := &repositories.StockInRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		FilterStoreID:      filterStoreIDPtr,
+		EnforceStoreFilter: true,
+	}
 	stockService := &services.StockInService{Repo: stockRepo}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		FilterStoreID:      filterStoreIDPtr,
+		EnforceStoreFilter: true,
+	}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	// =========================
 	// Goroutine: items + statistik
@@ -156,6 +191,7 @@ func ItemInIndex(c *gin.Context) {
 			"Page":           "item_in",
 			"stockIns":       stockIns,
 			"items":          items,
+			"stores":         stores,
 			"TotalQty":       totalQty,
 			"TotalTrans":     totalTransactions,
 			"TodayQty":       todayQty,
@@ -167,6 +203,7 @@ func ItemInIndex(c *gin.Context) {
 			"NextPage":       1,
 			"FilterItemName": itemName,
 			"FilterDate":     date,
+			"FilterStoreID":  filterStoreID,
 		})
 		return
 	}
@@ -210,6 +247,7 @@ func ItemInIndex(c *gin.Context) {
 		"Page":           "item_in",
 		"stockIns":       stockIns,
 		"items":          items,
+		"stores":         stores,
 		"TotalQty":       totalQty,
 		"TotalTrans":     totalTransactions,
 		"TodayQty":       todayQty,
@@ -221,6 +259,7 @@ func ItemInIndex(c *gin.Context) {
 		"NextPage":       nextPage,
 		"FilterItemName": itemName,
 		"FilterDate":     date,
+		"FilterStoreID":  filterStoreID,
 	})
 }
 
@@ -234,10 +273,27 @@ func ItemInStore(c *gin.Context) {
 	}
 
 	var form StockInForm
-	stockRepo := &repositories.StockInRepository{DB: config.DB}
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk membuat stok masuk")
+		return
+	}
+
+	stockRepo := &repositories.StockInRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	stockService := &services.StockInService{Repo: stockRepo}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
+	itemService := &services.ItemService{Repo: itemRepo}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	if err := c.ShouldBind(&form); err != nil || form.Qty <= 0 {
 		// Jika validasi form gagal, kirim error ke view di atas tabel data
@@ -249,16 +305,36 @@ func ItemInStore(c *gin.Context) {
 		todayTransactions, _ := stockService.TodayTransactions()
 
 		Render(c, "item/item_in.html", gin.H{
-			"Title":      "Barang Masuk",
-			"Page":       "item_in",
-			"stockIns":   stockIns,
-			"items":      items,
-			"TotalQty":   totalQty,
-			"TotalTrans": totalTransactions,
-			"TodayQty":   todayQty,
-			"TodayTrans": todayTransactions,
-			"Error":      "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
+			"Title":         "Barang Masuk",
+			"Page":          "item_in",
+			"stockIns":      stockIns,
+			"items":         items,
+			"stores":        stores,
+			"TotalQty":      totalQty,
+			"TotalTrans":    totalTransactions,
+			"TodayQty":      todayQty,
+			"TodayTrans":    todayTransactions,
+			"FilterStoreID": 0,
+			"Error":         "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
 		})
+		return
+	}
+
+	items, err := itemService.GetItems()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	isAllowedItem := false
+	for _, it := range items {
+		if it.ItemID == form.ItemID {
+			isAllowedItem = true
+			break
+		}
+	}
+	if !isAllowedItem {
+		c.String(http.StatusForbidden, "Item tidak tersedia untuk store yang diizinkan")
 		return
 	}
 
@@ -295,10 +371,27 @@ func ItemInUpdate(c *gin.Context) {
 	}
 
 	var form StockInUpdateForm
-	stockRepo := &repositories.StockInRepository{DB: config.DB}
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk mengubah stok masuk")
+		return
+	}
+
+	stockRepo := &repositories.StockInRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	stockService := &services.StockInService{Repo: stockRepo}
 
-	itemRepo := &repositories.ItemRepository{DB: config.DB}
+	itemRepo := &repositories.ItemRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
+	itemService := &services.ItemService{Repo: itemRepo}
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
 
 	if err := c.ShouldBind(&form); err != nil || form.Qty <= 0 {
 		stockIns, _ := stockService.GetStockIns()
@@ -309,16 +402,36 @@ func ItemInUpdate(c *gin.Context) {
 		todayTransactions, _ := stockService.TodayTransactions()
 
 		Render(c, "item/item_in.html", gin.H{
-			"Title":      "Barang Masuk",
-			"Page":       "item_in",
-			"stockIns":   stockIns,
-			"items":      items,
-			"TotalQty":   totalQty,
-			"TotalTrans": totalTransactions,
-			"TodayQty":   todayQty,
-			"TodayTrans": todayTransactions,
-			"Error":      "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
+			"Title":         "Barang Masuk",
+			"Page":          "item_in",
+			"stockIns":      stockIns,
+			"items":         items,
+			"stores":        stores,
+			"TotalQty":      totalQty,
+			"TotalTrans":    totalTransactions,
+			"TodayQty":      todayQty,
+			"TodayTrans":    todayTransactions,
+			"FilterStoreID": 0,
+			"Error":         "Item, tanggal dan quantity wajib diisi dan quantity harus lebih dari 0",
 		})
+		return
+	}
+
+	items, err := itemService.GetItems()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	isAllowedItem := false
+	for _, it := range items {
+		if it.ItemID == form.ItemID {
+			isAllowedItem = true
+			break
+		}
+	}
+	if !isAllowedItem {
+		c.String(http.StatusForbidden, "Item tidak tersedia untuk store yang diizinkan")
 		return
 	}
 
@@ -347,7 +460,17 @@ func ItemInDelete(c *gin.Context) {
 		return
 	}
 
-	stockRepo := &repositories.StockInRepository{DB: config.DB}
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.String(http.StatusForbidden, "Anda tidak memiliki akses store untuk menghapus stok masuk")
+		return
+	}
+
+	stockRepo := &repositories.StockInRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
 	stockService := &services.StockInService{Repo: stockRepo}
 
 	if err := stockService.DeleteStockIn(id); err != nil {

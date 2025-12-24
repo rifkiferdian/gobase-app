@@ -9,6 +9,8 @@ type StockIn struct {
 	UserName          string
 	ItemID            int
 	ItemName          string
+	StoreID           int
+	StoreName         string
 	SupplierName      string
 	Qty               int
 	ReceivedAt        string

@@ -126,6 +126,16 @@
 					<label class="visually-hidden" for="inlineFormSelectPref">Preference</label>
 					<input type="date" class="form-control" id="tanggal" name="date" value="{{ .FilterDate }}" placeholder="tanggal">
 				</div>
+
+				<div class="col-12">
+					<label class="visually-hidden" for="storeFilter">Store</label>
+					<select class="form-select" id="storeFilter" name="store_id">
+						<option value="">Semua Store</option>
+						{{ range .stores }}
+						<option value="{{ .StoreID }}" {{ if eq $.FilterStoreID .StoreID }}selected{{ end }}>{{ .StoreName }}</option>
+						{{ end }}
+					</select>
+				</div>
 				
 				<div class="col-12">
 					<button type="submit" class="btn btn-primary w-md">Cari</button>
@@ -146,6 +156,7 @@
 						<tr>
 							<th>#</th>
 							<th>Nama Barang</th>
+							<th>Nama Store</th>
 							<th>Nama Supplier</th>
 							<th>Qty</th>
 							<th>Tanggal In</th>
@@ -159,9 +170,10 @@
 						<tr>
 							<th scope="row">{{ .ID }}</th>
 							<td>{{ .ItemName }}</td>
+							<td>{{ .StoreName }}</td>
 							<td>{{ .SupplierName }}</td>
-						<td>{{ .Qty }}</td>
-						<td>{{ .ReceivedAtDisplay }}</td>
+							<td>{{ .Qty }}</td>
+							<td>{{ .ReceivedAtDisplay }}</td>
 							<td>{{ .Description }}</td>
 							<td>{{ .UserName }}</td>
 							<td style="font-size: large;">
@@ -178,7 +190,7 @@
 						</tr>
 						{{ else }}
 						<tr>
-							<td colspan="7" class="text-center">Tidak ada data barang masuk</td>
+							<td colspan="9" class="text-center">Tidak ada data barang masuk</td>
 						</tr>
 						{{ end }}
 					</tbody>
@@ -191,7 +203,7 @@
 				<ul class="pagination justify-content-center">
 					<!-- Tombol Previous -->
 					<li class="page-item {{ if le .CurrentPage 1 }}disabled{{ end }}">
-						<a class="page-link" href="/item-in?page={{ .PrevPage }}" aria-label="Previous">
+						<a class="page-link" href="/item-in?page={{ .PrevPage }}{{ if gt .FilterStoreID 0 }}&store_id={{ .FilterStoreID }}{{ end }}" aria-label="Previous">
 							<span aria-hidden="true">&laquo;</span>
 							<span class="sr-only">Previous</span>
 						</a>
@@ -200,13 +212,13 @@
 					<!-- Nomor halaman -->
 					{{ range .Pages }}
 					<li class="page-item {{ if eq . $.CurrentPage }}active{{ end }}">
-						<a class="page-link" href="/item-in?page={{ . }}">{{ . }}</a>
+						<a class="page-link" href="/item-in?page={{ . }}{{ if gt $.FilterStoreID 0 }}&store_id={{ $.FilterStoreID }}{{ end }}">{{ . }}</a>
 					</li>
 					{{ end }}
 
 					<!-- Tombol Next -->
 					<li class="page-item {{ if ge .CurrentPage .TotalPages }}disabled{{ end }}">
-						<a class="page-link" href="/item-in?page={{ .NextPage }}" aria-label="Next">
+						<a class="page-link" href="/item-in?page={{ .NextPage }}{{ if gt .FilterStoreID 0 }}&store_id={{ .FilterStoreID }}{{ end }}" aria-label="Next">
 							<span aria-hidden="true">&raquo;</span>
 							<span class="sr-only">Next</span>
 						</a>
