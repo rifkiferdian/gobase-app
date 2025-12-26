@@ -28,6 +28,7 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			i.item_name,
 			i.category,
 			su.supplier_name,
+			COALESCE(p.program_names, '') AS program_names,
 			st.store_name,
 			i.description,
 			COALESCE(SUM(si.qty), 0) AS total_in,
@@ -39,6 +40,13 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			), 0) AS total_out
 		FROM items i
 		JOIN suppliers su ON su.suppliers_id = i.supplier_id
+		LEFT JOIN (
+			SELECT
+				item_id,
+				GROUP_CONCAT(DISTINCT program_name ORDER BY program_id DESC SEPARATOR ', ') AS program_names
+			FROM programs
+			GROUP BY item_id
+		) p ON p.item_id = i.item_id
 		LEFT JOIN stores st ON st.store_id = i.store_id
 		LEFT JOIN stock_in si ON si.item_id = i.item_id
 	`
@@ -104,6 +112,7 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			&summary.ItemName,
 			&summary.Category,
 			&summary.SupplierName,
+			&summary.ProgramNames,
 			&summary.StoreName,
 			&summary.Description,
 			&summary.QtyIn,
@@ -113,7 +122,11 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 		}
 
 		summary.Remaining = summary.QtyIn - summary.QtyOut
-		summaries = append(summaries, summary)
+
+		// Hanya tampilkan item yang masih memiliki stok (>0)
+		if summary.Remaining > 0 {
+			summaries = append(summaries, summary)
+		}
 	}
 
 	return summaries, nil

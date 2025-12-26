@@ -7,6 +7,7 @@ type ItemStockSummary struct {
 	ItemName     string
 	Category     string
 	SupplierName string
+	ProgramNames string
 	StoreName    string
 	Description  string
 	QtyIn        int

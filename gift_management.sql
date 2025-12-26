@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 23, 2025 at 08:54 AM
+-- Generation Time: Dec 26, 2025 at 03:47 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -44,8 +44,8 @@ CREATE TABLE `items` (
 
 INSERT INTO `items` (`item_id`, `store_id`, `item_name`, `category`, `supplier_id`, `description`, `created_at`, `updated_at`) VALUES
 (1, 1, 'Mie Ayam', 'FOOD', 1, 'qweqwe', '2025-12-15 05:01:54', '2025-12-23 07:30:15'),
-(3, 1, 'asd', 'NON FOOD', 1, 'wqewew', '2025-12-17 06:32:38', '2025-12-20 01:58:20'),
-(4, 2, 'ayam', 'FOOD', 1, '', '2025-12-23 07:37:06', '2025-12-23 07:37:06');
+(3, 1, 'Plastik', 'NON FOOD', 1, 'wqewew', '2025-12-17 06:32:38', '2025-12-24 04:01:56'),
+(4, 3, 'ayam', 'FOOD', 1, '', '2025-12-23 07:37:06', '2025-12-23 08:07:05');
 
 -- --------------------------------------------------------
 
@@ -137,10 +137,7 @@ CREATE TABLE `programs` (
 
 INSERT INTO `programs` (`program_id`, `program_name`, `item_id`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES
 (1, 'Beli 1 gratis', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:14:52', '2025-12-19 04:02:18'),
-(2, 'Beli 2 bayar...', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:16:18', '2025-12-19 04:02:21'),
-(4, '324423', 1, '2025-12-23', '2025-12-24', '2025-12-23 07:32:47', '2025-12-23 07:32:47'),
-(6, '212332', 4, '2025-12-23', '2025-12-24', '2025-12-23 07:49:54', '2025-12-23 07:49:54'),
-(7, '12312', 4, '2025-12-24', '2025-12-24', '2025-12-23 07:52:03', '2025-12-23 07:52:03');
+(2, 'Beli 2 bayar...', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:16:18', '2025-12-19 04:02:21');
 
 -- --------------------------------------------------------
 
@@ -251,6 +248,22 @@ INSERT INTO `stock_out` (`id`, `user_id`, `program_id`, `issued_at`, `qty`, `cre
 -- --------------------------------------------------------
 
 --
+-- Table structure for table `stock_out_events`
+--
+
+CREATE TABLE `stock_out_events` (
+  `id` int(11) NOT NULL,
+  `stock_out_id` int(11) NOT NULL,
+  `user_id` int(11) NOT NULL,
+  `program_id` int(11) NOT NULL,
+  `item_id` int(11) NOT NULL,
+  `event_time` datetime NOT NULL,
+  `delta_qty` int(11) NOT NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+-- --------------------------------------------------------
+
+--
 -- Table structure for table `stores`
 --
 
@@ -301,7 +314,7 @@ CREATE TABLE `suppliers` (
 
 INSERT INTO `suppliers` (`suppliers_id`, `supplier_name`, `description`, `active`, `created_at`, `updated_at`) VALUES
 (1, 'CV Banteng Hitam', 'kuasdf asdflkuasbfkladisugfsfd fsd', 1, '2025-12-15 04:54:52', '2025-12-17 03:32:28'),
-(2, 'wqweq', 'wqewqea sdfasdf af arse', 1, '2025-12-17 04:05:35', '2025-12-17 04:22:40');
+(2, 'PT ABC', 'wqewqea sdfasdf af arse', 1, '2025-12-17 04:05:35', '2025-12-24 04:01:41');
 
 -- --------------------------------------------------------
 
@@ -402,6 +415,16 @@ ALTER TABLE `stock_out`
   ADD KEY `program_id` (`program_id`);
 
 --
+-- Indexes for table `stock_out_events`
+--
+ALTER TABLE `stock_out_events`
+  ADD PRIMARY KEY (`id`),
+  ADD KEY `stock_out_id` (`stock_out_id`,`user_id`,`program_id`,`item_id`),
+  ADD KEY `user_id` (`user_id`),
+  ADD KEY `program_id` (`program_id`),
+  ADD KEY `item_id` (`item_id`);
+
+--
 -- Indexes for table `stores`
 --
 ALTER TABLE `stores`
@@ -447,7 +470,7 @@ ALTER TABLE `permissions`
 -- AUTO_INCREMENT for table `programs`
 --
 ALTER TABLE `programs`
-  MODIFY `program_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=8;
+  MODIFY `program_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -466,6 +489,12 @@ ALTER TABLE `stock_in`
 --
 ALTER TABLE `stock_out`
   MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+
+--
+-- AUTO_INCREMENT for table `stock_out_events`
+--
+ALTER TABLE `stock_out_events`
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
 
 --
 -- AUTO_INCREMENT for table `stores`
@@ -534,6 +563,15 @@ ALTER TABLE `stock_in`
 ALTER TABLE `stock_out`
   ADD CONSTRAINT `stock_out_ibfk_1` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
   ADD CONSTRAINT `stock_out_ibfk_2` FOREIGN KEY (`program_id`) REFERENCES `programs` (`program_id`) ON DELETE CASCADE;
+
+--
+-- Constraints for table `stock_out_events`
+--
+ALTER TABLE `stock_out_events`
+  ADD CONSTRAINT `stock_out_events_ibfk_1` FOREIGN KEY (`stock_out_id`) REFERENCES `stock_out` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `stock_out_events_ibfk_2` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `stock_out_events_ibfk_3` FOREIGN KEY (`program_id`) REFERENCES `programs` (`program_id`) ON DELETE CASCADE,
+  ADD CONSTRAINT `stock_out_events_ibfk_4` FOREIGN KEY (`item_id`) REFERENCES `items` (`item_id`) ON DELETE CASCADE;
 COMMIT;
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;

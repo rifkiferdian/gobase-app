@@ -3,6 +3,7 @@ package controllers
 import (
 	"net/http"
 	"stok-hadiah/config"
+	helpers "stok-hadiah/helper"
 	"stok-hadiah/repositories"
 	"stok-hadiah/services"
 	"strconv"
@@ -55,5 +56,6 @@ func ItemOutIndex(c *gin.Context) {
 		"FilterItemName":   filterName,
 		"FilterCategory":   filterCategory,
 		"FilterSupplierID": selectedSupplier,
+		"dateNow":          helpers.DateNowID(),
 	})
 }
