@@ -1,6 +1,7 @@
 package controllers
 
 import (
+	"errors"
 	"net/http"
 	"stok-hadiah/config"
 	helpers "stok-hadiah/helper"
@@ -48,6 +49,23 @@ func ItemOutIndex(c *gin.Context) {
 		selectedSupplier = *supplierID
 	}
 
+	itemQtyMap := map[int]int{}
+	userID, _ := getCurrentUserID(c)
+	if userID > 0 && len(items) > 0 {
+		itemIDs := make([]int, 0, len(items))
+		for _, it := range items {
+			itemIDs = append(itemIDs, it.ItemID)
+		}
+		stockOutRepo := &repositories.StockOutRepository{
+			DB:                 config.DB,
+			StoreIDs:           allowedStoreIDs,
+			EnforceStoreFilter: true,
+		}
+		if qtyMap, err := stockOutRepo.GetTodayQuantities(itemIDs, userID); err == nil {
+			itemQtyMap = qtyMap
+		}
+	}
+
 	Render(c, "item_out.html", gin.H{
 		"Title":            "Item Out",
 		"Page":             "item_out",
@@ -57,5 +75,67 @@ func ItemOutIndex(c *gin.Context) {
 		"FilterCategory":   filterCategory,
 		"FilterSupplierID": selectedSupplier,
 		"dateNow":          helpers.DateNowID(),
+		"ItemQtyMap":       itemQtyMap,
+	})
+}
+
+// ItemOutUpdate menerima aksi plus/minus via AJAX dan menyimpan ke stock_out & stock_out_events.
+func ItemOutUpdate(c *gin.Context) {
+	type requestPayload struct {
+		ItemID    int    `json:"item_id" binding:"required"`
+		Direction string `json:"direction" binding:"required"` // "up" atau "down"
+	}
+
+	var payload requestPayload
+	if err := c.ShouldBindJSON(&payload); err != nil || payload.ItemID <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "payload tidak valid"})
+		return
+	}
+
+	var delta int
+	switch payload.Direction {
+	case "up":
+		delta = 1
+	case "down":
+		delta = -1
+	default:
+		c.JSON(http.StatusBadRequest, gin.H{"error": "aksi tidak dikenal"})
+		return
+	}
+
+	userID, err := getCurrentUserID(c)
+	if err != nil || userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "user tidak ditemukan"})
+		return
+	}
+
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	repo := &repositories.StockOutRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
+	service := &services.StockOutService{Repo: repo}
+
+	newQty, err := service.AdjustQuantity(payload.ItemID, delta, userID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		switch {
+		case errors.Is(err, repositories.ErrItemNotAllowed):
+			status = http.StatusForbidden
+		case errors.Is(err, repositories.ErrItemNotFound),
+			errors.Is(err, repositories.ErrProgramNotFound),
+			errors.Is(err, repositories.ErrQuantityNegative),
+			errors.Is(err, repositories.ErrQuantityZero):
+			status = http.StatusBadRequest
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success":   true,
+		"new_qty":   newQty,
+		"direction": payload.Direction,
 	})
 }

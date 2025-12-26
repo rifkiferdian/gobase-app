@@ -151,7 +151,7 @@
                                                                     <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-down" type="button">-</button>
                                                                     </span>
                                                                 </span>
-                                                                <input type="text" value="0" class="product-quantity form-control" name="qty[{{ .ItemID }}]" aria-label="Jumlah yang akan dikeluarkan untuk {{ .ItemName }}">
+                                                                <input type="text" value="{{ index $.ItemQtyMap .ItemID }}" class="product-quantity form-control" name="qty[{{ .ItemID }}]" data-item-id="{{ .ItemID }}" aria-label="Jumlah yang akan dikeluarkan untuk {{ .ItemName }}">
                                                                 <span class="input-group-addon bootstrap-touchspin-vertical-button-wrapper">
                                                                     <span class="input-group-btn-vertical">
                                                                     <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-up" type="button">+</button>
@@ -253,30 +253,108 @@
 
         <script>
             $(function () {
-                // Normalize any prefilled values to non-negative integers
-                $('.product-quantity').each(function () {
-                    var value = parseInt($(this).val(), 10);
+                function toggleDownButton($group, value) {
+                    var disabled = value <= 0;
+                    $group.find('.bootstrap-touchspin-down').prop('disabled', disabled);
+                }
+
+                function normalizeValue($input) {
+                    var value = parseInt($input.val(), 10);
                     if (isNaN(value) || value < 0) {
-                        $(this).val(0);
+                        value = 0;
                     }
+                    $input.val(value);
+                    toggleDownButton($input.closest('.bootstrap-touchspin'), value);
+                    return value;
+                }
+
+                function adjustRemaining($group, appliedDelta) {
+                    var $remaining = $group.closest('tr').find('.product-line-price');
+                    var remainingVal = parseInt($remaining.text(), 10);
+                    if (isNaN(remainingVal)) {
+                        return;
+                    }
+                    var updated = remainingVal - appliedDelta;
+                    if (updated < 0) {
+                        updated = 0;
+                    }
+                    $remaining.text(updated);
+                }
+
+                function handleChange($btn, delta) {
+                    var $group = $btn.closest('.bootstrap-touchspin');
+                    var $input = $group.find('.product-quantity');
+                    var current = normalizeValue($input);
+
+                    if (delta < 0 && current <= 0) {
+                        return;
+                    }
+
+                    var itemId = parseInt($input.data('item-id'), 10);
+                    if (!itemId) {
+                        console.error('Item ID tidak ditemukan pada input quantity');
+                        return;
+                    }
+
+                    var previousQty = current;
+
+                    // Kunci tombol sementara AJAX berjalan agar tidak dobel klik
+                    var $buttons = $group.find('.bootstrap-touchspin-down, .bootstrap-touchspin-up');
+                    $buttons.prop('disabled', true);
+
+                    $.ajax({
+                        url: '/item-out/update',
+                        method: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({
+                            item_id: itemId,
+                            direction: delta > 0 ? 'up' : 'down'
+                        }),
+                        success: function (resp) {
+                            if (resp && resp.success) {
+                                var newQty = parseInt(resp.new_qty, 10);
+                                if (isNaN(newQty) || newQty < 0) {
+                                    newQty = 0;
+                                }
+                                var appliedDelta = newQty - previousQty;
+                                $input.val(newQty);
+                                adjustRemaining($group, appliedDelta);
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Tersimpan',
+                                    text: 'Perubahan stok keluar berhasil disimpan',
+                                    showConfirmButton: false,
+                                    timer: 1200
+                                });
+                            } else {
+                                Swal.fire('Gagal', (resp && resp.error) ? resp.error : 'Tidak dapat menyimpan data', 'error');
+                            }
+                        },
+                        error: function (xhr) {
+                            var message = 'Tidak dapat menyimpan data';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                message = xhr.responseJSON.error;
+                            }
+                            Swal.fire('Gagal', message, 'error');
+                        },
+                        complete: function () {
+                            var val = normalizeValue($input);
+                            toggleDownButton($group, val);
+                            $group.find('.bootstrap-touchspin-up').prop('disabled', false);
+                        }
+                    });
+                }
+
+                $('.product-quantity').each(function () {
+                    normalizeValue($(this));
                 });
 
                 $(document).on('click', '.bootstrap-touchspin-down', function () {
-                    var $input = $(this).closest('.bootstrap-touchspin').find('.product-quantity');
-                    var current = parseInt($input.val(), 10);
-                    if (isNaN(current) || current < 0) {
-                        current = 0;
-                    }
-                    $input.val(Math.max(0, current - 1));
+                    handleChange($(this), -1);
                 });
 
                 $(document).on('click', '.bootstrap-touchspin-up', function () {
-                    var $input = $(this).closest('.bootstrap-touchspin').find('.product-quantity');
-                    var current = parseInt($input.val(), 10);
-                    if (isNaN(current) || current < 0) {
-                        current = 0;
-                    }
-                    $input.val(current + 1);
+                    handleChange($(this), 1);
                 });
             });
         </script>
