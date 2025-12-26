@@ -183,7 +183,7 @@
                                         <div class="mb-2">
                                             <i class="bx bxs-archive-out text-primary display-4"></i>
                                         </div>
-                                        <h1>22</h1>
+                                        <h1 id="total-out-count">{{ .TotalOut }}</h1>
                                         <hr>
                                         <h5 style="color: #d35400;">{{ if .User }}{{ index .User "name" }}{{ end }}</h5>
                                         <h4>{{ .dateNow }}</h4>
@@ -196,28 +196,30 @@
 
                                     <div class="table-responsive">
                                         <table class="table mb-0">
-                                            <tbody>
-                                                <tr>
-                                                    <td>Grand Total :</td>
-                                                    <td id="cart-subtotal">12</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Discount : </td>
-                                                    <td id="cart-discount">2</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Shipping Charge :</td>
-                                                    <td id="cart-shipping">4</td>
-                                                </tr>
-                                                <tr>
-                                                    <td>Estimated Tax (12.5%) :</td>
-                                                    <td id="cart-tax">3</td>
-                                                </tr>
-                                                <tr class="bg-light">
-                                                    <th>Total :</th>
-                                                    <th id="cart-total">21</th>
-                                                </tr>
+                                            <tbody id="item-out-summary-body">
+                                                {{ if .SummaryOut }}
+                                                    {{ range .SummaryOut }}
+                                                    <tr data-item-id="{{ .ItemID }}">
+                                                        <td>{{ .ItemName }}</td>
+                                                        <td>{{ .QtyIn }}</td>
+                                                        <td><b>{{ .QtyOut }}</b></td>
+                                                        <td>{{ .Remaining }}</td>
+                                                    </tr>
+                                                    {{ end }}
+                                                {{ else }}
+                                                    <tr class="summary-empty">
+                                                        <td colspan="4" class="text-center">Belum ada hadiah keluar hari ini</td>
+                                                    </tr>
+                                                {{ end }}
                                             </tbody>
+                                            <tfoot>
+                                                <tr class="bg-light">
+                                                    <th>Total</th>
+                                                    <th id="item-out-total-in">{{ .SummaryTotalIn }}</th>
+                                                    <th id="item-out-total-out">{{ .TotalOut }}</th>
+                                                    <th id="item-out-total-remaining">{{ .SummaryTotalRemain }}</th>
+                                                </tr>
+                                            </tfoot>
                                         </table>
                                     </div>
                                     <!-- end table-responsive -->
@@ -253,6 +255,88 @@
 
         <script>
             $(function () {
+                var $summaryBody = $('#item-out-summary-body');
+                var $totalOutEl = $('#total-out-count');
+                var $summaryTotalInEl = $('#item-out-total-in');
+                var $summaryTotalOutEl = $('#item-out-total-out');
+                var $summaryTotalRemainEl = $('#item-out-total-remaining');
+
+                function parseIntSafe(val) {
+                    var parsed = parseInt(val, 10);
+                    return isNaN(parsed) ? 0 : parsed;
+                }
+
+                function ensureSummaryPlaceholder() {
+                    if (!$summaryBody.length) {
+                        return;
+                    }
+                    if ($summaryBody.children().length === 0) {
+                        $summaryBody.append('<tr class="summary-empty"><td colspan="4" class="text-center">Belum ada hadiah keluar hari ini</td></tr>');
+                    }
+                }
+
+                function recalcSummaryTotals() {
+                    var totalIn = 0;
+                    var totalOut = 0;
+                    var totalRemain = 0;
+
+                    $summaryBody.find('tr[data-item-id]').each(function () {
+                        var $cells = $(this).find('td');
+                        totalIn += parseIntSafe($cells.eq(1).text());
+                        totalOut += parseIntSafe($cells.eq(2).text());
+                        totalRemain += parseIntSafe($cells.eq(3).text());
+                    });
+
+                    if ($summaryTotalInEl.length) {
+                        $summaryTotalInEl.text(totalIn);
+                    }
+                    if ($summaryTotalOutEl.length) {
+                        $summaryTotalOutEl.text(totalOut);
+                    }
+                    if ($summaryTotalRemainEl.length) {
+                        $summaryTotalRemainEl.text(totalRemain);
+                    }
+                    if ($totalOutEl.length) {
+                        $totalOutEl.text(totalOut);
+                    }
+                }
+
+                function upsertSummaryRow($row, itemId, qtyOut) {
+                    if (!$summaryBody.length) {
+                        return;
+                    }
+                    var itemName = $.trim($row.find('h5').text());
+                    var qtyIn = parseIntSafe($row.find('.product-price').text());
+                    var remaining = parseIntSafe($row.find('.product-line-price').text());
+
+                    var $existing = $summaryBody.find('tr[data-item-id="' + itemId + '"]');
+
+                    if (qtyOut > 0) {
+                        if (!$existing.length) {
+                            $existing = $('<tr/>').attr('data-item-id', itemId);
+                            $summaryBody.append($existing);
+                        }
+                        $existing.html(
+                            '<td>' + itemName + '</td>' +
+                            '<td>' + qtyIn + '</td>' +
+                            '<td><b>' + qtyOut + '</b></td>' +
+                            '<td>' + remaining + '</td>'
+                        );
+                        $summaryBody.find('.summary-empty').remove();
+                    } else if ($existing.length) {
+                        $existing.remove();
+                    }
+
+                    if ($summaryBody.children().length === 0) {
+                        ensureSummaryPlaceholder();
+                    }
+
+                    recalcSummaryTotals();
+                }
+
+                ensureSummaryPlaceholder();
+                recalcSummaryTotals();
+
                 function toggleDownButton($group, value) {
                     var disabled = value <= 0;
                     $group.find('.bootstrap-touchspin-down').prop('disabled', disabled);
@@ -319,6 +403,7 @@
                                 var appliedDelta = newQty - previousQty;
                                 $input.val(newQty);
                                 adjustRemaining($group, appliedDelta);
+                                upsertSummaryRow($group.closest('tr'), itemId, newQty);
                                 Swal.fire({
                                     icon: 'success',
                                     title: 'Tersimpan',

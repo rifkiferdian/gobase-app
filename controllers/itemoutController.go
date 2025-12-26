@@ -66,16 +66,49 @@ func ItemOutIndex(c *gin.Context) {
 		}
 	}
 
+	type itemOutSummary struct {
+		ItemID    int
+		ItemName  string
+		QtyIn     int
+		QtyOut    int
+		Remaining int
+	}
+
+	totalOut := 0
+	totalIn := 0
+	totalRemaining := 0
+	summaryOut := make([]itemOutSummary, 0)
+	for _, it := range items {
+		qty := itemQtyMap[it.ItemID]
+		totalOut += qty
+		if qty <= 0 {
+			continue
+		}
+		summaryOut = append(summaryOut, itemOutSummary{
+			ItemID:    it.ItemID,
+			ItemName:  it.ItemName,
+			QtyIn:     it.QtyIn,
+			QtyOut:    qty,
+			Remaining: it.Remaining,
+		})
+		totalIn += it.QtyIn
+		totalRemaining += it.Remaining
+	}
+
 	Render(c, "item_out.html", gin.H{
-		"Title":            "Item Out",
-		"Page":             "item_out",
-		"items":            items,
-		"suppliers":        suppliers,
-		"FilterItemName":   filterName,
-		"FilterCategory":   filterCategory,
-		"FilterSupplierID": selectedSupplier,
-		"dateNow":          helpers.DateNowID(),
-		"ItemQtyMap":       itemQtyMap,
+		"Title":              "Item Out",
+		"Page":               "item_out",
+		"items":              items,
+		"suppliers":          suppliers,
+		"FilterItemName":     filterName,
+		"FilterCategory":     filterCategory,
+		"FilterSupplierID":   selectedSupplier,
+		"dateNow":            helpers.DateNowID(),
+		"ItemQtyMap":         itemQtyMap,
+		"TotalOut":           totalOut,
+		"SummaryOut":         summaryOut,
+		"SummaryTotalIn":     totalIn,
+		"SummaryTotalRemain": totalRemaining,
 	})
 }
 
