@@ -134,6 +134,8 @@
                                                         <h5 class="font-size-14 text-truncate">{{ .ItemName }}</h5>
                                                         {{ if .ProgramNames }}
                                                             <p style="color: #d35400;" class="mb-0">Program : <span class="fw-medium">{{ .ProgramNames }}</span></p>
+                                                            {{ if .ProgramStartDisplay }}<p class="mb-0 text-muted">Start : {{ .ProgramStartDisplay }}</p>{{ end }}
+                                                            {{ if .ProgramEndDisplay }}<p class="mb-0 text-muted">End : {{ .ProgramEndDisplay }}</p>{{ end }}
                                                         {{ else }}
                                                             <p style="color: red;" class="mb-0">Program : <span class="fw-medium text-muted">(belum di setting)</span></p>
                                                         {{ end }}

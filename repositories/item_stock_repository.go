@@ -2,9 +2,36 @@ package repositories
 
 import (
 	"database/sql"
-	"stok-hadiah/models"
 	"strings"
+	"time"
+
+	helpers "stok-hadiah/helper"
+	"stok-hadiah/models"
 )
+
+func formatDateListID(dateList string) string {
+	trimmed := strings.TrimSpace(dateList)
+	if trimmed == "" {
+		return ""
+	}
+
+	parts := strings.Split(trimmed, ",")
+	formatted := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p == "" {
+			continue
+		}
+		t, err := time.Parse("2006-01-02", p)
+		if err != nil {
+			formatted = append(formatted, p)
+			continue
+		}
+		formatted = append(formatted, helpers.FormatDateID(t))
+	}
+
+	return strings.Join(formatted, ", ")
+}
 
 // ItemStockRepository menyediakan ringkasan stok per item (total masuk, keluar, dan sisa).
 type ItemStockRepository struct {
@@ -29,6 +56,8 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			i.category,
 			su.supplier_name,
 			COALESCE(p.program_names, '') AS program_names,
+			COALESCE(p.program_start_dates, '') AS program_start_dates,
+			COALESCE(p.program_end_dates, '') AS program_end_dates,
 			st.store_name,
 			i.description,
 			COALESCE(SUM(si.qty), 0) AS total_in,
@@ -43,7 +72,9 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 		LEFT JOIN (
 			SELECT
 				item_id,
-				GROUP_CONCAT(DISTINCT program_name ORDER BY program_id DESC SEPARATOR ', ') AS program_names
+				GROUP_CONCAT(DISTINCT program_name ORDER BY program_id DESC SEPARATOR ', ') AS program_names,
+				GROUP_CONCAT(DISTINCT DATE_FORMAT(start_date, '%Y-%m-%d') ORDER BY program_id DESC SEPARATOR ', ') AS program_start_dates,
+				GROUP_CONCAT(DISTINCT DATE_FORMAT(end_date, '%Y-%m-%d') ORDER BY program_id DESC SEPARATOR ', ') AS program_end_dates
 			FROM programs
 			GROUP BY item_id
 		) p ON p.item_id = i.item_id
@@ -113,6 +144,8 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			&summary.Category,
 			&summary.SupplierName,
 			&summary.ProgramNames,
+			&summary.ProgramStartDates,
+			&summary.ProgramEndDates,
 			&summary.StoreName,
 			&summary.Description,
 			&summary.QtyIn,
@@ -122,6 +155,10 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 		}
 
 		summary.Remaining = summary.QtyIn - summary.QtyOut
+
+		// Format ke Indonesia
+		summary.ProgramStartDisplay = formatDateListID(summary.ProgramStartDates)
+		summary.ProgramEndDisplay = formatDateListID(summary.ProgramEndDates)
 
 		// Hanya tampilkan item yang masih memiliki stok (>0)
 		if summary.Remaining > 0 {
