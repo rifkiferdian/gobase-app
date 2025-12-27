@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: 127.0.0.1
--- Generation Time: Dec 26, 2025 at 03:47 AM
+-- Generation Time: Dec 26, 2025 at 08:36 AM
 -- Server version: 10.4.32-MariaDB
 -- PHP Version: 8.2.12
 
@@ -137,7 +137,8 @@ CREATE TABLE `programs` (
 
 INSERT INTO `programs` (`program_id`, `program_name`, `item_id`, `start_date`, `end_date`, `created_at`, `updated_at`) VALUES
 (1, 'Beli 1 gratis', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:14:52', '2025-12-19 04:02:18'),
-(2, 'Beli 2 bayar...', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:16:18', '2025-12-19 04:02:21');
+(2, 'Beli 2 bayar...', 1, '2025-12-15', '2025-12-16', '2025-12-15 05:16:18', '2025-12-19 04:02:21'),
+(9, 'gratis', 3, '2025-12-26', '2025-12-27', '2025-12-26 04:26:56', '2025-12-26 04:26:56');
 
 -- --------------------------------------------------------
 
@@ -234,6 +235,7 @@ CREATE TABLE `stock_out` (
   `program_id` int(11) NOT NULL,
   `issued_at` datetime NOT NULL,
   `qty` int(11) NOT NULL,
+  `reason` text NOT NULL,
   `created_at` timestamp NOT NULL DEFAULT current_timestamp(),
   `updated_at` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp()
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
@@ -242,8 +244,10 @@ CREATE TABLE `stock_out` (
 -- Dumping data for table `stock_out`
 --
 
-INSERT INTO `stock_out` (`id`, `user_id`, `program_id`, `issued_at`, `qty`, `created_at`, `updated_at`) VALUES
-(1, 1, 1, '2025-12-15 12:14:08', 2, '2025-12-15 05:14:19', '2025-12-15 05:14:19');
+INSERT INTO `stock_out` (`id`, `user_id`, `program_id`, `issued_at`, `qty`, `reason`, `created_at`, `updated_at`) VALUES
+(2, 1, 2, '2025-12-26 04:21:59', 3, '', '2025-12-26 03:45:17', '2025-12-26 04:21:59'),
+(3, 1, 9, '2025-12-26 07:03:48', 1, '', '2025-12-26 04:27:08', '2025-12-26 07:03:48'),
+(4, 1, 9, '2025-12-26 08:35:10', 2, 'pecah', '2025-12-26 07:35:10', '2025-12-26 07:35:10');
 
 -- --------------------------------------------------------
 
@@ -260,6 +264,32 @@ CREATE TABLE `stock_out_events` (
   `event_time` datetime NOT NULL,
   `delta_qty` int(11) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_general_ci;
+
+--
+-- Dumping data for table `stock_out_events`
+--
+
+INSERT INTO `stock_out_events` (`id`, `stock_out_id`, `user_id`, `program_id`, `item_id`, `event_time`, `delta_qty`) VALUES
+(1, 2, 1, 2, 1, '2025-12-26 03:45:17', 1),
+(2, 2, 1, 2, 1, '2025-12-26 03:45:30', 1),
+(3, 2, 1, 2, 1, '2025-12-26 03:45:46', -1),
+(4, 2, 1, 2, 1, '2025-12-26 03:45:58', 1),
+(5, 2, 1, 2, 1, '2025-12-26 03:46:59', 1),
+(6, 2, 1, 2, 1, '2025-12-26 03:47:08', 1),
+(7, 2, 1, 2, 1, '2025-12-26 03:47:10', -1),
+(8, 2, 1, 2, 1, '2025-12-26 03:47:41', -1),
+(9, 2, 1, 2, 1, '2025-12-26 03:47:43', -1),
+(10, 2, 1, 2, 1, '2025-12-26 03:47:46', -1),
+(11, 2, 1, 2, 1, '2025-12-26 03:48:01', 1),
+(12, 2, 1, 2, 1, '2025-12-26 03:48:03', 1),
+(13, 2, 1, 2, 1, '2025-12-26 03:48:06', 1),
+(14, 2, 1, 2, 1, '2025-12-26 03:52:31', -1),
+(15, 2, 1, 2, 1, '2025-12-26 04:21:59', 1),
+(16, 3, 1, 9, 3, '2025-12-26 04:27:08', 1),
+(17, 3, 1, 9, 3, '2025-12-26 04:27:10', 1),
+(18, 3, 1, 9, 3, '2025-12-26 04:31:05', -1),
+(19, 3, 1, 9, 3, '2025-12-26 06:58:41', 1),
+(20, 3, 1, 9, 3, '2025-12-26 07:03:48', -1);
 
 -- --------------------------------------------------------
 
@@ -470,7 +500,7 @@ ALTER TABLE `permissions`
 -- AUTO_INCREMENT for table `programs`
 --
 ALTER TABLE `programs`
-  MODIFY `program_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=9;
+  MODIFY `program_id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=10;
 
 --
 -- AUTO_INCREMENT for table `roles`
@@ -488,13 +518,13 @@ ALTER TABLE `stock_in`
 -- AUTO_INCREMENT for table `stock_out`
 --
 ALTER TABLE `stock_out`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=2;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=5;
 
 --
 -- AUTO_INCREMENT for table `stock_out_events`
 --
 ALTER TABLE `stock_out_events`
-  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT;
+  MODIFY `id` int(11) NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=21;
 
 --
 -- AUTO_INCREMENT for table `stores`

@@ -8,6 +8,7 @@ import (
 	"stok-hadiah/repositories"
 	"stok-hadiah/services"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 )
@@ -50,6 +51,7 @@ func ItemOutIndex(c *gin.Context) {
 	}
 
 	itemQtyMap := map[int]int{}
+	stockOutInfo := map[int]repositories.StockOutInfo{}
 	userID, _ := getCurrentUserID(c)
 	if userID > 0 && len(items) > 0 {
 		itemIDs := make([]int, 0, len(items))
@@ -61,8 +63,11 @@ func ItemOutIndex(c *gin.Context) {
 			StoreIDs:           allowedStoreIDs,
 			EnforceStoreFilter: true,
 		}
-		if qtyMap, err := stockOutRepo.GetTodayQuantities(itemIDs, userID); err == nil {
-			itemQtyMap = qtyMap
+		if infoMap, err := stockOutRepo.GetTodayQuantities(itemIDs, userID); err == nil {
+			stockOutInfo = infoMap
+			for itemID, info := range infoMap {
+				itemQtyMap[itemID] = info.Qty
+			}
 		}
 	}
 
@@ -79,11 +84,12 @@ func ItemOutIndex(c *gin.Context) {
 	totalRemaining := 0
 	summaryOut := make([]itemOutSummary, 0)
 	for _, it := range items {
-		qty := itemQtyMap[it.ItemID]
-		totalOut += qty
-		if qty <= 0 {
+		info := stockOutInfo[it.ItemID]
+		qty := info.Qty
+		if qty <= 0 || strings.TrimSpace(info.Reason) != "" {
 			continue
 		}
+		totalOut += qty
 		summaryOut = append(summaryOut, itemOutSummary{
 			ItemID:    it.ItemID,
 			ItemName:  it.ItemName,

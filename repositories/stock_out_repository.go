@@ -23,6 +23,12 @@ type StockOutRepository struct {
 	EnforceStoreFilter bool
 }
 
+// StockOutInfo merepresentasikan qty dan alasan keluarnya hadiah untuk satu item.
+type StockOutInfo struct {
+	Qty    int
+	Reason string
+}
+
 // AdjustQuantity menambah/mengurangi qty untuk item tertentu dan mencatat eventnya.
 // Delta harus bernilai +1 atau -1; fungsi akan mengembalikan qty terkini setelah update.
 func (r *StockOutRepository) AdjustQuantity(itemID, delta, userID int) (int, error) {
@@ -69,29 +75,40 @@ func (r *StockOutRepository) AdjustQuantity(itemID, delta, userID int) (int, err
 	// Ambil record stock_out terakhir untuk kombinasi user + program.
 	var stockOutID int
 	var currentQty int
+	var createdAt time.Time
 	err = tx.QueryRow(`
-		SELECT id, qty
+		SELECT id, qty, created_at
 		FROM stock_out
 		WHERE program_id = ? AND user_id = ?
-		ORDER BY issued_at DESC
+		ORDER BY created_at DESC
 		LIMIT 1
-	`, programID, userID).Scan(&stockOutID, &currentQty)
+	`, programID, userID).Scan(&stockOutID, &currentQty, &createdAt)
 
 	if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		return 0, err
 	}
 
 	now := time.Now()
+	startNewRecord := false
 
-	// Jika belum ada record, hanya boleh menambah.
-	if errors.Is(err, sql.ErrNoRows) {
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		startNewRecord = true
+	case !sameDay(createdAt, now):
+		startNewRecord = true
+	}
+
+	// Jika belum ada record atau tanggal terakhir berbeda, mulai record baru dan reset qty.
+	if startNewRecord {
 		if delta < 0 {
 			return 0, ErrQuantityZero
 		}
+		newQty := delta
+
 		res, err := tx.Exec(`
 			INSERT INTO stock_out (user_id, program_id, issued_at, qty)
 			VALUES (?, ?, ?, ?)
-		`, userID, programID, now, delta)
+		`, userID, programID, now, newQty)
 		if err != nil {
 			return 0, err
 		}
@@ -101,6 +118,16 @@ func (r *StockOutRepository) AdjustQuantity(itemID, delta, userID int) (int, err
 		}
 		stockOutID = int(lastID)
 		currentQty = 0
+		if _, err := tx.Exec(`
+			INSERT INTO stock_out_events (stock_out_id, user_id, program_id, item_id, event_time, delta_qty)
+			VALUES (?, ?, ?, ?, ?, ?)
+		`, stockOutID, userID, programID, itemID, now, delta); err != nil {
+			return 0, err
+		}
+		if err := tx.Commit(); err != nil {
+			return 0, err
+		}
+		return newQty, nil
 	}
 
 	newQty := currentQty + delta
@@ -139,10 +166,16 @@ func containsInt(list []int, target int) bool {
 	return false
 }
 
+func sameDay(a, b time.Time) bool {
+	ay, am, ad := a.Date()
+	by, bm, bd := b.Date()
+	return ay == by && am == bm && ad == bd
+}
+
 // GetTodayQuantities mengambil qty stock_out per item (program terbaru per item) untuk user & tanggal hari ini.
 // Jika itemIDs kosong, maka tidak ada data yang diambil.
-func (r *StockOutRepository) GetTodayQuantities(itemIDs []int, userID int) (map[int]int, error) {
-	result := map[int]int{}
+func (r *StockOutRepository) GetTodayQuantities(itemIDs []int, userID int) (map[int]StockOutInfo, error) {
+	result := map[int]StockOutInfo{}
 	if userID == 0 || len(itemIDs) == 0 {
 		return result, nil
 	}
@@ -164,12 +197,13 @@ WITH latest_program AS (
     WHERE p.item_id IN (` + strings.Join(itemPlaceholders, ",") + `)
     GROUP BY p.item_id
 )
-SELECT lp.item_id, COALESCE(so.qty, 0) AS qty
+SELECT lp.item_id, COALESCE(so.qty, 0) AS qty, COALESCE(so.reason, '') AS reason
 FROM latest_program lp
 JOIN items i ON i.item_id = lp.item_id
 LEFT JOIN stock_out so ON so.program_id = lp.program_id
     AND so.user_id = ?
-    AND DATE(so.issued_at) = CURDATE()
+    AND DATE(so.created_at) = CURDATE()
+    AND (so.reason IS NULL OR TRIM(so.reason) = '')
 `
 	args = append(args, userID)
 
@@ -196,10 +230,14 @@ LEFT JOIN stock_out so ON so.program_id = lp.program_id
 	for rows.Next() {
 		var itemID int
 		var qty int
-		if err := rows.Scan(&itemID, &qty); err != nil {
+		var reason string
+		if err := rows.Scan(&itemID, &qty, &reason); err != nil {
 			return nil, err
 		}
-		result[itemID] = qty
+		result[itemID] = StockOutInfo{
+			Qty:    qty,
+			Reason: reason,
+		}
 	}
 
 	return result, nil

@@ -151,7 +151,7 @@
                                                                     <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-down" type="button">-</button>
                                                                     </span>
                                                                 </span>
-                                                                <input type="text" value="{{ index $.ItemQtyMap .ItemID }}" class="product-quantity form-control" name="qty[{{ .ItemID }}]" data-item-id="{{ .ItemID }}" aria-label="Jumlah yang akan dikeluarkan untuk {{ .ItemName }}">
+                                                                <input type="text" value="{{ with index $.ItemQtyMap .ItemID }}{{ . }}{{ else }}0{{ end }}" class="product-quantity form-control" name="qty[{{ .ItemID }}]" data-item-id="{{ .ItemID }}" aria-label="Jumlah yang akan dikeluarkan untuk {{ .ItemName }}">
                                                                 <span class="input-group-addon bootstrap-touchspin-vertical-button-wrapper">
                                                                     <span class="input-group-btn-vertical">
                                                                     <button tabindex="-1" class="btn btn-primary bootstrap-touchspin-up" type="button">+</button>

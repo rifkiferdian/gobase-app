@@ -48,6 +48,8 @@ func RegisterWebRoutes(r *gin.Engine) {
 		auth.POST("/programs/update", controllers.ProgramUpdate)
 		auth.GET("/programs/delete/:id", controllers.ProgramDelete)
 
+		auth.GET("/stock-report", controllers.StockReportIndex)
+
 		auth.GET("/home", controllers.HomeIndex) // contoh tambahan route
 	}
 }

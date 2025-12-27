@@ -1,0 +1,146 @@
+<!doctype html>
+<html lang="en"
+      data-layout-width="boxed"
+      data-topbar="dark"
+      data-preloader="disable"
+      data-card-layout="borderless"
+      data-bs-theme="light"
+      data-topbar-image="pattern-1">
+    <head>
+        <meta charset="utf-8" />
+        <!-- penting untuk responsive di HP -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>
+            {{ if .Title }}
+                {{ .Title }}
+            {{ else }}
+                Stock Hadiah App
+            {{ end }}
+        </title>
+
+        <!-- Bootstrap Css -->
+        <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+        <!-- Icons Css -->
+        <link href="/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <!-- App Css-->
+        <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+
+        <link href="/assets/libs/select2/css/select2.min.css" rel="stylesheet" type="text/css" />
+        <style>
+            /* Allow long supplier names to wrap instead of being truncated in Select2 */
+            .select2-container .select2-selection--single {
+                height: auto;
+                min-height: 38px;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__rendered {
+                white-space: normal;
+                line-height: 2.8;
+                word-break: break-word;
+            }
+
+            .select2-container--default .select2-selection--single .select2-selection__arrow {
+                height: 100%;
+            }
+
+            .supplier-select {
+                min-width: 240px;
+                width: 100%;
+            }
+        </style>
+
+        <!-- Plugin js (kalau perlu di-head) -->
+        <script src="/assets/js/plugin.js"></script>
+    </head>
+    <body data-sidebar="dark">
+        <div id="layout-wrapper">
+            {{ template "header" . }}
+            {{ template "sidebar" . }}
+        </div>
+
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid">
+					<div class="row">
+                        <div class="col-12">
+                            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                <h4 class="mb-sm-0 font-size-18">Stock Report</h4>
+
+                                <div class="page-title-right">
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="#">Report</a></li>
+                                        <li class="breadcrumb-item active">Stock Report</li>
+                                    </ol>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xl-8">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h4 class="card-title">Small table</h4>
+                                    <p class="card-title-desc"> Add <code>.table-sm</code> to make tables more compact by cutting cell padding in half.</p>    
+                                    
+                                    <div class="table-responsive">
+                                        <table class="table table-sm m-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>#</th>
+                                                    <th>First Name</th>
+                                                    <th>Last Name</th>
+                                                    <th>Username</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <th scope="row">1</th>
+                                                    <td>Mark</td>
+                                                    <td>Otto</td>
+                                                    <td>@mdo</td>
+                                                </tr>
+                                            </tbody>
+                                        </table>
+    
+                                    </div>
+    
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {{ template "footer" . }}
+        </div>
+
+        <!-- JAVASCRIPT -->
+        <script src="/assets/libs/jquery/jquery.min.js"></script>
+        <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="/assets/libs/metismenu/metisMenu.min.js"></script>
+        <script src="/assets/libs/simplebar/simplebar.min.js"></script>
+        <script src="/assets/libs/node-waves/waves.min.js"></script>
+
+        <!-- dashboard init -->
+        <script src="/assets/js/pages/dashboard.init.js"></script>
+
+        <!-- Sweet Alerts js -->
+        <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+        <!-- Sweet alert init js-->
+        <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+
+        <script src="/assets/libs/select2/js/select2.min.js"></script>
+        <!-- form advanced init -->
+        <script src="/assets/js/pages/form-advanced.init.js"></script>
+
+        
+
+        <!-- App js -->
+        <script src="/assets/js/app.js"></script>
+    </body>
+</html>
+
