@@ -242,3 +242,62 @@ LEFT JOIN stock_out so ON so.program_id = lp.program_id
 
 	return result, nil
 }
+
+// GetQuantityBeforeToday mengembalikan total qty keluar per item sebelum hari ini.
+func (r *StockOutRepository) GetQuantityBeforeToday(itemIDs []int) (map[int]int, error) {
+	result := map[int]int{}
+	if len(itemIDs) == 0 {
+		return result, nil
+	}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+
+	args := []interface{}{}
+	itemPlaceholders := make([]string, 0, len(itemIDs))
+	for _, id := range itemIDs {
+		itemPlaceholders = append(itemPlaceholders, "?")
+		args = append(args, id)
+	}
+
+	query := `
+SELECT p.item_id, COALESCE(SUM(so.qty), 0) AS qty_out_before_today
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE p.item_id IN (` + strings.Join(itemPlaceholders, ",") + `)
+  AND DATE(so.created_at) < CURDATE()
+  AND (so.reason IS NULL OR TRIM(so.reason) = '')
+`
+	conditions := []string{}
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		conditions = append(conditions, "i.store_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+	if len(conditions) > 0 {
+		query += " AND " + strings.Join(conditions, " AND ")
+	}
+
+	query += " GROUP BY p.item_id"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var itemID int
+		var qtyBefore int
+		if err := rows.Scan(&itemID, &qtyBefore); err != nil {
+			return nil, err
+		}
+		result[itemID] = qtyBefore
+	}
+
+	return result, nil
+}

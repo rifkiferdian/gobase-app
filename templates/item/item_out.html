@@ -119,14 +119,14 @@
                                                 <tr>
                                                     <th>Barang</th>
                                                     <th>Hadiah</th>
-                                                    <th>QTY In</th>
+                                                    <!-- <th>QTY In</th> -->
                                                     <th>Item Out</th>
                                                     <th>Sisa</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {{ range .items }}
-                                                <tr class="product">
+                                                <tr class="product" data-item-id="{{ .ItemID }}" data-qty-in="{{ .QtyIn }}" data-prior-out="{{ with index $.ItemPriorOutMap .ItemID }}{{ . }}{{ else }}0{{ end }}" data-available-today="{{ with index $.ItemAvailableTodayMap .ItemID }}{{ . }}{{ else }}0{{ end }}">
                                                     <td>
                                                         <img src="/assets/images/img-manna-kampus/logoold.webp" alt="product-img" title="product-img" class="avatar-md">
                                                     </td>
@@ -142,7 +142,7 @@
                                                         {{ if .StoreName }}<p class="mb-0 text-muted">Store : {{ .StoreName }}</p>{{ end }}
                                                         <!-- {{ if .Description }}<p class="mb-0 text-muted">{{ .Description }}</p>{{ end }} -->
                                                     </td>
-                                                    <td><span class="product-price">{{ .QtyIn }}</span></td>
+                                                    <!-- <td><span class="product-price">{{ .QtyIn }}</span></td> -->
                                                     <td>
                                                         <div class="me-3" style="width: 120px;">
                                                             <div class="input-group  bootstrap-touchspin bootstrap-touchspin-injected">
@@ -196,26 +196,38 @@
 
                                     <div class="table-responsive">
                                         <table class="table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nama</th>
+                                                    <th>QTY In</th>
+                                                    <th>QTY Out history</th>
+                                                    <th>QTY Out Hari ini</th>
+                                                    <th>Sisa</th>
+                                                </tr>
+                                            </thead>
                                             <tbody id="item-out-summary-body">
                                                 {{ if .SummaryOut }}
                                                     {{ range .SummaryOut }}
                                                     <tr data-item-id="{{ .ItemID }}">
                                                         <td>{{ .ItemName }}</td>
                                                         <td>{{ .QtyIn }}</td>
+                                                        <!-- <td>{{ .AvailableToday }}</td> -->
+                                                        <td>{{ .PriorQtyOut }}</td>
                                                         <td><b>{{ .QtyOut }}</b></td>
                                                         <td>{{ .Remaining }}</td>
                                                     </tr>
                                                     {{ end }}
                                                 {{ else }}
                                                     <tr class="summary-empty">
-                                                        <td colspan="4" class="text-center">Belum ada hadiah keluar hari ini</td>
+                                                        <td colspan="5" class="text-center">Belum ada hadiah keluar hari ini</td>
                                                     </tr>
                                                 {{ end }}
                                             </tbody>
                                             <tfoot>
                                                 <tr class="bg-light">
                                                     <th>Total</th>
-                                                    <th id="item-out-total-in">{{ .SummaryTotalIn }}</th>
+                                                    <th id="item-out-total-available">{{ .SummaryTotalAvail }}</th>
+                                                    <th id="item-out-total-prior">{{ .SummaryTotalPrior }}</th>
                                                     <th id="item-out-total-out">{{ .TotalOut }}</th>
                                                     <th id="item-out-total-remaining">{{ .SummaryTotalRemain }}</th>
                                                 </tr>
@@ -257,7 +269,8 @@
             $(function () {
                 var $summaryBody = $('#item-out-summary-body');
                 var $totalOutEl = $('#total-out-count');
-                var $summaryTotalInEl = $('#item-out-total-in');
+                var $summaryTotalAvailEl = $('#item-out-total-available');
+                var $summaryTotalPriorEl = $('#item-out-total-prior');
                 var $summaryTotalOutEl = $('#item-out-total-out');
                 var $summaryTotalRemainEl = $('#item-out-total-remaining');
 
@@ -271,24 +284,29 @@
                         return;
                     }
                     if ($summaryBody.children().length === 0) {
-                        $summaryBody.append('<tr class="summary-empty"><td colspan="4" class="text-center">Belum ada hadiah keluar hari ini</td></tr>');
+                        $summaryBody.append('<tr class="summary-empty"><td colspan="5" class="text-center">Belum ada hadiah keluar hari ini</td></tr>');
                     }
                 }
 
                 function recalcSummaryTotals() {
-                    var totalIn = 0;
+                    var totalAvailable = 0;
+                    var totalPrior = 0;
                     var totalOut = 0;
                     var totalRemain = 0;
 
                     $summaryBody.find('tr[data-item-id]').each(function () {
                         var $cells = $(this).find('td');
-                        totalIn += parseIntSafe($cells.eq(1).text());
-                        totalOut += parseIntSafe($cells.eq(2).text());
-                        totalRemain += parseIntSafe($cells.eq(3).text());
+                        totalAvailable += parseIntSafe($cells.eq(1).text());
+                        totalPrior += parseIntSafe($cells.eq(2).text());
+                        totalOut += parseIntSafe($cells.eq(3).text());
+                        totalRemain += parseIntSafe($cells.eq(4).text());
                     });
 
-                    if ($summaryTotalInEl.length) {
-                        $summaryTotalInEl.text(totalIn);
+                    if ($summaryTotalAvailEl.length) {
+                        $summaryTotalAvailEl.text(totalAvailable);
+                    }
+                    if ($summaryTotalPriorEl.length) {
+                        $summaryTotalPriorEl.text(totalPrior);
                     }
                     if ($summaryTotalOutEl.length) {
                         $summaryTotalOutEl.text(totalOut);
@@ -306,7 +324,12 @@
                         return;
                     }
                     var itemName = $.trim($row.find('h5').text());
-                    var qtyIn = parseIntSafe($row.find('.product-price').text());
+                    var availableToday = parseIntSafe($row.data('available-today'));
+                    var priorOut = parseIntSafe($row.data('prior-out'));
+                    var qtyIn = parseIntSafe($row.data('qty-in'));
+                    if (qtyIn === 0) {
+                        qtyIn = parseIntSafe($row.find('.product-price').text());
+                    }
                     var remaining = parseIntSafe($row.find('.product-line-price').text());
 
                     var $existing = $summaryBody.find('tr[data-item-id="' + itemId + '"]');
@@ -319,6 +342,8 @@
                         $existing.html(
                             '<td>' + itemName + '</td>' +
                             '<td>' + qtyIn + '</td>' +
+                            // '<td>' + availableToday + '</td>' +
+                            '<td>' + priorOut + '</td>' +
                             '<td><b>' + qtyOut + '</b></td>' +
                             '<td>' + remaining + '</td>'
                         );

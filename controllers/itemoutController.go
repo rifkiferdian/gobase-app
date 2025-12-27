@@ -52,16 +52,20 @@ func ItemOutIndex(c *gin.Context) {
 
 	itemQtyMap := map[int]int{}
 	stockOutInfo := map[int]repositories.StockOutInfo{}
+	priorOutMap := map[int]int{}
+	availableTodayMap := map[int]int{}
 	userID, _ := getCurrentUserID(c)
+
+	stockOutRepo := &repositories.StockOutRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
+
 	if userID > 0 && len(items) > 0 {
 		itemIDs := make([]int, 0, len(items))
 		for _, it := range items {
 			itemIDs = append(itemIDs, it.ItemID)
-		}
-		stockOutRepo := &repositories.StockOutRepository{
-			DB:                 config.DB,
-			StoreIDs:           allowedStoreIDs,
-			EnforceStoreFilter: true,
 		}
 		if infoMap, err := stockOutRepo.GetTodayQuantities(itemIDs, userID); err == nil {
 			stockOutInfo = infoMap
@@ -69,18 +73,34 @@ func ItemOutIndex(c *gin.Context) {
 				itemQtyMap[itemID] = info.Qty
 			}
 		}
+
+		if prevMap, err := stockOutRepo.GetQuantityBeforeToday(itemIDs); err == nil {
+			priorOutMap = prevMap
+		}
+		for _, it := range items {
+			prior := priorOutMap[it.ItemID]
+			available := it.QtyIn - prior
+			if available < 0 {
+				available = 0
+			}
+			availableTodayMap[it.ItemID] = available
+		}
 	}
 
 	type itemOutSummary struct {
-		ItemID    int
-		ItemName  string
-		QtyIn     int
-		QtyOut    int
-		Remaining int
+		ItemID         int
+		ItemName       string
+		QtyIn          int
+		QtyOut         int
+		Remaining      int
+		PriorQtyOut    int
+		AvailableToday int
 	}
 
 	totalOut := 0
 	totalIn := 0
+	totalPriorOut := 0
+	totalAvailable := 0
 	totalRemaining := 0
 	summaryOut := make([]itemOutSummary, 0)
 	for _, it := range items {
@@ -90,31 +110,41 @@ func ItemOutIndex(c *gin.Context) {
 			continue
 		}
 		totalOut += qty
+		priorOut := priorOutMap[it.ItemID]
+		availableToday := availableTodayMap[it.ItemID]
 		summaryOut = append(summaryOut, itemOutSummary{
-			ItemID:    it.ItemID,
-			ItemName:  it.ItemName,
-			QtyIn:     it.QtyIn,
-			QtyOut:    qty,
-			Remaining: it.Remaining,
+			ItemID:         it.ItemID,
+			ItemName:       it.ItemName,
+			QtyIn:          it.QtyIn,
+			QtyOut:         qty,
+			Remaining:      it.Remaining,
+			PriorQtyOut:    priorOut,
+			AvailableToday: availableToday,
 		})
 		totalIn += it.QtyIn
+		totalPriorOut += priorOut
+		totalAvailable += availableToday
 		totalRemaining += it.Remaining
 	}
 
 	Render(c, "item_out.html", gin.H{
-		"Title":              "Item Out",
-		"Page":               "item_out",
-		"items":              items,
-		"suppliers":          suppliers,
-		"FilterItemName":     filterName,
-		"FilterCategory":     filterCategory,
-		"FilterSupplierID":   selectedSupplier,
-		"dateNow":            helpers.DateNowID(),
-		"ItemQtyMap":         itemQtyMap,
-		"TotalOut":           totalOut,
-		"SummaryOut":         summaryOut,
-		"SummaryTotalIn":     totalIn,
-		"SummaryTotalRemain": totalRemaining,
+		"Title":                 "Item Out",
+		"Page":                  "item_out",
+		"items":                 items,
+		"suppliers":             suppliers,
+		"FilterItemName":        filterName,
+		"FilterCategory":        filterCategory,
+		"FilterSupplierID":      selectedSupplier,
+		"dateNow":               helpers.DateNowID(),
+		"ItemQtyMap":            itemQtyMap,
+		"ItemPriorOutMap":       priorOutMap,
+		"ItemAvailableTodayMap": availableTodayMap,
+		"TotalOut":              totalOut,
+		"SummaryOut":            summaryOut,
+		"SummaryTotalIn":        totalIn,
+		"SummaryTotalPrior":     totalPriorOut,
+		"SummaryTotalAvail":     totalAvailable,
+		"SummaryTotalRemain":    totalRemaining,
 	})
 }
 
