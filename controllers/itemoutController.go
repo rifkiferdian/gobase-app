@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"stok-hadiah/config"
 	helpers "stok-hadiah/helper"
+	"stok-hadiah/models"
 	"stok-hadiah/repositories"
 	"stok-hadiah/services"
 	"strconv"
@@ -55,6 +56,8 @@ func ItemOutIndex(c *gin.Context) {
 	priorOutMap := map[int]int{}
 	availableTodayMap := map[int]int{}
 	userID, _ := getCurrentUserID(c)
+	caseStockOuts := []models.StockOutCase{}
+	caseTotalQtyOut := 0
 
 	stockOutRepo := &repositories.StockOutRepository{
 		DB:                 config.DB,
@@ -87,6 +90,17 @@ func ItemOutIndex(c *gin.Context) {
 		}
 	}
 
+	// Ambil daftar stock out dengan alasan (kasus khusus)
+	if userID > 0 {
+		stockOutService := &services.StockOutService{Repo: stockOutRepo}
+		if caseList, err := stockOutService.ListCaseStockOuts(userID, 50); err == nil {
+			caseStockOuts = caseList
+			for _, cs := range caseStockOuts {
+				caseTotalQtyOut += cs.Qty
+			}
+		}
+	}
+
 	type itemOutSummary struct {
 		ItemID         int
 		ItemName       string
@@ -106,7 +120,7 @@ func ItemOutIndex(c *gin.Context) {
 	for _, it := range items {
 		info := stockOutInfo[it.ItemID]
 		qty := info.Qty
-		if qty <= 0 || strings.TrimSpace(info.Reason) != "" {
+		if qty <= 0 {
 			continue
 		}
 		totalOut += qty
@@ -145,6 +159,8 @@ func ItemOutIndex(c *gin.Context) {
 		"SummaryTotalPrior":     totalPriorOut,
 		"SummaryTotalAvail":     totalAvailable,
 		"SummaryTotalRemain":    totalRemaining,
+		"StockOutCases":         caseStockOuts,
+		"StockOutCaseTotal":     caseTotalQtyOut,
 	})
 }
 
@@ -206,5 +222,57 @@ func ItemOutUpdate(c *gin.Context) {
 		"success":   true,
 		"new_qty":   newQty,
 		"direction": payload.Direction,
+	})
+}
+
+// ItemOutCaseStore menerima input dari form "Stock Out By Case" dan menyimpan ke tabel stock_out.
+func ItemOutCaseStore(c *gin.Context) {
+	type caseForm struct {
+		ItemID int    `form:"item_id" binding:"required"`
+		Qty    int    `form:"qty" binding:"required"`
+		Reason string `form:"reason" binding:"required"`
+	}
+
+	var form caseForm
+	if err := c.ShouldBind(&form); err != nil || form.ItemID <= 0 || form.Qty <= 0 || strings.TrimSpace(form.Reason) == "" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Data tidak lengkap. Pilih barang, isi qty (>0) dan alasan."})
+		return
+	}
+
+	userID, err := getCurrentUserID(c)
+	if err != nil || userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
+
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	if len(allowedStoreIDs) == 0 {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Akses store tidak tersedia"})
+		return
+	}
+
+	repo := &repositories.StockOutRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
+	service := &services.StockOutService{Repo: repo}
+
+	entry, err := service.CreateCaseStockOut(form.ItemID, form.Qty, userID, form.Reason)
+	if err != nil {
+		status := http.StatusInternalServerError
+		switch {
+		case errors.Is(err, repositories.ErrItemNotAllowed):
+			status = http.StatusForbidden
+		case errors.Is(err, repositories.ErrItemNotFound), errors.Is(err, repositories.ErrProgramNotFound):
+			status = http.StatusBadRequest
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    entry,
 	})
 }

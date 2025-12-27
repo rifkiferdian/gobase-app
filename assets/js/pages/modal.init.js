@@ -6,20 +6,24 @@ Contact: themesbrand@gmail.com
 File: Material design Init Js File
 */
 
+var stockOutCaseModal = document.getElementById('stockOutCaseModal');
+if (stockOutCaseModal) {
+    stockOutCaseModal.addEventListener('show.bs.modal', function () {
+        var form = stockOutCaseModal.querySelector('#stockOutCaseForm');
+        if (form) {
+            form.reset();
+            form.classList.remove('was-validated');
+        }
+    });
 
-var exampleModal = document.getElementById('exampleModal')
-exampleModal.addEventListener('show.bs.modal', function (event) {
-    // Button that triggered the modal
-    var button = event.relatedTarget
-    // Extract info from data-bs-* attributes
-    var recipient = button.getAttribute('data-bs-whatever')
-    // If necessary, you could initiate an AJAX request here
-    // and then do the updating in a callback.
-    //
-    // Update the modal's content.
-    var modalTitle = exampleModal.querySelector('.modal-title')
-    var modalBodyInput = exampleModal.querySelector('.modal-body input')
-
-    modalTitle.textContent = 'New message to ' + recipient
-    modalBodyInput.value = recipient
-})
+    var form = stockOutCaseModal.querySelector('#stockOutCaseForm');
+    if (form) {
+        form.addEventListener('submit', function (event) {
+            if (!form.checkValidity()) {
+                event.preventDefault();
+                event.stopPropagation();
+            }
+            form.classList.add('was-validated');
+        });
+    }
+}

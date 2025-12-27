@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"strings"
 	"time"
+
+	"stok-hadiah/models"
 )
 
 var (
@@ -172,6 +174,167 @@ func sameDay(a, b time.Time) bool {
 	return ay == by && am == bm && ad == bd
 }
 
+// CreateCaseStockOut menyimpan pengeluaran stok dengan alasan khusus ke tabel stock_out dan mencatat event.
+func (r *StockOutRepository) CreateCaseStockOut(itemID, qty, userID int, reason string) (models.StockOutCase, error) {
+	var result models.StockOutCase
+	if qty <= 0 {
+		return result, fmt.Errorf("qty harus lebih dari 0")
+	}
+	if strings.TrimSpace(reason) == "" {
+		return result, fmt.Errorf("alasan wajib diisi")
+	}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, ErrItemNotAllowed
+	}
+
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return result, err
+	}
+	defer tx.Rollback()
+
+	// Validasi item dan akses store
+	var storeID int
+	var itemName string
+	if err := tx.QueryRow("SELECT store_id, item_name FROM items WHERE item_id = ?", itemID).Scan(&storeID, &itemName); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return result, ErrItemNotFound
+		}
+		return result, err
+	}
+	if len(r.StoreIDs) > 0 && !containsInt(r.StoreIDs, storeID) {
+		return result, ErrItemNotAllowed
+	}
+
+	// Ambil program terbaru untuk item ini.
+	var programID int
+	if err := tx.QueryRow(`
+		SELECT program_id
+		FROM programs
+		WHERE item_id = ?
+		ORDER BY program_id DESC
+		LIMIT 1
+	`, itemID).Scan(&programID); err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return result, ErrProgramNotFound
+		}
+		return result, err
+	}
+
+	now := time.Now()
+	res, err := tx.Exec(`
+		INSERT INTO stock_out (user_id, program_id, issued_at, qty, reason, created_at, updated_at)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, userID, programID, now, qty, reason, now, now)
+	if err != nil {
+		return result, err
+	}
+
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		return result, err
+	}
+
+	if _, err := tx.Exec(`
+		INSERT INTO stock_out_events (stock_out_id, user_id, program_id, item_id, event_time, delta_qty)
+		VALUES (?, ?, ?, ?, ?, ?)
+	`, lastID, userID, programID, itemID, now, qty); err != nil {
+		return result, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return result, err
+	}
+
+	result = models.StockOutCase{
+		ID:        int(lastID),
+		UserID:    userID,
+		ProgramID: programID,
+		ItemID:    itemID,
+		ItemName:  itemName,
+		Qty:       qty,
+		Reason:    reason,
+		IssuedAt:  now,
+	}
+	return result, nil
+}
+
+// ListCaseStockOuts mengembalikan daftar stock out yang memiliki alasan/keterangan (kasus khusus).
+// Jika limit <= 0 maka default 20.
+func (r *StockOutRepository) ListCaseStockOuts(userID, limit int) ([]models.StockOutCase, error) {
+	result := []models.StockOutCase{}
+	if userID == 0 {
+		return result, nil
+	}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+
+	now := time.Now()
+	startOfDay := time.Date(now.Year(), now.Month(), now.Day(), 0, 0, 0, 0, now.Location())
+	endOfDay := startOfDay.Add(24 * time.Hour)
+
+	args := []interface{}{userID, startOfDay, endOfDay}
+	query := `
+SELECT
+	so.id,
+	so.user_id,
+	so.program_id,
+	p.item_id,
+	i.item_name,
+	so.qty,
+	so.reason,
+	so.issued_at
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE so.user_id = ?
+  AND so.created_at >= ?
+  AND so.created_at < ?
+  AND TRIM(COALESCE(so.reason, '')) <> ''
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	query += " ORDER BY so.issued_at DESC LIMIT ?"
+	args = append(args, limit)
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry models.StockOutCase
+		if err := rows.Scan(
+			&entry.ID,
+			&entry.UserID,
+			&entry.ProgramID,
+			&entry.ItemID,
+			&entry.ItemName,
+			&entry.Qty,
+			&entry.Reason,
+			&entry.IssuedAt,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, entry)
+	}
+
+	return result, nil
+}
+
 // GetTodayQuantities mengambil qty stock_out per item (program terbaru per item) untuk user & tanggal hari ini.
 // Jika itemIDs kosong, maka tidak ada data yang diambil.
 func (r *StockOutRepository) GetTodayQuantities(itemIDs []int, userID int) (map[int]StockOutInfo, error) {
@@ -196,14 +359,18 @@ WITH latest_program AS (
     FROM programs p
     WHERE p.item_id IN (` + strings.Join(itemPlaceholders, ",") + `)
     GROUP BY p.item_id
+),
+today_stock_out AS (
+    SELECT so.program_id, SUM(so.qty) AS qty
+    FROM stock_out so
+    WHERE so.user_id = ?
+      AND DATE(so.created_at) = CURDATE()
+    GROUP BY so.program_id
 )
-SELECT lp.item_id, COALESCE(so.qty, 0) AS qty, COALESCE(so.reason, '') AS reason
+SELECT lp.item_id, COALESCE(ts.qty, 0) AS qty, '' AS reason
 FROM latest_program lp
 JOIN items i ON i.item_id = lp.item_id
-LEFT JOIN stock_out so ON so.program_id = lp.program_id
-    AND so.user_id = ?
-    AND DATE(so.created_at) = CURDATE()
-    AND (so.reason IS NULL OR TRIM(so.reason) = '')
+LEFT JOIN today_stock_out ts ON ts.program_id = lp.program_id
 `
 	args = append(args, userID)
 

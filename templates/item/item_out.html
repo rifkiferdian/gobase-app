@@ -239,6 +239,101 @@
                                     <!-- end table-responsive -->
                                 </div>
                             </div>
+
+                            <div class="card">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-center mb-3">
+                                        <h4 class="card-title mb-0">Rekap Hadiah Keluar (Kasus Tertentu)</h4>
+                                        
+                                        <!-- Button trigger modal -->
+                                        <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#stockOutCaseModal">
+                                            Tambah
+                                        </button>
+                                    </div>
+
+                                    <!-- Modal -->
+                                    <div class="modal fade" id="stockOutCaseModal" tabindex="-1" aria-labelledby="stockOutCaseLabel" aria-hidden="true">
+                                        <div class="modal-dialog modal-dialog-centered">
+                                            <div class="modal-content">
+                                                <div class="modal-header">
+                                                    <div>
+                                                        <h5 class="modal-title mb-0" id="stockOutCaseLabel">Stock Out By Case</h5>
+                                                        <p class="mb-0 text-muted small">Catat pengeluaran hadiah untuk kasus khusus</p>
+                                                    </div>
+                                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <form id="stockOutCaseForm" class="needs-validation" action="/item-out/case" method="post" novalidate>
+                                                    <div class="modal-body">
+                                                        <div class="mb-3">
+                                                            <label class="form-label" for="caseItemSelect">Nama Barang</label>
+                                                            <select class="form-select " id="caseItemSelect" name="item_id" required>
+                                                                <option value="" selected disabled>Pilih barang</option>
+                                                                {{ range .items }}
+                                                                <option value="{{ .ItemID }}">{{ .ItemName }}</option>
+                                                                {{ end }}
+                                                            </select>
+                                                            <div class="invalid-feedback">Pilih barang yang akan dikeluarkan.</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label" for="caseQtyInput">Qty Stock Out</label>
+                                                            <div class="input-group">
+                                                                <span class="input-group-text">Qty</span>
+                                                                <input type="number" min="1" step="1" class="form-control" id="caseQtyInput" name="qty" placeholder="0" required>
+                                                            </div>
+                                                            <div class="invalid-feedback">Jumlah harus lebih dari 0.</div>
+                                                        </div>
+                                                        <div class="mb-3">
+                                                            <label class="form-label" for="caseReason">Alasan / Keterangan</label>
+                                                            <textarea class="form-control" id="caseReason" name="reason" rows="3" placeholder="Contoh: Rusak, Pecah, dsb" required></textarea>
+                                                            <div class="invalid-feedback">Isi alasan pengeluaran.</div>
+                                                        </div>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-link text-muted" data-bs-dismiss="modal">Batal</button>
+                                                        <button type="submit" class="btn btn-primary">Simpan</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="table-responsive">
+                                        <table class="table mb-0">
+                                            <thead>
+                                                <tr>
+                                                    <th>Nama</th>
+                                                    <th>QTY Out</th>
+                                                    <th>Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody id="stock-out-case-body" >
+                                                {{ if .StockOutCases }}
+                                                    {{ range .StockOutCases }}
+                                                        <tr data-id="{{ .ID }}" >
+                                                            <td style="color: red;">{{ .ItemName }}</td>
+                                                            <td style="color: red;">{{ .Qty }}</td>
+                                                            <td style="color: red;">{{ .Reason }}</td>
+                                                        </tr>
+                                                    {{ end }}
+                                                {{ else }}
+                                                    <tr class="case-empty">
+                                                        <td colspan="3" class="text-center text-muted">Belum ada data kasus khusus</td>
+                                                    </tr>
+                                                {{ end }}
+                                            </tbody>
+                                            <tfoot>
+                                                <tr class="bg-light">
+                                                    <th>Total QTY Out</th>
+                                                    <th id="stock-out-case-total">{{ .StockOutCaseTotal }}</th>
+                                                    <th></th>
+                                                </tr>
+                                            </tfoot>
+                                        </table>
+                                    </div>
+                                    <!-- end table-responsive -->
+                                </div>
+                            </div>
+
                             <!-- end card -->
                         </div>
                     </div>
@@ -468,6 +563,95 @@
                 $(document).on('click', '.bootstrap-touchspin-up', function () {
                     handleChange($(this), 1);
                 });
+
+                // ====== Stock out by case (with reason) ======
+                var $caseForm = $('#stockOutCaseForm');
+                var $caseTableBody = $('#stock-out-case-body');
+                var $caseTotalEl = $('#stock-out-case-total');
+
+                function updateCaseTotal(delta) {
+                    if (!$caseTotalEl.length) {
+                        return;
+                    }
+                    var current = parseIntSafe($caseTotalEl.text());
+                    $caseTotalEl.text(current + delta);
+                }
+
+                function appendCaseRow(entry) {
+                    if (!$caseTableBody.length || !entry) {
+                        return;
+                    }
+                    var itemName = entry.item_name || entry.ItemName || '';
+                    var reason = entry.reason || entry.Reason || '';
+                    var qtyVal = parseInt(entry.qty || entry.Qty, 10);
+                    if (isNaN(qtyVal)) {
+                        qtyVal = 0;
+                    }
+                    $caseTableBody.find('.case-empty').remove();
+                    var $row = $('<tr/>').attr('data-id', entry.id || entry.ID || '');
+                    $('<td/>').text(itemName).css('color', 'red').appendTo($row);
+                    $('<td/>').text(qtyVal).css('color', 'red').appendTo($row);
+                    $('<td/>').text(reason).css('color', 'red').appendTo($row);
+                    $caseTableBody.prepend($row);
+                    updateCaseTotal(qtyVal);
+                }
+
+                if ($caseForm.length) {
+                    $caseForm.on('submit', function (e) {
+                        e.preventDefault();
+                        e.stopPropagation();
+
+                        if (!this.checkValidity()) {
+                            this.classList.add('was-validated');
+                            return;
+                        }
+
+                        var $form = $(this);
+                        var payload = $form.serialize();
+                        var actionUrl = $form.attr('action') || '/item-out/case';
+                        var $submitBtn = $form.find('button[type="submit"]');
+
+                        $submitBtn.prop('disabled', true);
+
+                        $.post(actionUrl, payload)
+                            .done(function (resp) {
+                                if (resp && resp.success) {
+                                    appendCaseRow(resp.data || {});
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Tersimpan',
+                                        text: 'Kasus stok keluar berhasil disimpan',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    });
+                                    $form[0].reset();
+                                    $form.removeClass('was-validated');
+                                    var modalEl = document.getElementById('stockOutCaseModal');
+                                    if (modalEl) {
+                                        var modalInstance = bootstrap.Modal.getInstance(modalEl);
+                                        if (modalInstance) {
+                                            modalInstance.hide();
+                                        }
+                                    }
+                                    if ($caseTableBody.children().length === 0) {
+                                        $caseTableBody.append('<tr class=\"case-empty\"><td colspan=\"3\" class=\"text-center text-muted\">Belum ada data kasus khusus</td></tr>');
+                                    }
+                                } else {
+                                    Swal.fire('Gagal', (resp && resp.error) ? resp.error : 'Tidak dapat menyimpan data', 'error');
+                                }
+                            })
+                            .fail(function (xhr) {
+                                var msg = 'Tidak dapat menyimpan data';
+                                if (xhr.responseJSON && xhr.responseJSON.error) {
+                                    msg = xhr.responseJSON.error;
+                                }
+                                Swal.fire('Gagal', msg, 'error');
+                            })
+                            .always(function () {
+                                $submitBtn.prop('disabled', false);
+                            });
+                    });
+                }
             });
         </script>
 
