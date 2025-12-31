@@ -16,6 +16,7 @@ var (
 	ErrProgramNotFound  = errors.New("program untuk item belum diatur")
 	ErrQuantityNegative = errors.New("quantity tidak boleh negatif")
 	ErrQuantityZero     = errors.New("quantity sudah 0")
+	ErrStockOutNotFound = errors.New("stock out tidak ditemukan")
 )
 
 // StockOutRepository menangani penyimpanan quantity keluar serta log per-aksi.
@@ -172,6 +173,82 @@ func sameDay(a, b time.Time) bool {
 	ay, am, ad := a.Date()
 	by, bm, bd := b.Date()
 	return ay == by && am == bm && ad == bd
+}
+
+// DeleteCaseStockOut menghapus entry stock_out dengan alasan (kasus khusus) dan seluruh event terkait.
+// Hanya mengizinkan penghapusan milik user yang sama dan store yang diizinkan.
+func (r *StockOutRepository) DeleteCaseStockOut(id, userID int) (models.StockOutCase, error) {
+	result := models.StockOutCase{}
+	if id <= 0 || userID <= 0 {
+		return result, fmt.Errorf("id atau user tidak valid")
+	}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, ErrItemNotAllowed
+	}
+
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return result, err
+	}
+	defer tx.Rollback()
+
+	var storeID int
+	var reason sql.NullString
+	err = tx.QueryRow(`
+		SELECT
+			so.program_id,
+			p.item_id,
+			i.store_id,
+			i.item_name,
+			so.qty,
+			so.reason,
+			so.issued_at
+		FROM stock_out so
+		JOIN programs p ON p.program_id = so.program_id
+		JOIN items i ON i.item_id = p.item_id
+		WHERE so.id = ? AND so.user_id = ?
+	`, id, userID).Scan(
+		&result.ProgramID,
+		&result.ItemID,
+		&storeID,
+		&result.ItemName,
+		&result.Qty,
+		&reason,
+		&result.IssuedAt,
+	)
+
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return result, ErrStockOutNotFound
+		}
+		return result, err
+	}
+
+	if len(r.StoreIDs) > 0 && !containsInt(r.StoreIDs, storeID) {
+		return result, ErrItemNotAllowed
+	}
+
+	result.ID = id
+	result.UserID = userID
+	result.Reason = strings.TrimSpace(reason.String)
+
+	if result.Reason == "" {
+		return result, fmt.Errorf("data bukan kasus khusus sehingga tidak bisa dihapus di sini")
+	}
+
+	if _, err := tx.Exec(`DELETE FROM stock_out_events WHERE stock_out_id = ?`, id); err != nil {
+		return result, err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM stock_out WHERE id = ? AND user_id = ?`, id, userID); err != nil {
+		return result, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		return result, err
+	}
+
+	return result, nil
 }
 
 // CreateCaseStockOut menyimpan pengeluaran stok dengan alasan khusus ke tabel stock_out dan mencatat event.

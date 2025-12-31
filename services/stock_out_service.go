@@ -38,3 +38,14 @@ func (s *StockOutService) CreateCaseStockOut(itemID, qty, userID int, reason str
 func (s *StockOutService) ListCaseStockOuts(userID, limit int) ([]models.StockOutCase, error) {
 	return s.Repo.ListCaseStockOuts(userID, limit)
 }
+
+// DeleteCaseStockOut menghapus pengeluaran stok berdasarkan ID untuk user terkait.
+func (s *StockOutService) DeleteCaseStockOut(id, userID int) (models.StockOutCase, error) {
+	if id <= 0 {
+		return models.StockOutCase{}, errors.New("id tidak valid")
+	}
+	if userID <= 0 {
+		return models.StockOutCase{}, errors.New("user tidak valid")
+	}
+	return s.Repo.DeleteCaseStockOut(id, userID)
+}

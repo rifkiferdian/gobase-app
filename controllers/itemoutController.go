@@ -276,3 +276,47 @@ func ItemOutCaseStore(c *gin.Context) {
 		"data":    entry,
 	})
 }
+
+// ItemOutCaseDelete menghapus data stock_out dengan alasan (kasus khusus) milik user terkait.
+func ItemOutCaseDelete(c *gin.Context) {
+	idStr := c.Param("id")
+	id, _ := strconv.Atoi(idStr)
+	if id <= 0 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "ID tidak valid"})
+		return
+	}
+
+	userID, err := getCurrentUserID(c)
+	if err != nil || userID == 0 {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "User tidak ditemukan"})
+		return
+	}
+
+	allowedStoreIDs := getAllowedStoreIDs(c)
+	repo := &repositories.StockOutRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
+	service := &services.StockOutService{Repo: repo}
+
+	entry, err := service.DeleteCaseStockOut(id, userID)
+	if err != nil {
+		status := http.StatusInternalServerError
+		switch {
+		case errors.Is(err, repositories.ErrItemNotAllowed):
+			status = http.StatusForbidden
+		case errors.Is(err, repositories.ErrStockOutNotFound):
+			status = http.StatusNotFound
+		case strings.Contains(strings.ToLower(err.Error()), "bukan kasus khusus"):
+			status = http.StatusBadRequest
+		}
+		c.JSON(status, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"success": true,
+		"data":    entry,
+	})
+}

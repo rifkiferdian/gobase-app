@@ -304,20 +304,26 @@
                                                     <th>Nama</th>
                                                     <th>QTY Out</th>
                                                     <th>Keterangan</th>
+                                                    <th>Hapus</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="stock-out-case-body" >
                                                 {{ if .StockOutCases }}
                                                     {{ range .StockOutCases }}
                                                         <tr data-id="{{ .ID }}" >
-                                                            <td style="color: red;">{{ .ItemName }}</td>
-                                                            <td style="color: red;">{{ .Qty }}</td>
-                                                            <td style="color: red;">{{ .Reason }}</td>
+                                                            <td style="color: brown;">{{ .ItemName }}</td>
+                                                            <td style="color: brown;">{{ .Qty }}</td>
+                                                            <td style="color: brown;">{{ .Reason }}</td>
+                                                            <td style="color: red; font-size: large;">
+                                                                <a href="/item-out/case/{{ .ID }}" data-id="{{ .ID }}" data-qty="{{ .Qty }}" style="color: red;" class="waves-effect btnDeleteCase">
+                                                                    <i class="bx bx-trash"></i>
+                                                                </a>
+                                                            </td>
                                                         </tr>
                                                     {{ end }}
                                                 {{ else }}
                                                     <tr class="case-empty">
-                                                        <td colspan="3" class="text-center text-muted">Belum ada data kasus khusus</td>
+                                                        <td colspan="4" class="text-center text-muted">Belum ada data kasus khusus</td>
                                                     </tr>
                                                 {{ end }}
                                             </tbody>
@@ -574,7 +580,20 @@
                         return;
                     }
                     var current = parseIntSafe($caseTotalEl.text());
-                    $caseTotalEl.text(current + delta);
+                    var next = current + delta;
+                    if (next < 0) {
+                        next = 0;
+                    }
+                    $caseTotalEl.text(next);
+                }
+
+                function ensureCasePlaceholder() {
+                    if (!$caseTableBody.length) {
+                        return;
+                    }
+                    if ($caseTableBody.children().length === 0) {
+                        $caseTableBody.append('<tr class="case-empty"><td colspan="4" class="text-center text-muted">Belum ada data kasus khusus</td></tr>');
+                    }
                 }
 
                 function appendCaseRow(entry) {
@@ -584,16 +603,41 @@
                     var itemName = entry.item_name || entry.ItemName || '';
                     var reason = entry.reason || entry.Reason || '';
                     var qtyVal = parseInt(entry.qty || entry.Qty, 10);
+                    var idVal = entry.id || entry.ID || '';
                     if (isNaN(qtyVal)) {
                         qtyVal = 0;
                     }
                     $caseTableBody.find('.case-empty').remove();
-                    var $row = $('<tr/>').attr('data-id', entry.id || entry.ID || '');
-                    $('<td/>').text(itemName).css('color', 'red').appendTo($row);
-                    $('<td/>').text(qtyVal).css('color', 'red').appendTo($row);
-                    $('<td/>').text(reason).css('color', 'red').appendTo($row);
+                    var $row = $('<tr/>').attr('data-id', idVal).attr('data-qty', qtyVal);
+                    $('<td/>').text(itemName).css('color', 'brown').appendTo($row);
+                    $('<td/>').text(qtyVal).css('color', 'brown').appendTo($row);
+                    $('<td/>').text(reason).css('color', 'brown').appendTo($row);
+                    var $deleteCell = $('<td/>').css({'color': 'red', 'font-size': 'large'});
+                    $('<a/>')
+                        .attr('href', '/item-out/case/' + idVal)
+                        .attr('data-id', idVal)
+                        .attr('data-qty', qtyVal)
+                        .addClass('waves-effect btnDeleteCase')
+                        .css('color', 'red')
+                        .append($('<i/>').addClass('bx bx-trash'))
+                        .appendTo($deleteCell);
+                    $deleteCell.appendTo($row);
                     $caseTableBody.prepend($row);
                     updateCaseTotal(qtyVal);
+                }
+
+                function removeCaseRowById(id) {
+                    if (!$caseTableBody.length || !id) {
+                        return;
+                    }
+                    var $row = $caseTableBody.find('tr[data-id="' + id + '"]');
+                    if (!$row.length) {
+                        return;
+                    }
+                    var qtyVal = parseIntSafe($row.attr('data-qty') || $row.find('td').eq(1).text());
+                    $row.remove();
+                    updateCaseTotal(-qtyVal);
+                    ensureCasePlaceholder();
                 }
 
                 if ($caseForm.length) {
@@ -636,7 +680,7 @@
                                         }
                                     }
                                     if ($caseTableBody.children().length === 0) {
-                                        $caseTableBody.append('<tr class=\"case-empty\"><td colspan=\"3\" class=\"text-center text-muted\">Belum ada data kasus khusus</td></tr>');
+                                        $caseTableBody.append('<tr class=\"case-empty\"><td colspan=\"4\" class=\"text-center text-muted\">Belum ada data kasus khusus</td></tr>');
                                     }
                                 } else {
                                     Swal.fire('Gagal', (resp && resp.error) ? resp.error : 'Tidak dapat menyimpan data', 'error');
@@ -654,6 +698,59 @@
                             });
                     });
                 }
+
+                $(document).on('click', '.btnDeleteCase', function (e) {
+                    e.preventDefault();
+                    var $btn = $(this);
+                    var id = $btn.data('id') || $btn.closest('tr').data('id');
+                    if (!id) {
+                        Swal.fire('Gagal', 'ID kasus tidak ditemukan', 'error');
+                        return;
+                    }
+                    var targetUrl = $btn.attr('href') || ('/item-out/case/' + id);
+
+                    Swal.fire({
+                        title: 'Hapus data?',
+                        text: 'Data kasus khusus ini akan dihapus dan tidak bisa dikembalikan.',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Ya, hapus'
+                    }).then(function (result) {
+                        if (!result.isConfirmed) {
+                            return;
+                        }
+                        $btn.prop('disabled', true);
+                        $.ajax({
+                            url: targetUrl,
+                            method: 'DELETE'
+                        }).done(function (resp) {
+                            if (resp && resp.success) {
+                                removeCaseRowById(id);
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Terhapus',
+                                    text: 'Data kasus berhasil dihapus',
+                                    timer: 1200,
+                                    showConfirmButton: false
+                                }).then(function () {
+                                    window.location.reload();
+                                });
+                            } else {
+                                Swal.fire('Gagal', (resp && resp.error) ? resp.error : 'Tidak dapat menghapus data', 'error');
+                            }
+                        }).fail(function (xhr) {
+                            var msg = 'Tidak dapat menghapus data';
+                            if (xhr.responseJSON && xhr.responseJSON.error) {
+                                msg = xhr.responseJSON.error;
+                            }
+                            Swal.fire('Gagal', msg, 'error');
+                        }).always(function () {
+                            $btn.prop('disabled', false);
+                        });
+                    });
+                });
             });
         </script>
 
