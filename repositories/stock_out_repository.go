@@ -365,6 +365,7 @@ today_stock_out AS (
     FROM stock_out so
     WHERE so.user_id = ?
       AND DATE(so.created_at) = CURDATE()
+      AND (so.reason IS NULL OR TRIM(so.reason) = '')
     GROUP BY so.program_id
 )
 SELECT lp.item_id, COALESCE(ts.qty, 0) AS qty, '' AS reason
@@ -434,7 +435,6 @@ JOIN programs p ON p.program_id = so.program_id
 JOIN items i ON i.item_id = p.item_id
 WHERE p.item_id IN (` + strings.Join(itemPlaceholders, ",") + `)
   AND DATE(so.created_at) < CURDATE()
-  AND (so.reason IS NULL OR TRIM(so.reason) = '')
 `
 	conditions := []string{}
 	if len(r.StoreIDs) > 0 {

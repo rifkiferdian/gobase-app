@@ -243,7 +243,7 @@
                             <div class="card">
                                 <div class="card-body">
                                     <div class="d-flex justify-content-between align-items-center mb-3">
-                                        <h4 class="card-title mb-0">Rekap Hadiah Keluar (Kasus Tertentu)</h4>
+                                        <h4 class="card-title mb-0">Rekap Hadiah Keluar hari ini (Kasus Tertentu)</h4>
                                         
                                         <!-- Button trigger modal -->
                                         <button type="button" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#stockOutCaseModal">
@@ -623,6 +623,8 @@
                                         text: 'Kasus stok keluar berhasil disimpan',
                                         showConfirmButton: false,
                                         timer: 1500
+                                    }).then(function () {
+                                        window.location.reload();
                                     });
                                     $form[0].reset();
                                     $form.removeClass('was-validated');
