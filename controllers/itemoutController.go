@@ -141,6 +141,8 @@ func ItemOutIndex(c *gin.Context) {
 		totalRemaining += it.Remaining
 	}
 
+	totalOutAllReasons := totalOut + caseTotalQtyOut
+
 	Render(c, "item_out.html", gin.H{
 		"Title":                 "Item Out",
 		"Page":                  "item_out",
@@ -153,7 +155,7 @@ func ItemOutIndex(c *gin.Context) {
 		"ItemQtyMap":            itemQtyMap,
 		"ItemPriorOutMap":       priorOutMap,
 		"ItemAvailableTodayMap": availableTodayMap,
-		"TotalOut":              totalOut,
+		"TotalOut":              totalOutAllReasons,
 		"SummaryOut":            summaryOut,
 		"SummaryTotalIn":        totalIn,
 		"SummaryTotalPrior":     totalPriorOut,
