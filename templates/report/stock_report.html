@@ -80,30 +80,168 @@
                     </div>
 
                     <div class="row">
-                        <div class="col-xl-8">
+                        <div class="col-md-3">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Barang Masuk</p>
+                                            <h4 class="mb-0">{{ .TotalQtyIn }}</h4>
+                                        </div>
+
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                                <span class="avatar-title">
+                                                    <i class="bx bxs-archive-in font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Barang Keluar</p>
+                                            <h4 class="mb-0">{{ .TotalQtyOut }}</h4>
+                                        </div>
+
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                                <span class="avatar-title">
+                                                    <i class="bx bxs-archive-out font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Sisa</p>
+                                            <h4 class="mb-0">{{ .TotalRemaining }}</h4>
+                                        </div>
+
+                                        <div class="flex-shrink-0 align-self-center ">
+                                            <div class="avatar-sm rounded-circle bg-success mini-stat-icon">
+                                                <span class="avatar-title rounded-circle bg-success">
+                                                    <i class="bx bx-package font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-xl-12">
                             <div class="card">
                                 <div class="card-body">
-                                    <h4 class="card-title">Small table</h4>
-                                    <p class="card-title-desc"> Add <code>.table-sm</code> to make tables more compact by cutting cell padding in half.</p>    
+                                    <h4 class="card-title">Report Stok</h4>
+                                    <p class="card-title-desc">Gunakan filter berikut untuk melihat ringkasan stok hadiah.</p>
+
+                                    <form method="get" action="/stock-report" class="row row-cols-lg-auto g-3 align-items-center mb-3">
+                                        <div class="col-12">
+                                            <label class="visually-hidden" for="itemNameSearch">Nama Hadiah</label>
+                                            <div class="input-group">
+                                                <div class="input-group-text">#</div>
+                                                <input type="text" class="form-control" id="itemNameSearch" name="item_name" value="{{ .FilterItemName }}" placeholder="Cari Nama Hadiah">
+                                            </div>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="visually-hidden" for="categorySearch">Kategori</label>
+                                            <select class="form-select" id="categorySearch" name="category">
+                                                <option value="">Semua Kategori</option>
+                                                <option value="FOOD" {{ if eq .FilterCategory "FOOD" }}selected{{ end }}>FOOD</option>
+                                                <option value="NON FOOD" {{ if eq .FilterCategory "NON FOOD" }}selected{{ end }}>NON FOOD</option>
+                                                <option value="DEPT STORE" {{ if eq .FilterCategory "DEPT STORE" }}selected{{ end }}>DEPT STORE</option>
+                                            </select>
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="visually-hidden" for="supplierSearch">Supplier</label>
+                                            <select class="form-select select2 supplier-select" id="supplierSearch" name="supplier_id" data-placeholder="Semua Supplier">
+                                                <option value="">Semua Supplier</option>
+                                                {{ range .suppliers }}
+                                                <option value="{{ .SupplierID }}" {{ if eq $.FilterSupplierID .SupplierID }}selected{{ end }}>{{ .SupplierName }}</option>
+                                                {{ end }}
+                                            </select>
+                                        </div>
+                                        {{ if .stores }}
+                                        <div class="col-12">
+                                            <label class="visually-hidden" for="storeFilter">Store</label>
+                                            <select class="form-select" id="storeFilter" name="store_id">
+                                                <option value="">Semua Store</option>
+                                                {{ range .stores }}
+                                                <option value="{{ .StoreID }}" {{ if eq $.FilterStoreID .StoreID }}selected{{ end }}>{{ .StoreName }}</option>
+                                                {{ end }}
+                                            </select>
+                                        </div>
+                                        {{ end }}
+                                        <div class="col-12 d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary w-md">Terapkan</button>
+                                            <a class="btn btn-light" href="/stock-report">Reset</a>
+                                        </div>
+                                    </form>
                                     
+
                                     <div class="table-responsive">
                                         <table class="table table-sm m-0">
                                             <thead>
                                                 <tr>
-                                                    <th>#</th>
-                                                    <th>First Name</th>
-                                                    <th>Last Name</th>
-                                                    <th>Username</th>
+                                                    <th>No</th>
+                                                    <th>Nama Hadiah</th>
+                                                    <th>Suplier</th>
+                                                    <th>Kategori</th>
+                                                    <th>Jumlah Barang masuk</th>
+                                                    <th>Jumlah Barang keluar</th>
+                                                    <th>Sisa Stok</th>
+                                                    <th>Program</th>
+                                                    <th>Tgl Start</th>
+                                                    <th>Tgl End</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
+                                                {{ range $i, $item := .items }}
                                                 <tr>
-                                                    <th scope="row">1</th>
-                                                    <td>Mark</td>
-                                                    <td>Otto</td>
-                                                    <td>@mdo</td>
+                                                    <td>{{ no $i 1 }}</td>
+                                                    <td>
+                                                        <div class="fw-semibold">{{ $item.ItemName }}</div>
+                                                        {{ if $item.StoreName }}<div class="text-muted small">Store: {{ $item.StoreName }}</div>{{ end }}
+                                                        {{ if $item.Description }}<div class="text-muted small">{{ $item.Description }}</div>{{ end }}
+                                                    </td>
+                                                    <td>{{ $item.SupplierName }}</td>
+                                                    <td>{{ $item.Category }}</td>
+                                                    <td>{{ $item.QtyIn }}</td>
+                                                    <td>{{ $item.QtyOut }}</td>
+                                                    <td>{{ $item.Remaining }}</td>
+                                                    <td>{{ if $item.ProgramNames }}{{ $item.ProgramNames }}{{ else }}-{{ end }}</td>
+                                                    <td>{{ if $item.ProgramStartDisplay }}{{ $item.ProgramStartDisplay }}{{ else }}-{{ end }}</td>
+                                                    <td>{{ if $item.ProgramEndDisplay }}{{ $item.ProgramEndDisplay }}{{ else }}-{{ end }}</td>
                                                 </tr>
+                                                {{ else }}
+                                                <tr>
+                                                    <td colspan="10" class="text-center">Belum ada data stok untuk filter ini.</td>
+                                                </tr>
+                                                {{ end }}
                                             </tbody>
+                                            <tfoot>
+                                                <tr>
+                                                    <th colspan="4" class="text-center">Total:</th>
+                                                    <th>{{ .TotalQtyIn }}</th>
+                                                    <th>{{ .TotalQtyOut }}</th>
+                                                    <th>{{ .TotalRemaining }}</th>
+                                                    <th colspan="3"></th>
+                                                </tr>
+                                            </tfoot>
                                         </table>
     
                                     </div>
