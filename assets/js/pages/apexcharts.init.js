@@ -271,74 +271,176 @@ if (lineChartsplineAreaColors) {
 
 // column chart
 var columnChartColors = getChartColorsArray("column_chart");
-if (columnChartColors) {
-    var options = {
-        chart: {
-            height: 350,
-            type: 'bar',
-            toolbar: {
-                show: false,
-            }
-        },
-        plotOptions: {
-            bar: {
-                horizontal: false,
-                columnWidth: '45%',
-                endingShape: 'rounded'
-            },
-        },
-        dataLabels: {
-            enabled: false
-        },
-        stroke: {
-            show: true,
-            width: 2,
-            colors: ['transparent']
-        },
-        series: [{
-            name: 'Net Profit',
-            data: [46, 57, 59, 54, 62, 58, 64, 60, 66]
-        }, {
-            name: 'Revenue',
-            data: [74, 83, 102, 97, 86, 106, 93, 114, 94]
-        }, {
-            name: 'Free Cash Flow',
-            data: [37, 42, 38, 26, 47, 50, 54, 55, 43]
-        }],
-        colors: columnChartColors,
-        xaxis: {
-            categories: ['Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'],
-        },
-        yaxis: {
-            title: {
-                text: '$ (thousands)',
-                style: {
-                    fontWeight: '500',
-                },
-            }
-        },
-        grid: {
-            borderColor: '#f1f1f1',
-        },
-        fill: {
-            opacity: 1
+var columnChartRawData = window.stockChartData;
+var parsedStockChartData = null;
+if (typeof columnChartRawData === "string") {
+    try {
+        parsedStockChartData = JSON.parse(columnChartRawData);
+    } catch (err) {
+        console.error("Failed to parse stock chart data:", err);
+    }
+} else if (columnChartRawData && typeof columnChartRawData === "object") {
+    parsedStockChartData = columnChartRawData;
+}
 
-        },
-        tooltip: {
-            y: {
-                formatter: function (val) {
-                    return "$ " + val + " thousands"
+if (columnChartColors) {
+    var columnChartTarget = document.querySelector("#column_chart");
+    var columnChartInstance = null;
+
+    function normalizeSeries(payload) {
+        var categories = [];
+        var series = [];
+
+        if (payload && Array.isArray(payload.categories) && Array.isArray(payload.series)) {
+            categories = payload.categories;
+            series = payload.series.map(function (s) {
+                return {
+                    name: s.name || '',
+                    data: Array.isArray(s.data) ? s.data : []
+                };
+            });
+        }
+
+        if (!categories.length || !series.length) {
+            categories = ['No Data'];
+            series = [
+                { name: 'Stock In', data: [0] },
+                { name: 'Stock Out', data: [0] }
+            ];
+        }
+
+        return { categories: categories, series: series };
+    }
+
+    function resolvePayload(rangeKey) {
+        if (!parsedStockChartData) {
+            return null;
+        }
+
+        var payload = null;
+        if (parsedStockChartData[rangeKey]) {
+            payload = parsedStockChartData[rangeKey];
+        } else if (parsedStockChartData.categories && parsedStockChartData.series) {
+            payload = parsedStockChartData;
+        }
+
+        if (typeof payload === "string") {
+            try {
+                payload = JSON.parse(payload);
+            } catch (err) {
+                console.error("Failed to parse payload for range", rangeKey, err);
+                payload = null;
+            }
+        }
+
+        return payload;
+    }
+
+    function buildColumnChartOptions(parsedPayload) {
+        var normalized = normalizeSeries(parsedPayload);
+        return {
+            chart: {
+                height: 350,
+                type: 'bar',
+                toolbar: {
+                    show: false,
+                }
+            },
+            plotOptions: {
+                bar: {
+                    horizontal: false,
+                    columnWidth: '45%',
+                    endingShape: 'rounded'
+                },
+            },
+            dataLabels: {
+                enabled: false
+            },
+            stroke: {
+                show: true,
+                width: 2,
+                colors: ['transparent']
+            },
+            series: normalized.series,
+            colors: columnChartColors,
+            xaxis: {
+                categories: normalized.categories,
+            },
+            yaxis: {
+                title: {
+                    text: 'Qty',
+                    style: {
+                        fontWeight: '500',
+                    },
+                }
+            },
+            grid: {
+                borderColor: '#f1f1f1',
+            },
+            fill: {
+                opacity: 1
+
+            },
+            tooltip: {
+                y: {
+                    formatter: function (val) {
+                        return val;
+                    }
                 }
             }
+        };
+    }
+
+    function renderStockChart(rangeKey) {
+        if (!columnChartTarget) {
+            return;
+        }
+
+        var payload = resolvePayload(rangeKey) || resolvePayload("year") || resolvePayload("month") || resolvePayload("week");
+        var options = buildColumnChartOptions(payload);
+
+        if (columnChartInstance) {
+            columnChartInstance.updateOptions({
+                series: options.series,
+                xaxis: options.xaxis
+            }, true, true);
+        } else {
+            columnChartInstance = new ApexCharts(columnChartTarget, options);
+            columnChartInstance.render();
         }
     }
 
-    var chart = new ApexCharts(
-        document.querySelector("#column_chart"),
-        options
-    );
+    function setActiveRange(rangeKey) {
+        var rangeButtons = document.querySelectorAll("[data-stock-range]");
+        rangeButtons.forEach(function (btn) {
+            var btnRange = btn.getAttribute("data-stock-range");
+            if (btnRange === rangeKey) {
+                btn.classList.add("active");
+            } else {
+                btn.classList.remove("active");
+            }
+        });
+    }
 
-    chart.render();
+    var initialRange = "year";
+    var toggleButtons = document.querySelectorAll("[data-stock-range]");
+    toggleButtons.forEach(function (btn) {
+        if (btn.classList.contains("active") && btn.getAttribute("data-stock-range")) {
+            initialRange = btn.getAttribute("data-stock-range");
+        }
+
+        btn.addEventListener("click", function (event) {
+            event.preventDefault();
+            var range = btn.getAttribute("data-stock-range");
+            if (!range) {
+                return;
+            }
+            setActiveRange(range);
+            renderStockChart(range);
+        });
+    });
+
+    renderStockChart(initialRange);
 }
 
 // dumbbell column chart

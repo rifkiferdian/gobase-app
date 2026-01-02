@@ -243,6 +243,92 @@ func (r *StockInRepository) SumTodayQty() (int, error) {
 	return total, nil
 }
 
+// DailyTotalsSince mengembalikan total qty stok masuk per hari sejak tanggal start (inklusif).
+// Key map menggunakan format YYYY-MM-DD agar mudah dicocokkan di layer atas.
+func (r *StockInRepository) DailyTotalsSince(start time.Time) (map[string]int, error) {
+	result := map[string]int{}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+
+	args := []interface{}{start}
+	query, skip := r.appendStoreFilter(`
+		SELECT DATE(si.received_at) AS day,
+		       COALESCE(SUM(si.qty), 0) AS total_qty
+		FROM stock_in si
+		JOIN items i ON i.item_id = si.item_id
+		WHERE si.received_at >= ?
+	`, &args, true)
+	if skip {
+		return result, nil
+	}
+
+	query += `
+		GROUP BY day
+		ORDER BY day
+	`
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var day string
+		var total int
+		if err := rows.Scan(&day, &total); err != nil {
+			return nil, err
+		}
+		result[day] = total
+	}
+
+	return result, nil
+}
+
+// MonthlyTotalsSince mengembalikan total qty stok masuk per bulan sejak tanggal start (inklusif).
+// Hasil berupa map dengan key tanggal awal bulan (YYYY-MM-01) untuk memudahkan agregasi di layer atas.
+func (r *StockInRepository) MonthlyTotalsSince(start time.Time) (map[string]int, error) {
+	result := map[string]int{}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+
+	args := []interface{}{start}
+	query, skip := r.appendStoreFilter(`
+		SELECT DATE_FORMAT(si.received_at, '%Y-%m-01') AS month_start,
+		       COALESCE(SUM(si.qty), 0) AS total_qty
+		FROM stock_in si
+		JOIN items i ON i.item_id = si.item_id
+		WHERE si.received_at >= ?
+	`, &args, true)
+	if skip {
+		return result, nil
+	}
+
+	query += `
+		GROUP BY month_start
+		ORDER BY month_start
+	`
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var month string
+		var total int
+		if err := rows.Scan(&month, &total); err != nil {
+			return nil, err
+		}
+		result[month] = total
+	}
+
+	return result, nil
+}
+
 // GetPaginated mengambil data stok masuk dengan pagination menggunakan LIMIT dan OFFSET.
 // Data yang diambil sudah termasuk join dengan tabel items, suppliers, dan users.
 func (r *StockInRepository) GetPaginated(limit, offset int) ([]models.StockIn, error) {

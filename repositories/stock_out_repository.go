@@ -412,6 +412,106 @@ WHERE so.user_id = ?
 	return result, nil
 }
 
+// DailyTotalsSince mengembalikan total qty stock out per hari sejak tanggal start (inklusif).
+// Data dijumlahkan berdasarkan issued_at agar mencerminkan waktu barang keluar.
+func (r *StockOutRepository) DailyTotalsSince(start time.Time) (map[string]int, error) {
+	result := map[string]int{}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+
+	args := []interface{}{start}
+	query := `
+SELECT DATE(so.issued_at) AS day,
+       COALESCE(SUM(so.qty), 0) AS total_qty
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE so.issued_at >= ?
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	query += `
+GROUP BY day
+ORDER BY day
+`
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var day string
+		var total int
+		if err := rows.Scan(&day, &total); err != nil {
+			return nil, err
+		}
+		result[day] = total
+	}
+
+	return result, nil
+}
+
+// MonthlyTotalsSince mengembalikan total qty stock out per bulan sejak tanggal start (inklusif).
+// Data dijumlahkan berdasarkan issued_at agar mencerminkan waktu barang keluar.
+func (r *StockOutRepository) MonthlyTotalsSince(start time.Time) (map[string]int, error) {
+	result := map[string]int{}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+
+	args := []interface{}{start}
+	query := `
+SELECT DATE_FORMAT(so.issued_at, '%Y-%m-01') AS month_start,
+       COALESCE(SUM(so.qty), 0) AS total_qty
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE so.issued_at >= ?
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	query += `
+GROUP BY month_start
+ORDER BY month_start
+`
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var month string
+		var total int
+		if err := rows.Scan(&month, &total); err != nil {
+			return nil, err
+		}
+		result[month] = total
+	}
+
+	return result, nil
+}
+
 // GetTodayQuantities mengambil qty stock_out per item (program terbaru per item) untuk user & tanggal hari ini.
 // Jika itemIDs kosong, maka tidak ada data yang diambil.
 func (r *StockOutRepository) GetTodayQuantities(itemIDs []int, userID int) (map[int]StockOutInfo, error) {

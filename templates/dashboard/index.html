@@ -3,6 +3,155 @@
 {{ end }}
 
 {{ define "dashboard_content" }}
-<h1>Dashboard</h1>
-<p>Lorem ipsum dolor sit amet consectetur adipisicing elit. Ducimus sapiente quod mollitia tempore doloremque. </p>
+<div class="row">
+	<div class="col-12">
+		<div class="page-title-box d-sm-flex align-items-center justify-content-between">
+			<h4 class="mb-sm-0 font-size-18">Dashboard</h4>
+
+			<div class="page-title-right">
+				<ol class="breadcrumb m-0">
+					<li class="breadcrumb-item"><a href="javascript: void(0);">Pages</a></li>
+					<li class="breadcrumb-item active">Dashboard</li>
+				</ol>
+			</div>
+		</div>
+	</div>
+</div>
+
+<div class="row">
+    <div class="col-xl-4">
+        <div class="card overflow-hidden">
+            <div class="bg-warning-subtle" style="background-color: moccasin;">
+                <div class="row">
+                    <div class="col-7">
+                        <div class="p-3">
+                            <h5>Welcome Back !</h5>
+                            <p>CustomerCare Dashboard</p>
+                        </div>
+                    </div>
+                    <div class="col-5 align-self-end">
+                        <img src="assets/images/profile-img.png" alt="" class="img-fluid">
+                    </div>
+                </div>
+            </div>
+            <div class="card-body pt-0">
+                <div class="row">
+                    <div class="col-sm-8">
+                        <div class="avatar-md profile-user-wid mb-4">
+                            <div class="avatar-lg d-inline-flex align-items-center justify-content-center rounded-circle bg-warning text-white fw-semibold" style="width:64px;height:64px;font-size:24px;">
+                                R
+                            </div>
+                        </div>
+                        <h5 class="font-size-15 text-truncate">Rifki Ahmad</h5>
+                        <p class="text-muted mb-0 text-truncate">Customer Service MK1 Babarsari</p>
+                    </div>
+
+                    <div class="col-sm-4">
+                        <div class="pt-4">
+                            <div class="mt-4">
+                                <a href="/profile" class="btn btn-warning waves-effect waves-light btn-sm" >View Profile
+                                    <i class="mdi mdi-arrow-right ms-1"></i></a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-xl-8">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card mini-stats-wid">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <p class="text-muted fw-medium">Jumlah Program</p>
+                                <h4 class="mb-0">3</h4>
+                            </div>
+
+                            <div class="flex-shrink-0 align-self-center">
+                                <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                    <span class="avatar-title">
+                                        <i class="bx bx-calendar-event font-size-24"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mini-stats-wid">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <p class="text-muted fw-medium">Jumlah Aktif sekarang</p>
+                                <h4 class="mb-0">0</h4>
+                            </div>
+
+                            <div class="flex-shrink-0 align-self-center">
+                                <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                    <span class="avatar-title">
+                                        <i class="bx bx-check-circle font-size-24"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-4">
+                <div class="card mini-stats-wid">
+                    <div class="card-body">
+                        <div class="d-flex">
+                            <div class="flex-grow-1">
+                                <p class="text-muted fw-medium">Jumlah Non Aktif</p>
+                                <h4 class="mb-0">3</h4>
+                            </div>
+
+                            <div class="flex-shrink-0 align-self-center">
+                                <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                    <span class="avatar-title">
+                                        <i class="bx bx-block font-size-24"></i>
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-xl-12">
+            <div class="card">
+                <div class="card-body">
+                    <div class="d-sm-flex flex-wrap">
+                        <h4 class="card-title mb-4">Chart Stock In - Out</h4>
+                        <div class="ms-auto">
+                            <ul class="nav nav-pills" id="stockChartFilter">
+                                <li class="nav-item">
+                                    <a class="nav-link stock-chart-range" data-stock-range="week" href="#">Week</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link stock-chart-range" data-stock-range="month" href="#">Month</a>
+                                </li>
+                                <li class="nav-item">
+                                    <a class="nav-link stock-chart-range active" data-stock-range="year" href="#">Year</a>
+                                </li>
+                            </ul>
+                        </div>
+                    </div>
+                        
+                        <div id="column_chart" data-colors='["--bs-success","--bs-primary", "--bs-danger"]' class="apex-charts" dir="ltr"></div>
+                        <script>
+                            window.stockChartData = {{ if .StockChartData }}{{ .StockChartData }}{{ else }}null{{ end }};
+                        </script>
+                    </div>
+                </div><!--end card-->
+            </div>
+        </div>
+    </div>
+</div>
 {{ end }}
