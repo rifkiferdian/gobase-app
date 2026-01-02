@@ -273,6 +273,7 @@ if (lineChartsplineAreaColors) {
 var columnChartColors = getChartColorsArray("column_chart");
 var columnChartRawData = window.stockChartData;
 var parsedStockChartData = null;
+var normalizedStockChartData = {};
 if (typeof columnChartRawData === "string") {
     try {
         parsedStockChartData = JSON.parse(columnChartRawData);
@@ -281,6 +282,12 @@ if (typeof columnChartRawData === "string") {
     }
 } else if (columnChartRawData && typeof columnChartRawData === "object") {
     parsedStockChartData = columnChartRawData;
+}
+
+if (parsedStockChartData) {
+    Object.keys(parsedStockChartData).forEach(function (key) {
+        normalizedStockChartData[key.toLowerCase()] = parsedStockChartData[key];
+    });
 }
 
 if (columnChartColors) {
@@ -318,9 +325,12 @@ if (columnChartColors) {
         }
 
         var payload = null;
-        if (parsedStockChartData[rangeKey]) {
-            payload = parsedStockChartData[rangeKey];
-        } else if (parsedStockChartData.categories && parsedStockChartData.series) {
+        var keyLower = (rangeKey || "").toLowerCase();
+        if (keyLower && normalizedStockChartData[keyLower]) {
+            payload = normalizedStockChartData[keyLower];
+        }
+
+        if (!payload && parsedStockChartData.categories && parsedStockChartData.series) {
             payload = parsedStockChartData;
         }
 
@@ -400,14 +410,11 @@ if (columnChartColors) {
         var options = buildColumnChartOptions(payload);
 
         if (columnChartInstance) {
-            columnChartInstance.updateOptions({
-                series: options.series,
-                xaxis: options.xaxis
-            }, true, true);
-        } else {
-            columnChartInstance = new ApexCharts(columnChartTarget, options);
-            columnChartInstance.render();
+            columnChartInstance.destroy();
         }
+
+        columnChartInstance = new ApexCharts(columnChartTarget, options);
+        columnChartInstance.render();
     }
 
     function setActiveRange(rangeKey) {

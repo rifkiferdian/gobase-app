@@ -48,6 +48,24 @@ func DashboardIndex(c *gin.Context) {
 		EnforceStoreFilter: true,
 	}
 
+	totalStockIn, err := stockInRepo.SumQty()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalStockOut, err := stockOutRepo.SumQty()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalStockOutToday, err := stockOutRepo.SumTodayQty()
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
 	chartData, err := buildStockChartData(stockInRepo, stockOutRepo)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
@@ -61,9 +79,12 @@ func DashboardIndex(c *gin.Context) {
 	}
 
 	Render(c, "dashboard/index.html", gin.H{
-		"Title":          "Dashboard User",
-		"Page":           "dashboard",
-		"StockChartData": template.JS(chartJSON),
+		"Title":              "Dashboard User",
+		"Page":               "dashboard",
+		"StockChartData":     template.JS(chartJSON),
+		"TotalStockIn":       totalStockIn,
+		"TotalStockOut":      totalStockOut,
+		"TotalStockOutToday": totalStockOutToday,
 	})
 
 }

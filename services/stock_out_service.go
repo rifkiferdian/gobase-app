@@ -49,3 +49,19 @@ func (s *StockOutService) DeleteCaseStockOut(id, userID int) (models.StockOutCas
 	}
 	return s.Repo.DeleteCaseStockOut(id, userID)
 }
+
+func (s *StockOutService) TotalQty() (int, error) {
+	return s.Repo.SumQty()
+}
+
+func (s *StockOutService) TotalTransactions() (int, error) {
+	return s.Repo.Count()
+}
+
+func (s *StockOutService) TodayQty() (int, error) {
+	return s.Repo.SumTodayQty()
+}
+
+func (s *StockOutService) TodayTransactions() (int, error) {
+	return s.Repo.CountToday()
+}

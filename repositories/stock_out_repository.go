@@ -175,6 +175,142 @@ func sameDay(a, b time.Time) bool {
 	return ay == by && am == bm && ad == bd
 }
 
+// Count mengembalikan jumlah baris stock_out sesuai filter store (jika ada).
+func (r *StockOutRepository) Count() (int, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return 0, nil
+	}
+
+	args := []interface{}{}
+	query := `
+SELECT COUNT(*)
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE 1=1
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	row := r.DB.QueryRow(query, args...)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// SumQty menghitung total qty stock out sesuai filter store (jika ada).
+func (r *StockOutRepository) SumQty() (int, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return 0, nil
+	}
+
+	args := []interface{}{}
+	query := `
+SELECT COALESCE(SUM(so.qty), 0)
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE 1=1
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	row := r.DB.QueryRow(query, args...)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// CountToday menghitung jumlah baris stock out untuk hari ini.
+func (r *StockOutRepository) CountToday() (int, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return 0, nil
+	}
+
+	args := []interface{}{}
+	query := `
+SELECT COUNT(*)
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE DATE(so.issued_at) = CURDATE()
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	row := r.DB.QueryRow(query, args...)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// SumTodayQty menghitung total qty stock out untuk hari ini.
+func (r *StockOutRepository) SumTodayQty() (int, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return 0, nil
+	}
+
+	args := []interface{}{}
+	query := `
+SELECT COALESCE(SUM(so.qty), 0)
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+WHERE DATE(so.issued_at) = CURDATE()
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	row := r.DB.QueryRow(query, args...)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
 // DeleteCaseStockOut menghapus entry stock_out dengan alasan (kasus khusus) dan seluruh event terkait.
 // Hanya mengizinkan penghapusan milik user yang sama dan store yang diizinkan.
 func (r *StockOutRepository) DeleteCaseStockOut(id, userID int) (models.StockOutCase, error) {
