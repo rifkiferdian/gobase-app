@@ -4,11 +4,15 @@ import (
 	"encoding/json"
 	"html/template"
 	"net/http"
+	"strings"
 	"time"
 
 	"stok-hadiah/config"
+	helpers "stok-hadiah/helper"
+	"stok-hadiah/models"
 	"stok-hadiah/repositories"
 
+	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
 )
 
@@ -36,6 +40,18 @@ func DashboardIndex(c *gin.Context) {
 	// fmt.Println("DEBUG user:", sess.Get("user"))
 
 	allowedStoreIDs := getAllowedStoreIDs(c)
+
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	storeDisplay := "-"
+	if stores, err := storeRepo.GetByIDs(allowedStoreIDs); err == nil {
+		storeNames := make([]string, 0, len(stores))
+		for _, s := range stores {
+			storeNames = append(storeNames, s.StoreName)
+		}
+		if len(storeNames) > 0 {
+			storeDisplay = strings.Join(storeNames, ", ")
+		}
+	}
 
 	stockInRepo := &repositories.StockInRepository{
 		DB:                 config.DB,
@@ -85,6 +101,8 @@ func DashboardIndex(c *gin.Context) {
 		"TotalStockIn":       totalStockIn,
 		"TotalStockOut":      totalStockOut,
 		"TotalStockOutToday": totalStockOutToday,
+		"StoreDisplay":       storeDisplay,
+		"Initials":           helpers.Initials(getUserName(c)),
 	})
 
 }
@@ -131,6 +149,28 @@ func buildStockChartData(stockInRepo *repositories.StockInRepository, stockOutRe
 		Month: monthPayload,
 		Year:  yearPayload,
 	}, nil
+}
+
+func getUserName(c *gin.Context) string {
+	session := sessions.Default(c)
+	userAny := session.Get("user")
+
+	switch u := userAny.(type) {
+	case models.SessionUser:
+		return u.Name
+	case map[string]interface{}:
+		if nameVal, ok := u["name"].(string); ok {
+			return nameVal
+		}
+	case gin.H:
+		if nameVal, ok := u["name"].(string); ok {
+			return nameVal
+		}
+	case string:
+		return u
+	}
+
+	return ""
 }
 
 func buildDailyChartPayload(start time.Time, totalDays int, stockInRepo *repositories.StockInRepository, stockOutRepo *repositories.StockOutRepository) (stockChartPayload, error) {

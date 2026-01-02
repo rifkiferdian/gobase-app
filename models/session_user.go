@@ -5,6 +5,7 @@ type SessionUser struct {
 	UserID          int
 	NIP             string
 	Name            string
+	Initials        string
 	Username        string
 	Role            string
 	StoreID         string

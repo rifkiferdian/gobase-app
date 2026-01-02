@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"net/http"
 	"stok-hadiah/config"
+	helpers "stok-hadiah/helper"
 	"stok-hadiah/models"
 
 	"github.com/gin-contrib/sessions"
@@ -86,11 +87,13 @@ func LoginPost(c *gin.Context) {
 	}
 
 	// simpan session
+	userInitials := helpers.Initials(dbName)
 	session := sessions.Default(c)
 	session.Set("user", models.SessionUser{
 		UserID:          userID,
 		NIP:             dbNip.String,
 		Name:            dbName,
+		Initials:        userInitials,
 		Username:        dbUser,
 		Role:            dbRole.String,
 		StoreID:         dbStore.String,

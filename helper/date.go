@@ -2,6 +2,7 @@ package helpers
 
 import (
 	"fmt"
+	"strings"
 	"time"
 )
 
@@ -37,4 +38,18 @@ func FormatDateID(t time.Time) string {
 		monthsID[t.Month()],
 		t.Year(),
 	)
+}
+
+func Initials(s string) string {
+	words := strings.Fields(s)
+	var result string
+
+	for _, w := range words {
+		r := []rune(w)
+		if len(r) > 0 {
+			result += string(r[0])
+		}
+	}
+
+	return result
 }

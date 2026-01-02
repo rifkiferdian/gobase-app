@@ -39,11 +39,11 @@
                     <div class="col-sm-8">
                         <div class="avatar-md profile-user-wid mb-4">
                             <div class="avatar-lg d-inline-flex align-items-center justify-content-center rounded-circle bg-warning text-white fw-semibold" style="width:64px;height:64px;font-size:24px;">
-                                R
+                                {{ if .Initials }}{{ .Initials }}{{ end }}
                             </div>
                         </div>
                         <h5 class="font-size-15 text-truncate">{{ if .User }}{{ index .User "name" }}{{ end }}</h5>
-                        <p class="text-muted mb-0 text-truncate">Staff Counter Store 1</p>
+                        <p class="text-muted mb-0 ">{{ if .StoreDisplay }}{{ .StoreDisplay }}{{ else }}-{{ end }}</p>
                     </div>
 
                     <div class="col-sm-4">

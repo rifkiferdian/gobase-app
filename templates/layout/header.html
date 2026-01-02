@@ -161,8 +161,9 @@ background: linear-gradient(90deg,rgba(211, 84, 0, 1) 0%, rgba(255, 255, 255, 1)
             <div class="dropdown d-inline-block">
                 <button type="button" class="btn header-item waves-effect" id="page-header-user-dropdown"
                 data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
-                    <img class="rounded-circle header-profile-user" src="assets/images/users/avatar-1.jpg"
-                        alt="Header Avatar">
+                    <div class="d-inline-flex align-items-center justify-content-center rounded-circle bg-warning text-white fw-semibold" style="width:32px; height:32px; font-size:14px;">
+                        {{ if .Initials }}{{ .Initials }}{{ end }}
+                    </div>
                     <span class="d-none d-xl-inline-block ms-1" key="t-henry">{{ if .User }}{{ index .User "name" }}{{ end }}</span>
                     <i class="mdi mdi-chevron-down d-none d-xl-inline-block"></i>
                 </button>
