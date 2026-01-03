@@ -1,0 +1,247 @@
+<!doctype html>
+<html lang="en"
+      data-layout-width="boxed"
+      data-topbar="dark"
+      data-preloader="disable"
+      data-card-layout="borderless"
+      data-bs-theme="light"
+      data-topbar-image="pattern-1">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>
+            {{ if .Title }}
+                {{ .Title }}
+            {{ else }}
+                Stock Hadiah App
+            {{ end }}
+        </title>
+
+        <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+        <link href="/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+
+        <script src="/assets/js/plugin.js"></script>
+    </head>
+    <body data-sidebar="dark">
+        <div id="layout-wrapper">
+            {{ template "header" . }}
+            {{ template "sidebar" . }}
+        </div>
+
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid">
+                    <form id="role-form" method="post" action="/role/update" class="row gy-2 gx-3 align-items-start">
+                        <input type="hidden" name="role_id" value="{{ .Role.ID }}">
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                    <h4 class="mb-sm-0 font-size-18">Edit Role</h4>
+                                    <div class="page-title-right">
+                                        <ol class="breadcrumb m-0">
+                                            <li class="breadcrumb-item"><a href="#">Settings</a></li>
+                                            <li class="breadcrumb-item"><a href="/role">Roles</a></li>
+                                            <li class="breadcrumb-item active">Edit</li>
+                                        </ol>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card shadow">
+                                    <div class="card-body">
+                                        {{ if .Error }}
+                                        <div class="alert alert-danger" role="alert">
+                                            {{ .Error }}
+                                        </div>
+                                        {{ end }}
+                                        <div class="row gy-2 gx-3 align-items-center">
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="role-name" class="form-label">Name <span style="color: red">*</span></label>
+                                                    <input type="text" class="form-control" id="role-name" name="name" placeholder="e.g. admin" required value="{{ .Role.Name }}">
+                                                </div>
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="guard-name" class="form-label">Guard Name</label>
+                                                    <input type="text" class="form-control" id="guard-name" name="guard_name" value="{{ if .Role.GuardName }}{{ .Role.GuardName }}{{ else }}web{{ end }}" placeholder="web">
+                                                </div>
+
+                                            </div>
+                                            <div class="col-md-4">
+                                                <div class="mb-3">
+                                                    <label for="guard-name" class="form-label"> &nbsp;</label>
+                                                    <div class="form-check form-switch form-switch-lg mb-1" dir="ltr">
+                                                        <input class="form-check-input" type="checkbox" id="switch-select-all">
+                                                        <label class="form-check-label" for="switch-select-all">Select All</label>
+                                                    </div>
+                                                    <p class="mb-0">Enables/Disables all Permissions for this role</p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="card shadow">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-center mb-3">
+                                            <h5 class="mb-0">Permissions</h5>
+                                            <small id="selected-counter" class="text-muted">Selected: 0 / {{ .TotalPermissions }}</small>
+                                        </div>
+
+                                        <div class="accordion accordion-flush" id="accordionPermissions">
+                                            {{ range $index, $group := .PermissionGroups }}
+                                            {{ $headingID := printf "heading_%s" $group.Key }}
+                                            {{ $collapseID := printf "collapse_%s" $group.Key }}
+                                            <div class="accordion-item">
+                                                <h2 class="accordion-header" id="{{ $headingID }}">
+                                                    <button style="background-color: gainsboro;" class="accordion-button fw-medium" type="button" data-bs-toggle="collapse" data-bs-target="#{{ $collapseID }}" aria-expanded="true" aria-controls="{{ $collapseID }}">
+                                                        <b class="text-capitalize">{{ $group.Label }}</b>
+                                                        <span class="ms-2 text-muted">({{ len $group.Permissions }} perms)</span>
+                                                    </button>
+                                                </h2>
+                                                <div id="{{ $collapseID }}" class="accordion-collapse collapse show" aria-labelledby="{{ $headingID }}">
+                                                    <div class="accordion-body">
+                                                        <div class="d-flex justify-content-between align-items-center mb-2">
+                                                            <div class="form-check form-switch m-0">
+                                                                <input class="form-check-input" type="checkbox" id="group_{{ $group.Key }}">
+                                                                <label style="color: black" class="form-check-label" for="group_{{ $group.Key }}">Select all</label>
+                                                            </div>
+                                                        </div>
+                                                        <div class="row">
+                                                            {{ range $permIndex, $perm := $group.Permissions }}
+                                                            <div class="col-lg-6">
+                                                                <div class="form-check form-check-warning mb-3">
+                                                                    <input class="form-check-input" type="checkbox" id="perm_{{ $perm.ID }}" name="permissions" value="{{ $perm.ID }}" data-permission-name="{{ $perm.Name }}" {{ if index $.SelectedPermissions $perm.ID }}checked{{ end }}>
+                                                                    <label style="color: black" class="form-check-label" for="perm_{{ $perm.ID }}">
+                                                                        {{ $perm.Name }}
+                                                                    </label>
+                                                                </div>
+                                                            </div>
+                                                            {{ end }}
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                            {{ else }}
+                                            <p class="text-muted mb-0">Belum ada permission tersedia.</p>
+                                            {{ end }}
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="row">
+                            <div class="col-12">
+                                <div class="d-flex justify-content-end">
+                                    <a href="/role" class="btn btn-light me-2">Cancel</a>
+                                    <button type="submit" class="btn btn-primary">
+                                        <span><i class="bx bx-save me-1"></i> Update</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                        <br>
+                        <hr>
+                    </form>
+
+                </div>
+            </div>
+            {{ template "footer" . }}
+        </div>
+
+        <script src="/assets/libs/jquery/jquery.min.js"></script>
+        <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="/assets/libs/metismenu/metisMenu.min.js"></script>
+        <script src="/assets/libs/simplebar/simplebar.min.js"></script>
+        <script src="/assets/libs/node-waves/waves.min.js"></script>
+        <script src="/assets/libs/apexcharts/apexcharts.min.js"></script>
+        <script src="/assets/js/pages/dashboard.init.js"></script>
+        <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+        <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+        <script src="/assets/js/app.js"></script>
+
+        <script>
+            document.addEventListener("DOMContentLoaded", function () {
+                const masterToggle = document.getElementById("switch-select-all");
+                const permissionCheckboxes = Array.from(document.querySelectorAll('input[id^="perm_"]'));
+                const groupCheckboxes = Array.from(document.querySelectorAll('input[id^="group_"]'));
+                const selectedCounter = document.getElementById("selected-counter");
+                const totalPermissions = permissionCheckboxes.length;
+
+                const updateSelectedCounter = () => {
+                    if (!selectedCounter) return;
+                    const selectedCount = permissionCheckboxes.filter((cb) => cb.checked).length;
+                    selectedCounter.textContent = `Selected: ${selectedCount} / ${totalPermissions}`;
+                };
+
+                const syncMasterToggle = () => {
+                    if (!masterToggle) return;
+                    const checkedCount = permissionCheckboxes.filter((cb) => cb.checked).length;
+                    masterToggle.checked = checkedCount === totalPermissions && totalPermissions > 0;
+                    masterToggle.indeterminate = checkedCount > 0 && checkedCount < totalPermissions;
+                };
+
+                const syncGroupToggle = (groupContainer) => {
+                    if (!groupContainer) return;
+                    const groupCheckbox = groupContainer.querySelector('input[id^="group_"]');
+                    const groupPermissions = Array.from(groupContainer.querySelectorAll('input[id^="perm_"]'));
+                    if (!groupCheckbox || groupPermissions.length === 0) return;
+
+                    const checkedCount = groupPermissions.filter((cb) => cb.checked).length;
+                    groupCheckbox.checked = checkedCount === groupPermissions.length;
+                    groupCheckbox.indeterminate = checkedCount > 0 && checkedCount < groupPermissions.length;
+                };
+
+                groupCheckboxes.forEach((groupCheckbox) => {
+                    groupCheckbox.addEventListener("change", (event) => {
+                        const groupContainer = event.target.closest(".accordion-item");
+                        if (!groupContainer) return;
+
+                        const groupPermissions = Array.from(groupContainer.querySelectorAll('input[id^="perm_"]'));
+                        groupPermissions.forEach((permCheckbox) => { permCheckbox.checked = event.target.checked; });
+                        syncGroupToggle(groupContainer);
+                        syncMasterToggle();
+                        updateSelectedCounter();
+                    });
+
+                    syncGroupToggle(groupCheckbox.closest(".accordion-item"));
+                });
+
+                permissionCheckboxes.forEach((permCheckbox) => {
+                    permCheckbox.addEventListener("change", (event) => {
+                        const groupContainer = event.target.closest(".accordion-item");
+                        syncGroupToggle(groupContainer);
+                        syncMasterToggle();
+                        updateSelectedCounter();
+                    });
+                });
+
+                if (masterToggle) {
+                    masterToggle.addEventListener("change", (event) => {
+                        groupCheckboxes.forEach((checkbox) => {
+                            checkbox.checked = event.target.checked;
+                            checkbox.indeterminate = false;
+                        });
+                        permissionCheckboxes.forEach((checkbox) => { checkbox.checked = event.target.checked; });
+                        syncMasterToggle();
+                        updateSelectedCounter();
+                    });
+                }
+
+                updateSelectedCounter();
+                syncMasterToggle();
+            });
+        </script>
+    </body>
+</html>

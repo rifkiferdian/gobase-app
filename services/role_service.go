@@ -1,6 +1,7 @@
 package services
 
 import (
+	"database/sql"
 	"errors"
 	"fmt"
 	"stok-hadiah/models"
@@ -15,6 +16,24 @@ type RoleService struct {
 
 func (s *RoleService) GetRoles() ([]models.Role, error) {
 	return s.Repo.GetAll()
+}
+
+// GetRoleDetail mengambil detail role beserta permission yang dimilikinya.
+func (s *RoleService) GetRoleDetail(id int) (*models.RoleDetail, error) {
+	if id <= 0 {
+		return nil, errors.New("role id tidak valid")
+	}
+
+	role, err := s.Repo.GetByID(id)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, fmt.Errorf("role dengan id %d tidak ditemukan", id)
+		}
+		return nil, err
+	}
+
+	role.PermissionIDs = uniqueInt64(role.PermissionIDs)
+	return role, nil
 }
 
 // CreateRole memvalidasi input lalu menyimpan role baru beserta permission yang dipilih.
@@ -64,6 +83,65 @@ func (s *RoleService) CreateRole(input models.RoleCreateInput) error {
 	})
 
 	return err
+}
+
+// UpdateRole memvalidasi input lalu memperbarui role beserta permission yang dipilih.
+func (s *RoleService) UpdateRole(input models.RoleUpdateInput) error {
+	name := strings.TrimSpace(input.Name)
+	guard := strings.TrimSpace(input.GuardName)
+	if guard == "" {
+		guard = "web"
+	}
+
+	if input.ID <= 0 {
+		return errors.New("role tidak valid")
+	}
+	if name == "" {
+		return errors.New("nama role wajib diisi")
+	}
+
+	role, err := s.Repo.GetByID(input.ID)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return fmt.Errorf("role dengan id %d tidak ditemukan", input.ID)
+		}
+		return err
+	}
+
+	exists, err := s.Repo.ExistsByNameAndGuardExceptID(name, guard, input.ID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("role '%s' sudah ada pada guard %s", name, guard)
+	}
+
+	permIDs := uniqueInt64(input.PermissionIDs)
+	if len(permIDs) > 0 {
+		found, err := s.Repo.FindExistingPermissionIDs(permIDs)
+		if err != nil {
+			return err
+		}
+
+		var missing []int64
+		for _, id := range permIDs {
+			if !found[id] {
+				missing = append(missing, id)
+			}
+		}
+
+		if len(missing) > 0 {
+			return fmt.Errorf("permission tidak ditemukan: %s", formatInt64Slice(missing))
+		}
+	}
+
+	return s.Repo.UpdateRoleWithPermissions(repositories.RoleUpdateParams{
+		ID:            input.ID,
+		Name:          name,
+		GuardName:     guard,
+		IsAdmin:       role.IsAdmin,
+		PermissionIDs: permIDs,
+	})
 }
 
 // DeleteRole validates input and removes the role by ID.

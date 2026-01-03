@@ -18,6 +18,15 @@ type RoleCreateParams struct {
 	PermissionIDs []int64
 }
 
+// RoleUpdateParams menampung data yang diperlukan untuk memperbarui role.
+type RoleUpdateParams struct {
+	ID            int
+	Name          string
+	GuardName     string
+	IsAdmin       bool
+	PermissionIDs []int64
+}
+
 // GetAll mengambil seluruh data role beserta jumlah permission dan user yang terkait.
 func (r *RoleRepository) GetAll() ([]models.Role, error) {
 	rows, err := r.DB.Query(`
@@ -73,6 +82,42 @@ func (r *RoleRepository) ExistsByNameAndGuard(name, guardName string) (bool, err
 	var count int
 	err := r.DB.QueryRow(`SELECT COUNT(1) FROM roles WHERE name = ? AND guard_name = ?`, name, guardName).Scan(&count)
 	return count > 0, err
+}
+
+// ExistsByNameAndGuardExceptID mengecek apakah kombinasi name + guard_name sudah ada di role lain.
+func (r *RoleRepository) ExistsByNameAndGuardExceptID(name, guardName string, excludeID int) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(`SELECT COUNT(1) FROM roles WHERE name = ? AND guard_name = ? AND id <> ?`, name, guardName, excludeID).Scan(&count)
+	return count > 0, err
+}
+
+// GetByID mengambil detail role dan permission yang dimilikinya.
+func (r *RoleRepository) GetByID(id int) (*models.RoleDetail, error) {
+	var role models.RoleDetail
+	if err := r.DB.QueryRow(`SELECT id, name, guard_name, is_admin FROM roles WHERE id = ?`, id).
+		Scan(&role.ID, &role.Name, &role.GuardName, &role.IsAdmin); err != nil {
+		return nil, err
+	}
+
+	rows, err := r.DB.Query(`SELECT permission_id FROM role_has_permissions WHERE role_id = ?`, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var permID int64
+		if err := rows.Scan(&permID); err != nil {
+			return nil, err
+		}
+		role.PermissionIDs = append(role.PermissionIDs, permID)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return &role, nil
 }
 
 // FindExistingPermissionIDs mengembalikan map id permission yang ditemukan di database.
@@ -151,6 +196,46 @@ func (r *RoleRepository) CreateRoleWithPermissions(params RoleCreateParams) (int
 	}
 
 	return roleID, nil
+}
+
+// UpdateRoleWithPermissions memperbarui data role beserta relasi permission dalam satu transaksi.
+func (r *RoleRepository) UpdateRoleWithPermissions(params RoleUpdateParams) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(`
+		UPDATE roles 
+		SET name = ?, guard_name = ?, is_admin = ?
+		WHERE id = ?
+	`, params.Name, params.GuardName, params.IsAdmin, params.ID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM role_has_permissions WHERE role_id = ?`, params.ID); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if len(params.PermissionIDs) > 0 {
+		stmt, err := tx.Prepare(`INSERT INTO role_has_permissions (permission_id, role_id) VALUES (?, ?)`)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		defer stmt.Close()
+
+		for _, permID := range params.PermissionIDs {
+			if _, err := stmt.Exec(permID, params.ID); err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
 }
 
 // DeleteByID removes a role and its related mappings in a single transaction.

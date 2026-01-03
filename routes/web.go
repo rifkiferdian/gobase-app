@@ -30,7 +30,9 @@ func RegisterWebRoutes(r *gin.Engine) {
 		auth.GET("/users/delete/:id", middleware.RequirePermission("user_delete"), controllers.UserDelete)
 		auth.GET("/role", controllers.RoleIndex)
 		auth.GET("/roleForm", controllers.RoleFormIndex)
+		auth.GET("/role/:id/edit", middleware.RequirePermission("role_edit"), controllers.RoleEdit)
 		auth.POST("/role", middleware.RequirePermission("role_create"), controllers.RoleStore)
+		auth.POST("/role/update", middleware.RequirePermission("role_edit"), controllers.RoleUpdate)
 		auth.GET("/role/delete/:id", middleware.RequirePermission("role_delete"), controllers.RoleDelete)
 
 		auth.GET("/suppliers", controllers.SupplierIndex)
