@@ -110,6 +110,101 @@ func (s *UserService) CreateUser(input models.UserCreateInput) error {
 	return err
 }
 
+// UpdateUser memperbarui data user yang sudah ada.
+func (s *UserService) UpdateUser(input models.UserUpdateInput) error {
+	username := strings.TrimSpace(input.Username)
+	name := strings.TrimSpace(input.Name)
+	email := strings.TrimSpace(input.Email)
+	status := strings.TrimSpace(input.Status)
+
+	if input.ID <= 0 {
+		return errors.New("user tidak valid")
+	}
+	if username == "" || name == "" {
+		return errors.New("nama dan username wajib diisi")
+	}
+	if input.NIP <= 0 {
+		return errors.New("NIP wajib diisi")
+	}
+	if status != "active" && status != "non_active" {
+		status = "active"
+	}
+
+	exists, err := s.Repo.ExistsByUsernameExceptID(username, input.ID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("username '%s' sudah digunakan", username)
+	}
+
+	exists, err = s.Repo.ExistsByNIPExceptID(input.NIP, input.ID)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("NIP %d sudah digunakan", input.NIP)
+	}
+
+	if email != "" {
+		exists, err = s.Repo.ExistsByEmailExceptID(email, input.ID)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("email %s sudah digunakan", email)
+		}
+	}
+
+	roleNames := uniqueStrings(input.RoleNames)
+	roleMap, err := s.Repo.GetRoleIDsByNames(roleNames)
+	if err != nil {
+		return err
+	}
+
+	var (
+		roleIDs      []int64
+		missingRoles []string
+	)
+
+	for _, roleName := range roleNames {
+		if id, ok := roleMap[roleName]; ok {
+			roleIDs = append(roleIDs, id)
+		} else {
+			missingRoles = append(missingRoles, roleName)
+		}
+	}
+
+	if len(missingRoles) > 0 {
+		return fmt.Errorf("role tidak ditemukan: %s", strings.Join(missingRoles, ", "))
+	}
+
+	storeIDs := uniqueInts(input.StoreIDs)
+	if storeIDs == nil {
+		storeIDs = []int{}
+	}
+
+	var hashedPassword string
+	if strings.TrimSpace(input.Password) != "" {
+		hashed, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+		if err != nil {
+			return err
+		}
+		hashedPassword = string(hashed)
+	}
+
+	return s.Repo.UpdateUserWithRoles(repositories.UserUpdateParams{
+		ID:             input.ID,
+		NIP:            input.NIP,
+		Username:       username,
+		HashedPassword: hashedPassword,
+		Name:           name,
+		Email:          email,
+		Status:         status,
+		StoreIDs:       storeIDs,
+	}, roleIDs)
+}
+
 const userModelType = "Models\\User"
 
 // DeleteUser removes user data by ID.

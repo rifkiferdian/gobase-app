@@ -25,11 +25,23 @@ type UserCreateParams struct {
 	StoreIDs       []int
 }
 
+type UserUpdateParams struct {
+	ID             int
+	NIP            int
+	Username       string
+	HashedPassword string
+	Name           string
+	Email          string
+	Status         string
+	StoreIDs       []int
+}
+
 // GetAll mengambil seluruh data user beserta parsing store_id JSON dan format tanggal.
 func (r *UserRepository) GetAll() ([]models.User, error) {
 	rows, err := r.DB.Query(`
 		SELECT 
 			u.id, 
+			u.nip,
 			u.username, 
 			u.name, 
 			u.email, 
@@ -41,7 +53,7 @@ func (r *UserRepository) GetAll() ([]models.User, error) {
 		LEFT JOIN model_has_roles mhr ON mhr.model_id = u.id AND mhr.model_type = ?
 		LEFT JOIN roles r2 ON r2.id = mhr.role_id
 		GROUP BY 
-			u.id, u.username, u.name, u.email, u.status, u.store_id, u.created_at
+			u.id, u.nip, u.username, u.name, u.email, u.status, u.store_id, u.created_at
 		ORDER BY u.created_at DESC
 	`, userModelType)
 	if err != nil {
@@ -60,6 +72,7 @@ func (r *UserRepository) GetAll() ([]models.User, error) {
 
 		if err := rows.Scan(
 			&u.ID,
+			&u.NIP,
 			&u.Username,
 			&u.Name,
 			&u.Email,
@@ -102,6 +115,7 @@ func (r *UserRepository) GetAll() ([]models.User, error) {
 		if u.RoleDisplay == "" {
 			u.RoleDisplay = "-"
 		}
+		u.RoleNames = splitAndTrimCSV(u.RoleDisplay)
 
 		users = append(users, u)
 	}
@@ -171,6 +185,73 @@ func (r *UserRepository) CreateUserWithRoles(params UserCreateParams, roleIDs []
 	return userID, nil
 }
 
+// UpdateUserWithRoles memperbarui data user beserta role assignments dalam satu transaksi.
+func (r *UserRepository) UpdateUserWithRoles(params UserUpdateParams, roleIDs []int64) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	storeJSON, err := json.Marshal(params.StoreIDs)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	var emailVal interface{}
+	if strings.TrimSpace(params.Email) == "" {
+		emailVal = nil
+	} else {
+		emailVal = params.Email
+	}
+
+	if params.HashedPassword != "" {
+		if _, err := tx.Exec(`
+			UPDATE users
+			SET nip = ?, username = ?, password = ?, name = ?, email = ?, status = ?, store_id = ?
+			WHERE id = ?
+		`, params.NIP, params.Username, params.HashedPassword, params.Name, emailVal, params.Status, string(storeJSON), params.ID); err != nil {
+			tx.Rollback()
+			return err
+		}
+	} else {
+		if _, err := tx.Exec(`
+			UPDATE users
+			SET nip = ?, username = ?, name = ?, email = ?, status = ?, store_id = ?
+			WHERE id = ?
+		`, params.NIP, params.Username, params.Name, emailVal, params.Status, string(storeJSON), params.ID); err != nil {
+			tx.Rollback()
+			return err
+		}
+	}
+
+	if _, err := tx.Exec(`DELETE FROM model_has_roles WHERE model_id = ? AND model_type = ?`, params.ID, userModelType); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if len(roleIDs) > 0 {
+		stmt, err := tx.Prepare(`
+			INSERT INTO model_has_roles (role_id, model_type, model_id)
+			VALUES (?, ?, ?)
+		`)
+		if err != nil {
+			tx.Rollback()
+			return err
+		}
+		defer stmt.Close()
+
+		for _, roleID := range roleIDs {
+			if _, err := stmt.Exec(roleID, userModelType, params.ID); err != nil {
+				tx.Rollback()
+				return err
+			}
+		}
+	}
+
+	return tx.Commit()
+}
+
 // ExistsByUsername mengecek apakah username sudah digunakan.
 func (r *UserRepository) ExistsByUsername(username string) (bool, error) {
 	var count int
@@ -178,10 +259,24 @@ func (r *UserRepository) ExistsByUsername(username string) (bool, error) {
 	return count > 0, err
 }
 
+// ExistsByUsernameExceptID mengecek apakah username sudah digunakan oleh user lain.
+func (r *UserRepository) ExistsByUsernameExceptID(username string, id int) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE username = ? AND id <> ?`, username, id).Scan(&count)
+	return count > 0, err
+}
+
 // ExistsByNIP mengecek apakah NIP sudah digunakan.
 func (r *UserRepository) ExistsByNIP(nip int) (bool, error) {
 	var count int
 	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE nip = ?`, nip).Scan(&count)
+	return count > 0, err
+}
+
+// ExistsByNIPExceptID mengecek apakah NIP sudah digunakan user lain.
+func (r *UserRepository) ExistsByNIPExceptID(nip int, id int) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE nip = ? AND id <> ?`, nip, id).Scan(&count)
 	return count > 0, err
 }
 
@@ -193,6 +288,17 @@ func (r *UserRepository) ExistsByEmail(email string) (bool, error) {
 
 	var count int
 	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE email = ?`, email).Scan(&count)
+	return count > 0, err
+}
+
+// ExistsByEmailExceptID mengecek apakah email sudah digunakan user lain (abaikan jika kosong).
+func (r *UserRepository) ExistsByEmailExceptID(email string, id int) (bool, error) {
+	if strings.TrimSpace(email) == "" {
+		return false, nil
+	}
+
+	var count int
+	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE email = ? AND id <> ?`, email, id).Scan(&count)
 	return count > 0, err
 }
 
@@ -286,6 +392,23 @@ func joinIntSlice(values []int) string {
 	}
 
 	return strings.Join(parts, ", ")
+}
+
+func splitAndTrimCSV(val string) []string {
+	val = strings.TrimSpace(val)
+	if val == "" || val == "-" {
+		return nil
+	}
+
+	parts := strings.Split(val, ",")
+	result := make([]string, 0, len(parts))
+	for _, p := range parts {
+		p = strings.TrimSpace(p)
+		if p != "" {
+			result = append(result, p)
+		}
+	}
+	return result
 }
 
 // DeleteUser removes a user and related role/permission mappings in a single transaction.

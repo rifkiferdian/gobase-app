@@ -79,6 +79,68 @@ func UserStore(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/users")
 }
 
+// UserUpdate memperbarui data user yang sudah ada.
+func UserUpdate(c *gin.Context) {
+	type userUpdateForm struct {
+		ID       int    `form:"user_id" binding:"required"`
+		Name     string `form:"name" binding:"required"`
+		Username string `form:"username" binding:"required"`
+		Password string `form:"password"`
+		Email    string `form:"email"`
+		NIP      string `form:"nip" binding:"required"`
+		Status   string `form:"status"`
+	}
+
+	var (
+		form     userUpdateForm
+		userRepo = &repositories.UserRepository{DB: config.DB}
+		userSvc  = &services.UserService{Repo: userRepo}
+	)
+
+	if err := c.ShouldBind(&form); err != nil {
+		renderUserPage(c, userSvc, "Form tidak lengkap")
+		return
+	}
+
+	nip, err := strconv.Atoi(strings.TrimSpace(form.NIP))
+	if err != nil {
+		renderUserPage(c, userSvc, "NIP harus berupa angka")
+		return
+	}
+
+	storeIDs := []int{}
+	for _, val := range c.PostFormArray("store_id") {
+		if val == "" {
+			continue
+		}
+		id, err := strconv.Atoi(val)
+		if err != nil {
+			renderUserPage(c, userSvc, "Store ID tidak valid")
+			return
+		}
+		storeIDs = append(storeIDs, id)
+	}
+
+	input := models.UserUpdateInput{
+		ID:        form.ID,
+		NIP:       nip,
+		Name:      strings.TrimSpace(form.Name),
+		Username:  strings.TrimSpace(form.Username),
+		Password:  form.Password,
+		Email:     strings.TrimSpace(form.Email),
+		Status:    form.Status,
+		StoreIDs:  storeIDs,
+		RoleNames: c.PostFormArray("roles"),
+	}
+
+	if err := userSvc.UpdateUser(input); err != nil {
+		renderUserPage(c, userSvc, err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/users")
+}
+
 // UserDelete menghapus data user berdasarkan ID.
 func UserDelete(c *gin.Context) {
 	idStr := c.Param("id")

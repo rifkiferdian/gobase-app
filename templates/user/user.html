@@ -105,7 +105,16 @@
                                                     <!-- <td>{{ $user.CreatedAtDisplay }}</td> -->
                                                     <td>
                                                         <div class="d-flex justify-content-start">
-                                                        <button  class="btn btn-outline-warning waves-effect waves-light btn-sm me-1">
+                                                        <button type="button"
+                                                            class="btn btn-outline-warning waves-effect waves-light btn-sm me-1 btn-edit-user"
+                                                            data-user-id="{{ $user.ID }}"
+                                                            data-nip="{{ $user.NIP }}"
+                                                            data-username="{{ $user.Username }}"
+                                                            data-name="{{ $user.Name }}"
+                                                            data-email="{{ $user.Email }}"
+                                                            data-status="{{ $user.Status }}"
+                                                            data-stores="{{ range $index, $sid := $user.StoreIDs }}{{ if $index }},{{ end }}{{ $sid }}{{ end }}"
+                                                            data-roles="{{ range $idx, $role := $user.RoleNames }}{{ if $idx }},{{ end }}{{ $role }}{{ end }}">
                                                             <i class="bx bx-pen font-size-16 align-middle me-2"></i>Edit</button>
                                                         <button type="button" class="btn btn-outline-danger waves-effect waves-light btn-sm btn-delete-user" data-url="/users/delete/{{ $user.ID }}" data-username="{{ $user.Username }}">
                                                             <i class="bx bx-trash font-size-16 align-middle me-2"></i>Del</button>
@@ -214,6 +223,87 @@
         </div>
     </div>
 
+    <!-- Edit Modal -->
+    <div class="modal fade " id="userEditModal" tabindex="-1"
+         aria-labelledby="userEditModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal" id="userEditModalLabel">Edit User</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <form action="/users/update" method="post">
+                    <div class="modal-body">
+                        <input type="hidden" name="user_id" id="edit_user_id">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label for="edit_name" class="form-label">Name</label>
+                                    <input type="text" class="form-control " id="edit_name" name="name">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="edit_username" class="form-label">Username Login</label>
+                                    <input type="text" class="form-control " id="edit_username" name="username">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="edit_userPassword" class="form-label">Password</label>
+                                    <input type="password" name="password" class="form-control " id="edit_userPassword" placeholder="Kosongkan jika tidak diubah">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="edit_email" class="form-label">Email</label>
+                                    <input type="email" class="form-control " id="edit_email" name="email">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="edit_userRoles" class="form-label">Roles</label>
+                                    <select name="roles" id="edit_userRoles" class="form-select" multiple>
+                                        {{ range .roles }}
+                                            <option value="{{ .Name }}">{{ .Name }}</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label for="edit_nip" class="form-label">Nomor Identitas Pegawai</label>
+                                    <input type="text" class="form-control " id="edit_nip" name="nip" placeholder="Masukkan NIP/NIK Pegawai">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="edit_store_id" class="form-label">Outlet MK</label>
+                                    <select id="edit_store_id" class="form-select " name="store_id" multiple>
+                                        {{ range .stores }}
+                                            <option value="{{ .StoreID }}">{{ .StoreName }}</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="edit_status" class="form-label">Aktif</label>
+                                    <select id="edit_status" class="form-select" name="status">
+                                        <option value="active">Aktif</option>
+                                        <option value="non_active">Non Aktif</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            Update
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
         <!-- JAVASCRIPT -->
         <script src="/assets/libs/jquery/jquery.min.js"></script>
         <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
@@ -256,6 +346,61 @@
                                 window.location.href = targetUrl;
                             }
                         });
+                    });
+                });
+
+                var editButtons = document.querySelectorAll('.btn-edit-user');
+                var editModalEl = document.getElementById('userEditModal');
+                var editModal = (typeof bootstrap !== 'undefined' && editModalEl) ? new bootstrap.Modal(editModalEl) : null;
+
+                function parseListAttr(val) {
+                    if (!val) return [];
+                    return val.split(',').map(function (item) {
+                        return item.trim();
+                    }).filter(Boolean);
+                }
+
+                function setMultiSelect(selectEl, values) {
+                    if (!selectEl) return;
+                    var lookup = new Set(values);
+                    Array.from(selectEl.options).forEach(function (opt) {
+                        opt.selected = lookup.has(opt.value);
+                    });
+                }
+
+                editButtons.forEach(function (btn) {
+                    btn.addEventListener('click', function () {
+                        if (!editModalEl) {
+                            return;
+                        }
+
+                        var idInput = editModalEl.querySelector('#edit_user_id');
+                        var nameInput = editModalEl.querySelector('#edit_name');
+                        var usernameInput = editModalEl.querySelector('#edit_username');
+                        var passwordInput = editModalEl.querySelector('#edit_userPassword');
+                        var emailInput = editModalEl.querySelector('#edit_email');
+                        var nipInput = editModalEl.querySelector('#edit_nip');
+                        var statusSelect = editModalEl.querySelector('#edit_status');
+                        var roleSelect = editModalEl.querySelector('#edit_userRoles');
+                        var storeSelect = editModalEl.querySelector('#edit_store_id');
+
+                        if (idInput) idInput.value = btn.getAttribute('data-user-id') || '';
+                        if (nameInput) nameInput.value = btn.getAttribute('data-name') || '';
+                        if (usernameInput) usernameInput.value = btn.getAttribute('data-username') || '';
+                        if (passwordInput) passwordInput.value = '';
+                        if (emailInput) emailInput.value = btn.getAttribute('data-email') || '';
+                        if (nipInput) nipInput.value = btn.getAttribute('data-nip') || '';
+                        if (statusSelect) statusSelect.value = btn.getAttribute('data-status') || 'active';
+
+                        setMultiSelect(roleSelect, parseListAttr(btn.getAttribute('data-roles')));
+                        setMultiSelect(storeSelect, parseListAttr(btn.getAttribute('data-stores')));
+
+                        if (editModal) {
+                            editModal.show();
+                        } else {
+                            editModalEl.classList.add('show');
+                            editModalEl.style.display = 'block';
+                        }
                     });
                 });
             });
