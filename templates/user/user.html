@@ -60,11 +60,16 @@
                             <div class="card"> 
                                 <div class="card-header d-flex justify-content-between align-items-center">
                                     <h5 class="mb-0">Daftar User</h5>
-                                    <button type="button" class="btn btn-primary waves-effect btn-label waves-light" disabled>
+                                    <button type="button" class="btn btn-primary waves-effect btn-label waves-light" data-bs-toggle="modal" data-bs-target="#userModal">
                                         <i class="bx bx-plus label-icon"></i> New User
                                     </button>
                                 </div>
                                 <div class="card-body">
+                                    {{ if .Error }}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ .Error }}
+                                    </div>
+                                    {{ end }}
                                     <div class="table-responsive">
                                         <table class="table table-responsive">
                                             <thead class="table-light">
@@ -72,11 +77,12 @@
                                                     <th style="width: 50px;">#</th>
                                                     <th>Username</th>
                                                     <th>Nama</th>
-                                                    <th>Email</th>
+                                                    <!-- <th>Email</th> -->
                                                     <th>Role</th>
                                                     <th>Store ID</th>
                                                     <th>Status</th>
-                                                    <th>Created At</th>
+                                                    <!-- <th>Created At</th> -->
+                                                    <th>Aksi</th>
                                                 </tr>
                                             </thead>
                                             <tbody>
@@ -85,7 +91,7 @@
                                                     <td>{{ no $i 1 }}</td>
                                                     <td>{{ $user.Username }}</td>
                                                     <td>{{ $user.Name }}</td>
-                                                    <td>{{ $user.Email }}</td>
+                                                    <!-- <td>{{ $user.Email }}</td> -->
                                                     <td><h5><span class=" badge badge-soft-info">{{ $user.RoleDisplay }}</span></h5></td>
                                                     <td>{{ $user.StoreDisplay }}</td>
                                                     <td><h5>
@@ -96,7 +102,15 @@
                                                         {{ end }}
                                                         </h5>
                                                     </td>
-                                                    <td>{{ $user.CreatedAtDisplay }}</td>
+                                                    <!-- <td>{{ $user.CreatedAtDisplay }}</td> -->
+                                                    <td>
+                                                        <div class="d-flex justify-content-start">
+                                                        <button  class="btn btn-outline-warning waves-effect waves-light btn-sm me-1">
+                                                            <i class="bx bx-pen font-size-16 align-middle me-2"></i>Edit</button>
+                                                        <button type="button" onclick="return confirm('Hapus role ini?')" class="btn btn-outline-danger waves-effect waves-light btn-sm">
+                                                            <i class="bx bx-trash font-size-16 align-middle me-2"></i>Del</button>
+                                                        </div>
+                                                    </td>
                                                 </tr>
                                                 {{ else }}
                                                 <tr>
@@ -114,6 +128,91 @@
             </div>
             {{ template "footer" . }}
         </div>
+
+    <!-- Modal -->
+    <div class="modal fade " id="userModal" tabindex="-1"
+         aria-labelledby="userModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal" id="userModalLabel">New User Form</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                
+                <form action="/users" method="post">
+                    <div class="modal-body">
+                        <div class="row">
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label for="name" class="form-label">Name</label>
+                                    <input type="text" class="form-control "
+                                        id="name" name="name">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="username" class="form-label">Username Login</label>
+                                    <input type="text" class="form-control "
+                                        id="username" name="username">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="userPassword" class="form-label">Password</label>
+                                    <input type="password" name="password" class="form-control " id="userPassword">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="email" class="form-label">Email</label>
+                                    <input type="email" class="form-control " 
+                                        id="email" name="email">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="userRoles" class="form-label">Roles</label>
+                                    <select name="roles" id="userRoles" class="form-select" multiple>
+                                        {{ range .roles }}
+                                            <option value="{{ .Name }}">{{ .Name }}</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="col-6">
+                                <div class="mb-3">
+                                    <label for="nip" class="form-label">Nomor Identitas Pegawai</label>
+                                    <input type="text" class="form-control "
+                                        id="nip" name="nip" placeholder="Masukkan NIP/NIK Pegawai">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="store_id" class="form-label">Outlet MK</label>
+                                    <select id="store_id" class="form-select " name="store_id" multiple>
+                                        {{ range .stores }}
+                                            <option value="{{ .StoreID }}">{{ .StoreName }}</option>
+                                        {{ end }}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label for="status" class="form-label">Aktif</label>
+                                    <select id="status" class="form-select" name="status">
+                                        <option value="active">Aktif</option>
+                                        <option value="non_active">Non Aktif</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Batal</button>
+                        <button type="submit" class="btn btn-primary">
+                            <!-- <span wire:loading wire:target="store" class="spinner-border spinner-border-sm"></span> -->
+                            Simpan
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
 
         <!-- JAVASCRIPT -->
         <script src="/assets/libs/jquery/jquery.min.js"></script>

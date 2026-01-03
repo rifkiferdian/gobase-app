@@ -2,9 +2,14 @@ package services
 
 import (
 	"database/sql"
+	"errors"
+	"fmt"
 	"stok-hadiah/config"
 	"stok-hadiah/models"
 	"stok-hadiah/repositories"
+	"strings"
+
+	"golang.org/x/crypto/bcrypt"
 )
 
 type UserService struct {
@@ -13,6 +18,96 @@ type UserService struct {
 
 func (s *UserService) GetUsers() ([]models.User, error) {
 	return s.Repo.GetAll()
+}
+
+// CreateUser memproses data dari form, melakukan validasi dasar, hashing password,
+// lalu menyimpan user beserta role yang dipilih.
+func (s *UserService) CreateUser(input models.UserCreateInput) error {
+	username := strings.TrimSpace(input.Username)
+	name := strings.TrimSpace(input.Name)
+	email := strings.TrimSpace(input.Email)
+	status := strings.TrimSpace(input.Status)
+
+	if username == "" || name == "" || input.Password == "" {
+		return errors.New("nama, username, dan password wajib diisi")
+	}
+	if input.NIP <= 0 {
+		return errors.New("NIP wajib diisi")
+	}
+	if status != "active" && status != "non_active" {
+		status = "active"
+	}
+
+	exists, err := s.Repo.ExistsByUsername(username)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("username '%s' sudah digunakan", username)
+	}
+
+	exists, err = s.Repo.ExistsByNIP(input.NIP)
+	if err != nil {
+		return err
+	}
+	if exists {
+		return fmt.Errorf("NIP %d sudah digunakan", input.NIP)
+	}
+
+	if email != "" {
+		exists, err = s.Repo.ExistsByEmail(email)
+		if err != nil {
+			return err
+		}
+		if exists {
+			return fmt.Errorf("email %s sudah digunakan", email)
+		}
+	}
+
+	roleNames := uniqueStrings(input.RoleNames)
+	roleMap, err := s.Repo.GetRoleIDsByNames(roleNames)
+	if err != nil {
+		return err
+	}
+
+	var (
+		roleIDs      []int64
+		missingRoles []string
+	)
+
+	for _, roleName := range roleNames {
+		if id, ok := roleMap[roleName]; ok {
+			roleIDs = append(roleIDs, id)
+		} else {
+			missingRoles = append(missingRoles, roleName)
+		}
+	}
+
+	if len(missingRoles) > 0 {
+		return fmt.Errorf("role tidak ditemukan: %s", strings.Join(missingRoles, ", "))
+	}
+
+	storeIDs := uniqueInts(input.StoreIDs)
+	if storeIDs == nil {
+		storeIDs = []int{}
+	}
+
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+
+	_, err = s.Repo.CreateUserWithRoles(repositories.UserCreateParams{
+		NIP:            input.NIP,
+		Username:       username,
+		HashedPassword: string(hashedPassword),
+		Name:           name,
+		Email:          email,
+		Status:         status,
+		StoreIDs:       storeIDs,
+	}, roleIDs)
+
+	return err
 }
 
 const userModelType = "Models\\User"
@@ -87,4 +182,31 @@ func GetUserPermissions(userID int) (map[string]bool, error) {
 	}
 
 	return perms, nil
+}
+
+func uniqueStrings(values []string) []string {
+	seen := make(map[string]bool)
+	var result []string
+	for _, v := range values {
+		v = strings.TrimSpace(v)
+		if v == "" || seen[v] {
+			continue
+		}
+		seen[v] = true
+		result = append(result, v)
+	}
+	return result
+}
+
+func uniqueInts(values []int) []int {
+	seen := make(map[int]bool)
+	var result []int
+	for _, v := range values {
+		if seen[v] {
+			continue
+		}
+		seen[v] = true
+		result = append(result, v)
+	}
+	return result
 }

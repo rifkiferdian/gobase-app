@@ -15,6 +15,16 @@ type UserRepository struct {
 
 const userModelType = "Models\\User"
 
+type UserCreateParams struct {
+	NIP            int
+	Username       string
+	HashedPassword string
+	Name           string
+	Email          string
+	Status         string
+	StoreIDs       []int
+}
+
 // GetAll mengambil seluruh data user beserta parsing store_id JSON dan format tanggal.
 func (r *UserRepository) GetAll() ([]models.User, error) {
 	rows, err := r.DB.Query(`
@@ -97,6 +107,135 @@ func (r *UserRepository) GetAll() ([]models.User, error) {
 	}
 
 	return users, nil
+}
+
+// CreateUserWithRoles menyimpan data user baru beserta assignment rolenya dalam satu transaksi.
+func (r *UserRepository) CreateUserWithRoles(params UserCreateParams, roleIDs []int64) (int64, error) {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return 0, err
+	}
+
+	storeJSON, err := json.Marshal(params.StoreIDs)
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	var emailVal interface{}
+	if strings.TrimSpace(params.Email) == "" {
+		emailVal = nil // simpan NULL jika email kosong
+	} else {
+		emailVal = params.Email
+	}
+
+	res, err := tx.Exec(`
+		INSERT INTO users (nip, username, password, name, email, status, store_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`, params.NIP, params.Username, params.HashedPassword, params.Name, emailVal, params.Status, string(storeJSON))
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	userID, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	if len(roleIDs) > 0 {
+		stmt, err := tx.Prepare(`
+			INSERT INTO model_has_roles (role_id, model_type, model_id)
+			VALUES (?, ?, ?)
+		`)
+		if err != nil {
+			tx.Rollback()
+			return 0, err
+		}
+		defer stmt.Close()
+
+		for _, roleID := range roleIDs {
+			if _, err := stmt.Exec(roleID, userModelType, userID); err != nil {
+				tx.Rollback()
+				return 0, err
+			}
+		}
+	}
+
+	if err := tx.Commit(); err != nil {
+		tx.Rollback()
+		return 0, err
+	}
+
+	return userID, nil
+}
+
+// ExistsByUsername mengecek apakah username sudah digunakan.
+func (r *UserRepository) ExistsByUsername(username string) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE username = ?`, username).Scan(&count)
+	return count > 0, err
+}
+
+// ExistsByNIP mengecek apakah NIP sudah digunakan.
+func (r *UserRepository) ExistsByNIP(nip int) (bool, error) {
+	var count int
+	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE nip = ?`, nip).Scan(&count)
+	return count > 0, err
+}
+
+// ExistsByEmail mengecek apakah email sudah digunakan (abaikan jika kosong).
+func (r *UserRepository) ExistsByEmail(email string) (bool, error) {
+	if strings.TrimSpace(email) == "" {
+		return false, nil
+	}
+
+	var count int
+	err := r.DB.QueryRow(`SELECT COUNT(1) FROM users WHERE email = ?`, email).Scan(&count)
+	return count > 0, err
+}
+
+// GetRoleIDsByNames mengambil role_id berdasarkan nama role yang diberikan.
+func (r *UserRepository) GetRoleIDsByNames(names []string) (map[string]int64, error) {
+	result := make(map[string]int64)
+
+	if len(names) == 0 {
+		return result, nil
+	}
+
+	placeholders := make([]string, len(names))
+	args := make([]interface{}, len(names))
+
+	for i, name := range names {
+		placeholders[i] = "?"
+		args[i] = name
+	}
+
+	query := `
+		SELECT id, name
+		FROM roles
+		WHERE name IN (` + strings.Join(placeholders, ",") + `)
+	`
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var (
+			id   int64
+			name string
+		)
+		if err := rows.Scan(&id, &name); err != nil {
+			return nil, err
+		}
+		result[name] = id
+	}
+
+	return result, rows.Err()
 }
 
 func (r *UserRepository) getStoreNames(ids []int) ([]string, error) {

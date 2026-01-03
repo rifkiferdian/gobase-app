@@ -15,3 +15,15 @@ type User struct {
 	CreatedAt        string
 	CreatedAtDisplay string
 }
+
+// UserCreateInput menampung data yang dikirimkan dari form create user.
+type UserCreateInput struct {
+	NIP       int
+	Username  string
+	Password  string
+	Name      string
+	Email     string
+	Status    string
+	StoreIDs  []int
+	RoleNames []string
+}

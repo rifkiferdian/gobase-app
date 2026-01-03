@@ -10,6 +10,30 @@ type StoreRepository struct {
 	DB *sql.DB
 }
 
+// GetAll mengambil seluruh data store.
+func (r *StoreRepository) GetAll() ([]models.Store, error) {
+	rows, err := r.DB.Query(`
+		SELECT store_id, store_name
+		FROM stores
+		ORDER BY store_id asc
+	`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stores []models.Store
+	for rows.Next() {
+		var s models.Store
+		if err := rows.Scan(&s.StoreID, &s.StoreName); err != nil {
+			return nil, err
+		}
+		stores = append(stores, s)
+	}
+
+	return stores, rows.Err()
+}
+
 // GetByIDs mengambil daftar store berdasarkan id yang diberikan.
 func (r *StoreRepository) GetByIDs(ids []int) ([]models.Store, error) {
 	if len(ids) == 0 {
