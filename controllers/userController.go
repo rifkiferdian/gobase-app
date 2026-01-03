@@ -79,6 +79,26 @@ func UserStore(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/users")
 }
 
+// UserDelete menghapus data user berdasarkan ID.
+func UserDelete(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		c.String(http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	userRepo := &repositories.UserRepository{DB: config.DB}
+	userService := &services.UserService{Repo: userRepo}
+
+	if err := userService.DeleteUser(id); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/users")
+}
+
 func renderUserPage(c *gin.Context, userService *services.UserService, message string) {
 	users, err := userService.GetUsers()
 	if err != nil {

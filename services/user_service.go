@@ -112,6 +112,14 @@ func (s *UserService) CreateUser(input models.UserCreateInput) error {
 
 const userModelType = "Models\\User"
 
+// DeleteUser removes user data by ID.
+func (s *UserService) DeleteUser(id int) error {
+	if id <= 0 {
+		return errors.New("user id tidak valid")
+	}
+	return s.Repo.DeleteUser(id)
+}
+
 func UserHasPermission(userID int, perm string) (bool, error) {
 	var dummy int
 	// Cek permission via role yang dimiliki user

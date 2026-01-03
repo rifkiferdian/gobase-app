@@ -287,3 +287,28 @@ func joinIntSlice(values []int) string {
 
 	return strings.Join(parts, ", ")
 }
+
+// DeleteUser removes a user and related role/permission mappings in a single transaction.
+func (r *UserRepository) DeleteUser(id int) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM model_has_roles WHERE model_id = ? AND model_type = ?`, id, userModelType); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM model_has_permissions WHERE model_id = ? AND model_type = ?`, id, userModelType); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM users WHERE id = ?`, id); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}

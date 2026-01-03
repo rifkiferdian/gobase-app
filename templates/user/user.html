@@ -107,7 +107,7 @@
                                                         <div class="d-flex justify-content-start">
                                                         <button  class="btn btn-outline-warning waves-effect waves-light btn-sm me-1">
                                                             <i class="bx bx-pen font-size-16 align-middle me-2"></i>Edit</button>
-                                                        <button type="button" onclick="return confirm('Hapus role ini?')" class="btn btn-outline-danger waves-effect waves-light btn-sm">
+                                                        <button type="button" class="btn btn-outline-danger waves-effect waves-light btn-sm btn-delete-user" data-url="/users/delete/{{ $user.ID }}" data-username="{{ $user.Username }}">
                                                             <i class="bx bx-trash font-size-16 align-middle me-2"></i>Del</button>
                                                         </div>
                                                     </td>
@@ -232,6 +232,34 @@
 
         <!-- Sweet alert init js-->
         <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var deleteButtons = document.querySelectorAll('.btn-delete-user');
+                deleteButtons.forEach(function (btn) {
+                    btn.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        var username = btn.getAttribute('data-username') || 'user';
+                        var targetUrl = btn.getAttribute('data-url');
+
+                        Swal.fire({
+                            title: 'Hapus user ini?',
+                            text: 'User ' + username + ' akan dihapus secara permanen.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, hapus',
+                            cancelButtonText: 'Batal'
+                        }).then(function (result) {
+                            if (result.isConfirmed && targetUrl) {
+                                window.location.href = targetUrl;
+                            }
+                        });
+                    });
+                });
+            });
+        </script>
 
         <!-- App js -->
         <script src="/assets/js/app.js"></script>
