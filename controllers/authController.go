@@ -59,14 +59,14 @@ func LoginPost(c *gin.Context) {
 		FROM users u
 		LEFT JOIN model_has_roles mhr ON mhr.model_id = u.id 
 		LEFT JOIN roles r ON r.id = mhr.role_id
-		WHERE u.username = ?
+		WHERE u.username = ? and u.status = 'active'
 	`, username).
 		Scan(&userID, &dbUser, &dbName, &dbPass, &dbNip, &dbRole, &dbStore)
 
 	if err == sql.ErrNoRows {
 		c.HTML(200, "login.html", gin.H{
 			"Title": "Login User",
-			"Error": "Username tidak ditemukan",
+			"Error": "Username tidak ditemukan / atau mungkin user tidak aktif",
 		})
 		return
 	} else if err != nil {
