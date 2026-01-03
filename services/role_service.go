@@ -66,6 +66,14 @@ func (s *RoleService) CreateRole(input models.RoleCreateInput) error {
 	return err
 }
 
+// DeleteRole validates input and removes the role by ID.
+func (s *RoleService) DeleteRole(id int) error {
+	if id <= 0 {
+		return errors.New("role id tidak valid")
+	}
+	return s.Repo.DeleteByID(id)
+}
+
 func uniqueInt64(values []int64) []int64 {
 	seen := make(map[int64]bool)
 	var result []int64

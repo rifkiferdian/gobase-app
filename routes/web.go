@@ -31,6 +31,7 @@ func RegisterWebRoutes(r *gin.Engine) {
 		auth.GET("/role", controllers.RoleIndex)
 		auth.GET("/roleForm", controllers.RoleFormIndex)
 		auth.POST("/role", middleware.RequirePermission("role_create"), controllers.RoleStore)
+		auth.GET("/role/delete/:id", middleware.RequirePermission("role_delete"), controllers.RoleDelete)
 
 		auth.GET("/suppliers", controllers.SupplierIndex)
 		auth.POST("/suppliers", controllers.SupplierStore)

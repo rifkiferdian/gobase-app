@@ -152,3 +152,28 @@ func (r *RoleRepository) CreateRoleWithPermissions(params RoleCreateParams) (int
 
 	return roleID, nil
 }
+
+// DeleteByID removes a role and its related mappings in a single transaction.
+func (r *RoleRepository) DeleteByID(id int) error {
+	tx, err := r.DB.Begin()
+	if err != nil {
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM role_has_permissions WHERE role_id = ?`, id); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM model_has_roles WHERE role_id = ?`, id); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	if _, err := tx.Exec(`DELETE FROM roles WHERE id = ?`, id); err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return tx.Commit()
+}

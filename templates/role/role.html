@@ -87,9 +87,9 @@
                                                     <td>{{ $role.UpdatedAt }}</td>
                                                     <td>
                                                         <div class="d-flex justify-content-start">
-                                                        <a wire:navigate="" href="/role/{{ $role.ID }}/edit" class="btn btn-outline-warning waves-effect waves-light btn-sm me-1">
+                                                        <a href="/role/{{ $role.ID }}/edit" class="btn btn-outline-warning waves-effect waves-light btn-sm me-1">
                                                             <i class="bx bx-pen font-size-16 align-middle me-2"></i>Edit</a>
-                                                        <button type="button" wire:click="destroy({{ $role.ID }})" onclick="return confirm('Hapus role ini?')" class="btn btn-outline-danger waves-effect waves-light btn-sm">
+                                                        <button type="button" class="btn btn-outline-danger waves-effect waves-light btn-sm btn-delete-role" data-url="/role/delete/{{ $role.ID }}" data-role-name="{{ $role.Name }}">
                                                             <i class="bx bx-trash font-size-16 align-middle me-2"></i>Del</button>
                                                         </div>
                                                     </td>
@@ -129,6 +129,34 @@
 
         <!-- Sweet alert init js-->
         <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var deleteButtons = document.querySelectorAll('.btn-delete-role');
+                deleteButtons.forEach(function (btn) {
+                    btn.addEventListener('click', function (event) {
+                        event.preventDefault();
+                        var roleName = btn.getAttribute('data-role-name') || 'role';
+                        var targetUrl = btn.getAttribute('data-url');
+
+                        Swal.fire({
+                            title: 'Hapus role ini?',
+                            text: 'Role ' + roleName + ' akan dihapus secara permanen.',
+                            icon: 'warning',
+                            showCancelButton: true,
+                            confirmButtonColor: '#d33',
+                            cancelButtonColor: '#6c757d',
+                            confirmButtonText: 'Ya, hapus',
+                            cancelButtonText: 'Batal'
+                        }).then(function (result) {
+                            if (result.isConfirmed && targetUrl) {
+                                window.location.href = targetUrl;
+                            }
+                        });
+                    });
+                });
+            });
+        </script>
 
         <!-- App js -->
         <script src="/assets/js/app.js"></script>

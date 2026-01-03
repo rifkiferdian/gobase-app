@@ -78,6 +78,26 @@ func RoleStore(c *gin.Context) {
 	c.Redirect(http.StatusSeeOther, "/role")
 }
 
+// RoleDelete menghapus role berdasarkan ID.
+func RoleDelete(c *gin.Context) {
+	idStr := c.Param("id")
+	id, err := strconv.Atoi(idStr)
+	if err != nil || id <= 0 {
+		c.String(http.StatusBadRequest, "invalid role id")
+		return
+	}
+
+	roleRepo := &repositories.RoleRepository{DB: config.DB}
+	roleService := &services.RoleService{Repo: roleRepo}
+
+	if err := roleService.DeleteRole(id); err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.Redirect(http.StatusSeeOther, "/role")
+}
+
 func renderRoleForm(c *gin.Context, message string) {
 	permissionRepo := &repositories.PermissionRepository{DB: config.DB}
 	permissionService := &services.PermissionService{Repo: permissionRepo}
