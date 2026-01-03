@@ -39,6 +39,7 @@
         <div class="main-content">
             <div class="page-content">
                 <div class="container-fluid">
+                    <form id="role-form" method="post" action="/role" class="row gy-2 gx-3 align-items-start">
 					<div class="row">
                         <div class="col-12">
                             <div class="page-title-box d-sm-flex align-items-center justify-content-between">
@@ -59,43 +60,38 @@
                         <div class="col-lg-12">
                             <div class="card shadow">
                                 <div class="card-body">
-                                    <form class="row gy-2 gx-3 align-items-center" >
-                                        <div class="row">
-                                            <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="role-name" class="form-label">Name <span style="color: red">*</span></label>
-                                                    <input type="text" class="form-control " id="role-name" placeholder="e.g. admin">
-                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
-                                                </div>
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="guard-name" class="form-label">Guard Name</label>
-                                                    <input type="text" class="form-control " id="guard-name" value="web" placeholder="web">
-                                                    <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
-                                                </div>
-
-                                            </div>
-                                            <div class="col-md-4">
-                                                <div class="mb-3">
-                                                    <label for="guard-name" class="form-label"> &nbsp;</label>
-                                                    <div class="form-check form-switch form-switch-lg mb-1" dir="ltr">
-                                                        <input class="form-check-input" type="checkbox" id="switch-select-all" >
-                                                        <label class="form-check-label" for="switch-select-all">Select All</label>
-                                                    </div>
-                                                    <p class="mb-0">Enables/Disables all Permissions for this role</p>
-                                                </div>
+                                    {{ if .Error }}
+                                    <div class="alert alert-danger" role="alert">
+                                        {{ .Error }}
+                                    </div>
+                                    {{ end }}
+                                    <div class="row gy-2 gx-3 align-items-center">
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="role-name" class="form-label">Name <span style="color: red">*</span></label>
+                                                <input type="text" class="form-control" id="role-name" name="name" placeholder="e.g. admin" required>
+                                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
                                             </div>
                                         </div>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="guard-name" class="form-label">Guard Name</label>
+                                                <input type="text" class="form-control" id="guard-name" name="guard_name" value="web" placeholder="web">
+                                                <!--[if BLOCK]><![endif]--><!--[if ENDBLOCK]><![endif]-->
+                                            </div>
 
-                                        <div class="d-flex justify-content-end">
-                                            <a href="#" class="btn btn-light me-2">Cancel</a>
-                                            <button type="submit" class="btn btn-primary">
-                                                <span><i class="bx bx-save me-1"></i> Save</span>
-                                                <span><span class="spinner-border spinner-border-sm me-1"></span> Saving...</span>
-                                            </button>
                                         </div>
-                                    </form>
+                                        <div class="col-md-4">
+                                            <div class="mb-3">
+                                                <label for="guard-name" class="form-label"> &nbsp;</label>
+                                                <div class="form-check form-switch form-switch-lg mb-1" dir="ltr">
+                                                    <input class="form-check-input" type="checkbox" id="switch-select-all" >
+                                                    <label class="form-check-label" for="switch-select-all">Select All</label>
+                                                </div>
+                                                <p class="mb-0">Enables/Disables all Permissions for this role</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -108,7 +104,7 @@
                                     
                                     <div class="d-flex justify-content-between align-items-center mb-3">
                                         <h5 class="mb-0">Permissions</h5>
-                                        <small class="text-muted">Selected: 0 / {{ .TotalPermissions }}</small>
+                                        <small id="selected-counter" class="text-muted">Selected: 0 / {{ .TotalPermissions }}</small>
                                     </div>
 
                                     <div class="accordion accordion-flush" id="accordionPermissions">
@@ -134,7 +130,7 @@
                                                         {{ range $permIndex, $perm := $group.Permissions }}
                                                         <div class="col-lg-6">
                                                             <div class="form-check form-check-warning mb-3">
-                                                                <input class="form-check-input" type="checkbox" id="perm_{{ $perm.ID }}" value="{{ $perm.Name }}">
+                                                                <input class="form-check-input" type="checkbox" id="perm_{{ $perm.ID }}" name="permissions" value="{{ $perm.ID }}" data-permission-name="{{ $perm.Name }}">
                                                                 <label style="color: black" class="form-check-label" for="perm_{{ $perm.ID }}">
                                                                     {{ $perm.Name }}
                                                                 </label>
@@ -153,6 +149,19 @@
                             </div>
                         </div>
                     </div>
+                    <div class="row">
+                        <div class="col-12">
+                            <div class="d-flex justify-content-end">
+                                <a href="/role" class="btn btn-light me-2">Cancel</a>
+                                <button type="submit" class="btn btn-primary">
+                                    <span><i class="bx bx-save me-1"></i> Save</span>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                    <br>
+                    <hr>
+                    </form>
 
                 </div>
             </div>
@@ -184,14 +193,33 @@
         <script>
             document.addEventListener("DOMContentLoaded", function () {
                 const masterToggle = document.getElementById("switch-select-all");
-                if (!masterToggle) return;
-
                 const permissionCheckboxes = Array.from(document.querySelectorAll('input[id^="perm_"]'));
                 const groupCheckboxes = Array.from(document.querySelectorAll('input[id^="group_"]'));
+                const selectedCounter = document.getElementById("selected-counter");
+                const totalPermissions = permissionCheckboxes.length;
 
-                const toggleAll = (checked) => {
-                    groupCheckboxes.forEach((checkbox) => { checkbox.checked = checked; });
-                    permissionCheckboxes.forEach((checkbox) => { checkbox.checked = checked; });
+                const updateSelectedCounter = () => {
+                    if (!selectedCounter) return;
+                    const selectedCount = permissionCheckboxes.filter((cb) => cb.checked).length;
+                    selectedCounter.textContent = `Selected: ${selectedCount} / ${totalPermissions}`;
+                };
+
+                const syncMasterToggle = () => {
+                    if (!masterToggle) return;
+                    const checkedCount = permissionCheckboxes.filter((cb) => cb.checked).length;
+                    masterToggle.checked = checkedCount === totalPermissions && totalPermissions > 0;
+                    masterToggle.indeterminate = checkedCount > 0 && checkedCount < totalPermissions;
+                };
+
+                const syncGroupToggle = (groupContainer) => {
+                    if (!groupContainer) return;
+                    const groupCheckbox = groupContainer.querySelector('input[id^="group_"]');
+                    const groupPermissions = Array.from(groupContainer.querySelectorAll('input[id^="perm_"]'));
+                    if (!groupCheckbox || groupPermissions.length === 0) return;
+
+                    const checkedCount = groupPermissions.filter((cb) => cb.checked).length;
+                    groupCheckbox.checked = checkedCount === groupPermissions.length;
+                    groupCheckbox.indeterminate = checkedCount > 0 && checkedCount < groupPermissions.length;
                 };
 
                 groupCheckboxes.forEach((groupCheckbox) => {
@@ -201,12 +229,38 @@
 
                         const groupPermissions = Array.from(groupContainer.querySelectorAll('input[id^="perm_"]'));
                         groupPermissions.forEach((permCheckbox) => { permCheckbox.checked = event.target.checked; });
+                        syncGroupToggle(groupContainer);
+                        syncMasterToggle();
+                        updateSelectedCounter();
+                    });
+
+                    // set state on load
+                    syncGroupToggle(groupCheckbox.closest(".accordion-item"));
+                });
+
+                permissionCheckboxes.forEach((permCheckbox) => {
+                    permCheckbox.addEventListener("change", (event) => {
+                        const groupContainer = event.target.closest(".accordion-item");
+                        syncGroupToggle(groupContainer);
+                        syncMasterToggle();
+                        updateSelectedCounter();
                     });
                 });
 
-                masterToggle.addEventListener("change", (event) => {
-                    toggleAll(event.target.checked);
-                });
+                if (masterToggle) {
+                    masterToggle.addEventListener("change", (event) => {
+                        groupCheckboxes.forEach((checkbox) => {
+                            checkbox.checked = event.target.checked;
+                            checkbox.indeterminate = false;
+                        });
+                        permissionCheckboxes.forEach((checkbox) => { checkbox.checked = event.target.checked; });
+                        syncMasterToggle();
+                        updateSelectedCounter();
+                    });
+                }
+
+                updateSelectedCounter();
+                syncMasterToggle();
             });
         </script>
     </body>

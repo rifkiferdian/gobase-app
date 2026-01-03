@@ -8,3 +8,10 @@ type Role struct {
 	UserCount       int
 	UpdatedAt       string
 }
+
+// RoleCreateInput mewakili payload untuk membuat role baru.
+type RoleCreateInput struct {
+	Name          string
+	GuardName     string
+	PermissionIDs []int64
+}
