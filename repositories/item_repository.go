@@ -139,6 +139,53 @@ func (r *ItemRepository) Search(name, category string) ([]models.Item, error) {
 	return items, nil
 }
 
+// GetByID mengambil satu item beserta nama supplier/store-nya.
+func (r *ItemRepository) GetByID(id int) (models.Item, error) {
+	var (
+		it        models.Item
+		createdAt time.Time
+	)
+
+	args := []interface{}{id}
+	query := `
+		SELECT i.item_id,
+		       i.item_name,
+		       i.category,
+		       i.supplier_id,
+		       s.supplier_name,
+		       i.store_id,
+		       st.store_name,
+		       i.description,
+		       i.created_at
+		FROM items i
+		JOIN suppliers s ON s.suppliers_id = i.supplier_id
+		LEFT JOIN stores st ON st.store_id = i.store_id
+		WHERE i.item_id = ?
+	`
+	query, skip := r.appendStoreFilter(query, &args, true)
+	if skip {
+		return it, sql.ErrNoRows
+	}
+
+	row := r.DB.QueryRow(query, args...)
+	if err := row.Scan(
+		&it.ItemID,
+		&it.ItemName,
+		&it.Category,
+		&it.SupplierID,
+		&it.SupplierName,
+		&it.StoreID,
+		&it.StoreName,
+		&it.Description,
+		&createdAt,
+	); err != nil {
+		return it, err
+	}
+
+	it.CreatedAt = createdAt.Format("02-01-2006 15:04:05")
+	return it, nil
+}
+
 // Count mengembalikan jumlah seluruh data item.
 func (r *ItemRepository) Count() (int, error) {
 	args := []interface{}{}

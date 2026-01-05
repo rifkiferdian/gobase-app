@@ -76,6 +76,69 @@ func (r *StockInRepository) GetAll() ([]models.StockIn, error) {
 	return stockIns, nil
 }
 
+// GetByItemID mengambil daftar stok masuk untuk satu item saja.
+func (r *StockInRepository) GetByItemID(itemID int) ([]models.StockIn, error) {
+	args := []interface{}{itemID}
+	query := `
+		SELECT si.id,
+		       si.user_id,
+		       u.name,
+		       si.item_id,
+		       i.item_name,
+		       i.store_id,
+		       st.store_name,
+		       s.supplier_name,
+		       si.qty,
+		       si.received_at,
+		       si.details
+		FROM stock_in si
+		JOIN users u ON u.id = si.user_id
+		JOIN items i ON i.item_id = si.item_id
+		LEFT JOIN stores st ON st.store_id = i.store_id
+		JOIN suppliers s ON s.suppliers_id = i.supplier_id
+		WHERE i.item_id = ?
+	`
+	query, skip := r.appendStoreFilter(query, &args, true)
+	if skip {
+		return []models.StockIn{}, nil
+	}
+
+	query += " ORDER BY si.received_at DESC"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var stockIns []models.StockIn
+
+	for rows.Next() {
+		var s models.StockIn
+		if err := rows.Scan(
+			&s.ID,
+			&s.UserID,
+			&s.UserName,
+			&s.ItemID,
+			&s.ItemName,
+			&s.StoreID,
+			&s.StoreName,
+			&s.SupplierName,
+			&s.Qty,
+			&s.ReceivedAt,
+			&s.Description,
+		); err != nil {
+			return nil, err
+		}
+
+		s.ReceivedAt, s.ReceivedAtDisplay = formatStockInTime(s.ReceivedAt)
+
+		stockIns = append(stockIns, s)
+	}
+
+	return stockIns, nil
+}
+
 // Search mengambil data stok masuk yang difilter berdasarkan nama barang dan/atau
 // tanggal (bagian tanggal dari kolom received_at). Jika kedua parameter kosong,
 // maka fungsi akan mengembalikan seluruh data seperti GetAll.

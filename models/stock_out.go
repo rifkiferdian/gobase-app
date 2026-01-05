@@ -2,6 +2,23 @@ package models
 
 import "time"
 
+// StockOutDetail merepresentasikan detail keluarnya stok per baris stock_out.
+// IssuedAt disimpan sebagai string agar mudah diisi ke input/tabel dan tampilan terformat.
+type StockOutDetail struct {
+	ID              int
+	UserID          int
+	UserName        string
+	ProgramID       int
+	ItemID          int
+	ItemName        string
+	StoreID         int
+	StoreName       string
+	Qty             int
+	IssuedAt        string
+	IssuedAtDisplay string
+	Reason          string
+}
+
 // StockOutCase merepresentasikan pengeluaran stok dengan alasan/keterangan khusus.
 // IssuedAt disimpan sebagai time.Time agar mudah diformat di layer lain.
 type StockOutCase struct {

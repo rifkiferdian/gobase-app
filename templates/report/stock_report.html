@@ -214,7 +214,7 @@
                                                 <tr>
                                                     <td>{{ no $i 1 }}</td>
                                                     <td>
-                                                        <div class="fw-semibold">{{ $item.ItemName }}</div>
+                                                        <div class="fw-semibold"> <a href="/items-report/{{ $item.ItemID }}">{{ $item.ItemName }}</a></div>
                                                         {{ if $item.StoreName }}<div class="text-muted small">Store: {{ $item.StoreName }}</div>{{ end }}
                                                         {{ if $item.Description }}<div class="text-muted small">{{ $item.Description }}</div>{{ end }}
                                                     </td>

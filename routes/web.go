@@ -44,6 +44,7 @@ func RegisterWebRoutes(r *gin.Engine) {
 		auth.POST("/items", controllers.ItemStore)
 		auth.POST("/items/update", controllers.ItemUpdate)
 		auth.GET("/items/delete/:id", controllers.ItemDelete)
+		auth.GET("/items-report/:id", controllers.ItemReportIndex)
 
 		auth.GET("/item-out", controllers.ItemOutIndex)
 		auth.POST("/item-out/update", controllers.ItemOutUpdate)

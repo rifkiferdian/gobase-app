@@ -781,3 +781,94 @@ WHERE p.item_id IN (` + strings.Join(itemPlaceholders, ",") + `)
 
 	return result, nil
 }
+
+// GetByItemID mengambil daftar stok keluar untuk satu item dengan info user & store.
+func (r *StockOutRepository) GetByItemID(itemID int) ([]models.StockOutDetail, error) {
+	result := []models.StockOutDetail{}
+	if itemID <= 0 {
+		return result, nil
+	}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+
+	args := []interface{}{itemID}
+	query := `
+SELECT
+	so.id,
+	so.user_id,
+	u.name,
+	so.program_id,
+	p.item_id,
+	i.item_name,
+	i.store_id,
+	st.store_name,
+	so.qty,
+	so.issued_at,
+	COALESCE(so.reason, '')
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+LEFT JOIN stores st ON st.store_id = i.store_id
+JOIN users u ON u.id = so.user_id
+WHERE p.item_id = ?
+`
+
+	if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		query += " AND i.store_id IN (" + strings.Join(placeholders, ",") + ")"
+	}
+
+	query += " ORDER BY so.issued_at DESC"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry models.StockOutDetail
+		if err := rows.Scan(
+			&entry.ID,
+			&entry.UserID,
+			&entry.UserName,
+			&entry.ProgramID,
+			&entry.ItemID,
+			&entry.ItemName,
+			&entry.StoreID,
+			&entry.StoreName,
+			&entry.Qty,
+			&entry.IssuedAt,
+			&entry.Reason,
+		); err != nil {
+			return nil, err
+		}
+
+		entry.IssuedAt, entry.IssuedAtDisplay = formatStockOutTime(entry.IssuedAt)
+		entry.Reason = strings.TrimSpace(entry.Reason)
+		result = append(result, entry)
+	}
+
+	return result, nil
+}
+
+// formatStockOutTime mencoba berbagai layout datetime agar tampilan konsisten.
+func formatStockOutTime(raw string) (string, string) {
+	layouts := []string{
+		"2006-01-02 15:04:05",
+		time.RFC3339,
+		"2006-01-02T15:04:05",
+		"2006-01-02",
+	}
+	for _, layout := range layouts {
+		if t, err := time.Parse(layout, raw); err == nil {
+			return t.Format("2006-01-02T15:04"), t.Format("02-01-2006 15:04:05")
+		}
+	}
+	return raw, raw
+}
