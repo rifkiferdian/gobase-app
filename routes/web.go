@@ -62,6 +62,7 @@ func RegisterWebRoutes(r *gin.Engine) {
 		auth.GET("/programs/delete/:id", controllers.ProgramDelete)
 
 		auth.GET("/stock-report", controllers.StockReportIndex)
+		auth.GET("/user-report-list", controllers.UserReportListIndex)
 
 		auth.GET("/home", controllers.HomeIndex) // contoh tambahan route
 	}
