@@ -82,6 +82,13 @@ func ItemReportIndex(c *gin.Context) {
 }
 
 func ItemOutReportIndex(c *gin.Context) {
+	pageStr := c.Query("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	const pageSize = 10
+
 	filterName := c.Query("item_name")
 	filterDate := c.Query("date")
 
@@ -99,7 +106,22 @@ func ItemOutReportIndex(c *gin.Context) {
 		EnforceStoreFilter: true,
 	}
 
-	stockOuts, err := stockOutRepo.ListReports(filterName, filterDate, storeID)
+	totalItems, err := stockOutRepo.CountReports(filterName, filterDate, storeID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalPages := 0
+	if totalItems > 0 {
+		totalPages = (totalItems + pageSize - 1) / pageSize
+	}
+	if totalPages > 0 && page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * pageSize
+
+	stockOuts, err := stockOutRepo.ListReports(filterName, filterDate, storeID, pageSize, offset)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
@@ -111,6 +133,20 @@ func ItemOutReportIndex(c *gin.Context) {
 		stores = nil
 	}
 
+	pages := make([]int, 0, totalPages)
+	for i := 1; i <= totalPages; i++ {
+		pages = append(pages, i)
+	}
+
+	prevPage := page - 1
+	if prevPage < 1 {
+		prevPage = 1
+	}
+	nextPage := page + 1
+	if totalPages > 0 && nextPage > totalPages {
+		nextPage = totalPages
+	}
+
 	Render(c, "item_out_report.html", gin.H{
 		"Title":          "Item Out Report",
 		"Page":           "itemOutReport",
@@ -119,5 +155,11 @@ func ItemOutReportIndex(c *gin.Context) {
 		"FilterItemName": filterName,
 		"FilterDate":     filterDate,
 		"FilterStoreID":  storeID,
+		"CurrentPage":    page,
+		"TotalPages":     totalPages,
+		"Pages":          pages,
+		"PrevPage":       prevPage,
+		"NextPage":       nextPage,
+		"TotalItems":     totalItems,
 	})
 }

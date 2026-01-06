@@ -126,12 +126,37 @@
                                                 </tr>
                                                 {{ else }}
                                                 <tr>
-                                                    <td colspan="8" class="text-center">Belum ada data stock keluar untuk filter ini.</td>
+                                                    <td colspan="9" class="text-center">Belum ada data stock keluar untuk filter ini.</td>
                                                 </tr>
                                                 {{ end }}
                                             </tbody>
                                         </table>
                                     </div>
+                                    {{ if gt .TotalPages 1 }}
+                                    <div class="d-flex justify-content-center mt-3">
+                                        <nav aria-label="Page navigation">
+                                            <ul class="pagination mb-0">
+                                                <li class="page-item {{ if le .CurrentPage 1 }}disabled{{ end }}">
+                                                    <a class="page-link" href="/item-out-report?page={{ .PrevPage }}{{ if .FilterItemName }}&item_name={{ .FilterItemName }}{{ end }}{{ if .FilterDate }}&date={{ .FilterDate }}{{ end }}{{ if gt .FilterStoreID 0 }}&store_id={{ .FilterStoreID }}{{ end }}" aria-label="Previous">
+                                                        <span aria-hidden="true">&laquo;</span>
+                                                        <span class="sr-only">Previous</span>
+                                                    </a>
+                                                </li>
+                                                {{ range .Pages }}
+                                                <li class="page-item {{ if eq . $.CurrentPage }}active{{ end }}">
+                                                    <a class="page-link" href="/item-out-report?page={{ . }}{{ if $.FilterItemName }}&item_name={{ $.FilterItemName }}{{ end }}{{ if $.FilterDate }}&date={{ $.FilterDate }}{{ end }}{{ if gt $.FilterStoreID 0 }}&store_id={{ $.FilterStoreID }}{{ end }}">{{ . }}</a>
+                                                </li>
+                                                {{ end }}
+                                                <li class="page-item {{ if ge .CurrentPage .TotalPages }}disabled{{ end }}">
+                                                    <a class="page-link" href="/item-out-report?page={{ .NextPage }}{{ if .FilterItemName }}&item_name={{ .FilterItemName }}{{ end }}{{ if .FilterDate }}&date={{ .FilterDate }}{{ end }}{{ if gt .FilterStoreID 0 }}&store_id={{ .FilterStoreID }}{{ end }}" aria-label="Next">
+                                                        <span aria-hidden="true">&raquo;</span>
+                                                        <span class="sr-only">Next</span>
+                                                    </a>
+                                                </li>
+                                            </ul>
+                                        </nav>
+                                    </div>
+                                    {{ end }}
                                 </div>
                             </div>
 

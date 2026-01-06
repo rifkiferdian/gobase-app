@@ -782,11 +782,11 @@ WHERE p.item_id IN (` + strings.Join(itemPlaceholders, ",") + `)
 	return result, nil
 }
 
-// ListReports mengambil daftar stok keluar dengan filter nama barang, tanggal, dan store.
-func (r *StockOutRepository) ListReports(itemName, date string, storeID int) ([]models.StockOutDetail, error) {
-	result := []models.StockOutDetail{}
+// buildReportFilter menyusun klausa WHERE dan args untuk laporan stock out.
+// Mengembalikan skip=true jika filter store tidak diizinkan atau akses store kosong.
+func (r *StockOutRepository) buildReportFilter(itemName, date string, storeID int) (string, []interface{}, bool) {
 	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
-		return result, nil
+		return "", nil, true
 	}
 
 	args := []interface{}{}
@@ -804,7 +804,7 @@ func (r *StockOutRepository) ListReports(itemName, date string, storeID int) ([]
 
 	if storeID > 0 {
 		if len(r.StoreIDs) > 0 && !containsInt(r.StoreIDs, storeID) {
-			return result, nil
+			return "", nil, true
 		}
 		conditions = append(conditions, "i.store_id = ?")
 		args = append(args, storeID)
@@ -815,6 +815,28 @@ func (r *StockOutRepository) ListReports(itemName, date string, storeID int) ([]
 			args = append(args, id)
 		}
 		conditions = append(conditions, "i.store_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	if len(conditions) == 0 {
+		return "", args, false
+	}
+
+	return " WHERE " + strings.Join(conditions, " AND "), args, false
+}
+
+// ListReports mengambil daftar stok keluar dengan filter nama barang, tanggal, dan store.
+func (r *StockOutRepository) ListReports(itemName, date string, storeID, limit, offset int) ([]models.StockOutDetail, error) {
+	result := []models.StockOutDetail{}
+
+	whereClause, args, skip := r.buildReportFilter(itemName, date, storeID)
+	if skip {
+		return result, nil
+	}
+	if limit <= 0 {
+		limit = 20
+	}
+	if offset < 0 {
+		offset = 0
 	}
 
 	query := `
@@ -839,10 +861,12 @@ LEFT JOIN stores st ON st.store_id = i.store_id
 JOIN suppliers s ON s.suppliers_id = i.supplier_id
 JOIN users u ON u.id = so.user_id
 `
-	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
-	}
-	query += " ORDER BY so.issued_at DESC"
+	query += whereClause
+	query += `
+ORDER BY so.issued_at DESC
+LIMIT ? OFFSET ?
+`
+	args = append(args, limit, offset)
 
 	rows, err := r.DB.Query(query, args...)
 	if err != nil {
@@ -876,6 +900,33 @@ JOIN users u ON u.id = so.user_id
 	}
 
 	return result, nil
+}
+
+// CountReports menghitung total baris untuk laporan stok keluar sesuai filter.
+func (r *StockOutRepository) CountReports(itemName, date string, storeID int) (int, error) {
+	whereClause, args, skip := r.buildReportFilter(itemName, date, storeID)
+	if skip {
+		return 0, nil
+	}
+
+	query := `
+SELECT COUNT(*)
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+JOIN suppliers s ON s.suppliers_id = i.supplier_id
+JOIN users u ON u.id = so.user_id
+`
+	query += whereClause
+
+	row := r.DB.QueryRow(query, args...)
+
+	var total int
+	if err := row.Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
 }
 
 // GetByItemID mengambil daftar stok keluar untuk satu item dengan info user & store.
