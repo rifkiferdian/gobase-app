@@ -34,6 +34,11 @@ func main() {
 		"no": func(a, b int) int {
 			return a + b
 		},
+		"baseURL": func(path string) string {
+			base := strings.TrimRight(os.Getenv("BASE_URL"), "/")
+			p := "/" + strings.TrimLeft(path, "/")
+			return base + p
+		},
 	})
 
 	// Templates & static files

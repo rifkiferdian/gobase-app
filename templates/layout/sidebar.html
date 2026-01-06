@@ -10,7 +10,7 @@
                 <li class="menu-title" key="t-menu">Menu</li>
                 
                 <li>
-                    <a href="/dashboard" class="waves-effect">
+                    <a href="{{ baseURL "/dashboard" }}" class="waves-effect">
                         <i class="bx bx-home-circle"></i>
                         <span key="t-dashboards">Dashboards</span>
                     </a>
@@ -22,9 +22,9 @@
                         <span key="t-layouts">Master Data</span>
                     </a>
                     <ul class="sub-menu" aria-expanded="false">
-                        <li><a href="suppliers" key="t-login">Suplier</a></li>
-                        <li><a href="items" key="t-login-2">Barang</a></li>
-                        <li><a href="programs" key="t-login-2">Program</a></li>
+                        <li><a href="{{ baseURL "/suppliers" }}" key="t-login">Suplier</a></li>
+                        <li><a href="{{ baseURL "/items" }}" key="t-login-2">Barang</a></li>
+                        <li><a href="{{ baseURL "/programs" }}" key="t-login-2">Program</a></li>
                     </ul>
                 </li>
                 {{ if or (index .Permissions "user_management_access") (index .Permissions "role_management_access") }}
@@ -32,7 +32,7 @@
                 {{ end }}
                 {{ if index .Permissions "user_management_access" }}
                 <li class="">
-                    <a href="/users" class="waves-effect">
+                    <a href="{{ baseURL "/users" }}" class="waves-effect">
                         <i class="bx bx-user"></i>
                         <span key="t-users">Users</span>
                     </a>
@@ -40,7 +40,7 @@
                 {{ end }}
                 {{ if index .Permissions "role_management_access" }}
                 <li class="">
-                    <a href="/role" class="waves-effect">
+                    <a href="{{ baseURL "/role" }}" class="waves-effect">
                         <i class="bx bx-task"></i>
                         <span key="t-users">Roles</span>
                     </a>
@@ -49,25 +49,25 @@
                 <li class="menu-title" key="t-pages">APPS</li>
 
                 <li>
-                    <a href="/item-in" class="waves-effect">
+                    <a href="{{ baseURL "/item-in" }}" class="waves-effect">
                         <i class="bx bxs-archive-in"></i>
                         <span key="b-masuk">Barang Masuk</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/item-out" class="waves-effect">
+                    <a href="{{ baseURL "/item-out" }}" class="waves-effect">
                         <i class="bx bxs-archive-out"></i>
                         <span key="b-keluar">Barang Keluar</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/stock-report" class="waves-effect">
+                    <a href="{{ baseURL "/stock-report" }}" class="waves-effect">
                         <i class="bx bxs-spreadsheet"></i>
                         <span key="t-laporan">Laporan Stok</span>
                     </a>
                 </li>
                 <li>
-                    <a href="/user-report-list" class="waves-effect">
+                    <a href="{{ baseURL "/user-report-list" }}" class="waves-effect">
                         <i class="bx bxs-spreadsheet"></i>
                         <span key="t-laporan">Laporan Per User</span>
                     </a>
