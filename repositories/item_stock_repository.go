@@ -41,13 +41,7 @@ type ItemStockRepository struct {
 	EnforceStoreFilter bool
 }
 
-// GetSummaries mengembalikan daftar ringkasan stok item dengan filter nama, kategori, dan supplier opsional.
-// Filter store otomatis diterapkan berdasarkan StoreIDs/FilterStoreID.
-func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, supplierID *int) ([]models.ItemStockSummary, error) {
-	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
-		return []models.ItemStockSummary{}, nil
-	}
-
+func (r *ItemStockRepository) buildSummaryQuery(filterName, filterCategory string, supplierID *int) (string, []interface{}) {
 	args := []interface{}{}
 	query := `
 		SELECT
@@ -61,12 +55,8 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			st.store_name,
 			i.description,
 			COALESCE(SUM(si.qty), 0) AS total_in,
-			COALESCE((
-				SELECT SUM(so.qty)
-				FROM stock_out so
-				JOIN programs p2 ON p2.program_id = so.program_id
-				WHERE p2.item_id = i.item_id
-			), 0) AS total_out
+			COALESCE(sot.total_out, 0) AS total_out,
+			COALESCE(SUM(si.qty), 0) - COALESCE(sot.total_out, 0) AS remaining
 		FROM items i
 		JOIN suppliers su ON su.suppliers_id = i.supplier_id
 		LEFT JOIN (
@@ -80,6 +70,12 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 		) p ON p.item_id = i.item_id
 		LEFT JOIN stores st ON st.store_id = i.store_id
 		LEFT JOIN stock_in si ON si.item_id = i.item_id
+		LEFT JOIN (
+			SELECT p2.item_id, SUM(so.qty) AS total_out
+			FROM stock_out so
+			JOIN programs p2 ON p2.program_id = so.program_id
+			GROUP BY p2.item_id
+		) sot ON sot.item_id = i.item_id
 	`
 
 	conditions := []string{}
@@ -124,18 +120,19 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			i.category,
 			su.supplier_name,
 			st.store_name,
-			i.description
-		ORDER BY i.item_id DESC
+			i.description,
+			p.program_names,
+			p.program_start_dates,
+			p.program_end_dates,
+			sot.total_out
+		HAVING (COALESCE(SUM(si.qty), 0) - COALESCE(sot.total_out, 0)) > 0
 	`
 
-	rows, err := r.DB.Query(query, args...)
-	if err != nil {
-		return nil, err
-	}
-	defer rows.Close()
+	return query, args
+}
 
+func scanItemStockSummaries(rows *sql.Rows) ([]models.ItemStockSummary, error) {
 	var summaries []models.ItemStockSummary
-
 	for rows.Next() {
 		var summary models.ItemStockSummary
 		if err := rows.Scan(
@@ -150,21 +147,96 @@ func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, su
 			&summary.Description,
 			&summary.QtyIn,
 			&summary.QtyOut,
+			&summary.Remaining,
 		); err != nil {
 			return nil, err
 		}
 
-		summary.Remaining = summary.QtyIn - summary.QtyOut
-
-		// Format ke Indonesia
 		summary.ProgramStartDisplay = formatDateListID(summary.ProgramStartDates)
 		summary.ProgramEndDisplay = formatDateListID(summary.ProgramEndDates)
+		summaries = append(summaries, summary)
+	}
+	return summaries, nil
+}
 
-		// Hanya tampilkan item yang masih memiliki stok (>0)
-		if summary.Remaining > 0 {
-			summaries = append(summaries, summary)
-		}
+// GetSummaries mengembalikan daftar ringkasan stok item dengan filter nama, kategori, dan supplier opsional.
+// Filter store otomatis diterapkan berdasarkan StoreIDs/FilterStoreID.
+func (r *ItemStockRepository) GetSummaries(filterName, filterCategory string, supplierID *int) ([]models.ItemStockSummary, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return []models.ItemStockSummary{}, nil
 	}
 
-	return summaries, nil
+	baseQuery, args := r.buildSummaryQuery(filterName, filterCategory, supplierID)
+	query := baseQuery + "\nORDER BY i.item_id DESC"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanItemStockSummaries(rows)
+}
+
+// GetSummariesPaginated mengembalikan daftar ringkasan stok item dengan pagination.
+func (r *ItemStockRepository) GetSummariesPaginated(filterName, filterCategory string, supplierID *int, limit, offset int) ([]models.ItemStockSummary, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return []models.ItemStockSummary{}, nil
+	}
+
+	baseQuery, baseArgs := r.buildSummaryQuery(filterName, filterCategory, supplierID)
+	args := append([]interface{}{}, baseArgs...)
+	query := baseQuery + "\nORDER BY i.item_id DESC"
+	if limit > 0 {
+		query += " LIMIT ? OFFSET ?"
+		args = append(args, limit, offset)
+	}
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	return scanItemStockSummaries(rows)
+}
+
+// CountSummaries menghitung total item yang memiliki stok tersisa sesuai filter.
+func (r *ItemStockRepository) CountSummaries(filterName, filterCategory string, supplierID *int) (int, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return 0, nil
+	}
+
+	baseQuery, args := r.buildSummaryQuery(filterName, filterCategory, supplierID)
+	countQuery := "SELECT COUNT(*) FROM (" + baseQuery + ") summary"
+
+	var total int
+	if err := r.DB.QueryRow(countQuery, args...).Scan(&total); err != nil {
+		return 0, err
+	}
+
+	return total, nil
+}
+
+// GetSummaryTotals mengembalikan total qty in/out dan remaining untuk seluruh hasil filter.
+func (r *ItemStockRepository) GetSummaryTotals(filterName, filterCategory string, supplierID *int) (int, int, int, error) {
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return 0, 0, 0, nil
+	}
+
+	baseQuery, args := r.buildSummaryQuery(filterName, filterCategory, supplierID)
+	totalQuery := `
+		SELECT
+			COALESCE(SUM(total_in), 0) AS total_qty_in,
+			COALESCE(SUM(total_out), 0) AS total_qty_out,
+			COALESCE(SUM(remaining), 0) AS total_remaining
+		FROM (` + baseQuery + `) summary
+	`
+
+	var totalIn, totalOut, totalRemaining int
+	if err := r.DB.QueryRow(totalQuery, args...).Scan(&totalIn, &totalOut, &totalRemaining); err != nil {
+		return 0, 0, 0, err
+	}
+
+	return totalIn, totalOut, totalRemaining, nil
 }

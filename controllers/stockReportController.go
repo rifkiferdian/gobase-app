@@ -11,6 +11,13 @@ import (
 )
 
 func StockReportIndex(c *gin.Context) {
+	pageStr := c.Query("page")
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+	const pageSize = 10
+
 	filterName := c.Query("item_name")
 	filterCategory := c.Query("category")
 
@@ -40,19 +47,31 @@ func StockReportIndex(c *gin.Context) {
 	}
 	stockService := &services.ItemStockService{Repo: stockRepo}
 
-	items, err := stockService.ListSummaries(filterName, filterCategory, supplierID)
+	totalItems, err := stockService.CountSummaries(filterName, filterCategory, supplierID)
 	if err != nil {
 		c.String(http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	totalIn := 0
-	totalOut := 0
-	totalRemaining := 0
-	for _, it := range items {
-		totalIn += it.QtyIn
-		totalOut += it.QtyOut
-		totalRemaining += it.Remaining
+	totalPages := 0
+	if totalItems > 0 {
+		totalPages = (totalItems + pageSize - 1) / pageSize
+	}
+	if totalPages > 0 && page > totalPages {
+		page = totalPages
+	}
+	offset := (page - 1) * pageSize
+
+	items, err := stockService.ListSummariesPaginated(filterName, filterCategory, supplierID, pageSize, offset)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	totalIn, totalOut, totalRemaining, err := stockService.GetSummaryTotals(filterName, filterCategory, supplierID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
 	}
 
 	supplierRepo := &repositories.SupplierRepository{DB: config.DB}
@@ -64,6 +83,20 @@ func StockReportIndex(c *gin.Context) {
 
 	storeRepo := &repositories.StoreRepository{DB: config.DB}
 	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
+
+	pages := make([]int, 0, totalPages)
+	for i := 1; i <= totalPages; i++ {
+		pages = append(pages, i)
+	}
+
+	prevPage := page - 1
+	if prevPage < 1 {
+		prevPage = 1
+	}
+	nextPage := page + 1
+	if totalPages > 0 && nextPage > totalPages {
+		nextPage = totalPages
+	}
 
 	Render(c, "stock_report.html", gin.H{
 		"Title":            "Stock Report",
@@ -78,5 +111,12 @@ func StockReportIndex(c *gin.Context) {
 		"TotalQtyIn":       totalIn,
 		"TotalQtyOut":      totalOut,
 		"TotalRemaining":   totalRemaining,
+		"CurrentPage":      page,
+		"TotalPages":       totalPages,
+		"Pages":            pages,
+		"PrevPage":         prevPage,
+		"NextPage":         nextPage,
+		"TotalItems":       totalItems,
+		"RowOffset":        offset + 1,
 	})
 }
