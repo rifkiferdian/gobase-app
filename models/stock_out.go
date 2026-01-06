@@ -9,6 +9,7 @@ type StockOutDetail struct {
 	UserID          int
 	UserName        string
 	ProgramID       int
+	ProgramName     string
 	ItemID          int
 	ItemName        string
 	StoreID         int

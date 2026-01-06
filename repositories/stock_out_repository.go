@@ -782,6 +782,102 @@ WHERE p.item_id IN (` + strings.Join(itemPlaceholders, ",") + `)
 	return result, nil
 }
 
+// ListReports mengambil daftar stok keluar dengan filter nama barang, tanggal, dan store.
+func (r *StockOutRepository) ListReports(itemName, date string, storeID int) ([]models.StockOutDetail, error) {
+	result := []models.StockOutDetail{}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, nil
+	}
+
+	args := []interface{}{}
+	conditions := []string{}
+
+	if itemName = strings.TrimSpace(itemName); itemName != "" {
+		conditions = append(conditions, "i.item_name LIKE ?")
+		args = append(args, "%"+itemName+"%")
+	}
+
+	if date = strings.TrimSpace(date); date != "" {
+		conditions = append(conditions, "DATE(so.issued_at) = ?")
+		args = append(args, date)
+	}
+
+	if storeID > 0 {
+		if len(r.StoreIDs) > 0 && !containsInt(r.StoreIDs, storeID) {
+			return result, nil
+		}
+		conditions = append(conditions, "i.store_id = ?")
+		args = append(args, storeID)
+	} else if len(r.StoreIDs) > 0 {
+		placeholders := make([]string, len(r.StoreIDs))
+		for i, id := range r.StoreIDs {
+			placeholders[i] = "?"
+			args = append(args, id)
+		}
+		conditions = append(conditions, "i.store_id IN ("+strings.Join(placeholders, ",")+")")
+	}
+
+	query := `
+SELECT
+	so.id,
+	so.user_id,
+	u.name,
+	so.program_id,
+	p.program_name,
+	p.item_id,
+	i.item_name,
+	i.store_id,
+	st.store_name,
+	s.supplier_name,
+	so.qty,
+	so.issued_at,
+	COALESCE(so.reason, '')
+FROM stock_out so
+JOIN programs p ON p.program_id = so.program_id
+JOIN items i ON i.item_id = p.item_id
+LEFT JOIN stores st ON st.store_id = i.store_id
+JOIN suppliers s ON s.suppliers_id = i.supplier_id
+JOIN users u ON u.id = so.user_id
+`
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+	query += " ORDER BY so.issued_at DESC"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry models.StockOutDetail
+		if err := rows.Scan(
+			&entry.ID,
+			&entry.UserID,
+			&entry.UserName,
+			&entry.ProgramID,
+			&entry.ProgramName,
+			&entry.ItemID,
+			&entry.ItemName,
+			&entry.StoreID,
+			&entry.StoreName,
+			&entry.SupplierName,
+			&entry.Qty,
+			&entry.IssuedAt,
+			&entry.Reason,
+		); err != nil {
+			return nil, err
+		}
+
+		entry.IssuedAt, entry.IssuedAtDisplay = formatStockOutTime(entry.IssuedAt)
+		entry.Reason = strings.TrimSpace(entry.Reason)
+		result = append(result, entry)
+	}
+
+	return result, nil
+}
+
 // GetByItemID mengambil daftar stok keluar untuk satu item dengan info user & store.
 func (r *StockOutRepository) GetByItemID(itemID int) ([]models.StockOutDetail, error) {
 	result := []models.StockOutDetail{}
@@ -799,6 +895,7 @@ SELECT
 	so.user_id,
 	u.name,
 	so.program_id,
+	p.program_name,
 	p.item_id,
 	i.item_name,
 	i.store_id,
@@ -840,6 +937,7 @@ WHERE p.item_id = ?
 			&entry.UserID,
 			&entry.UserName,
 			&entry.ProgramID,
+			&entry.ProgramName,
 			&entry.ItemID,
 			&entry.ItemName,
 			&entry.StoreID,

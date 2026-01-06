@@ -80,3 +80,44 @@ func ItemReportIndex(c *gin.Context) {
 		"Remaining":   remaining,
 	})
 }
+
+func ItemOutReportIndex(c *gin.Context) {
+	filterName := c.Query("item_name")
+	filterDate := c.Query("date")
+
+	storeStr := c.Query("store_id")
+	storeID := 0
+	if id, err := strconv.Atoi(storeStr); err == nil && id > 0 {
+		storeID = id
+	}
+
+	allowedStoreIDs := getAllowedStoreIDs(c)
+
+	stockOutRepo := &repositories.StockOutRepository{
+		DB:                 config.DB,
+		StoreIDs:           allowedStoreIDs,
+		EnforceStoreFilter: true,
+	}
+
+	stockOuts, err := stockOutRepo.ListReports(filterName, filterDate, storeID)
+	if err != nil {
+		c.String(http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	storeRepo := &repositories.StoreRepository{DB: config.DB}
+	stores, _ := storeRepo.GetByIDs(allowedStoreIDs)
+	if len(stores) == 0 {
+		stores = nil
+	}
+
+	Render(c, "item_out_report.html", gin.H{
+		"Title":          "Item Out Report",
+		"Page":           "itemOutReport",
+		"items":          stockOuts,
+		"stores":         stores,
+		"FilterItemName": filterName,
+		"FilterDate":     filterDate,
+		"FilterStoreID":  storeID,
+	})
+}
