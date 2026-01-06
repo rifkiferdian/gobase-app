@@ -34,12 +34,19 @@ func (r *UserReportRepository) GetSummaries() ([]models.UserReportSummary, error
 	}
 
 	allStoreIDs := make(map[int]bool)
+	filteredUsers := make([]userReportUser, 0, len(users))
 	for i := range users {
 		users[i].StoreIDs = filterStoreIDs(users[i].StoreIDs, allowed)
+		if len(allowed) > 0 && len(users[i].StoreIDs) == 0 {
+			continue
+		}
+		filteredUsers = append(filteredUsers, users[i])
 		for _, id := range users[i].StoreIDs {
 			allStoreIDs[id] = true
 		}
 	}
+
+	users = filteredUsers
 
 	storeNameMap, err := r.buildStoreNameMap(allStoreIDs)
 	if err != nil {
@@ -100,6 +107,9 @@ func (r *UserReportRepository) GetDetail(userID int, itemName, date string) (mod
 	}
 
 	user.StoreIDs = filterStoreIDs(user.StoreIDs, allowed)
+	if len(allowed) > 0 && len(user.StoreIDs) == 0 {
+		return models.UserReportDetail{}, nil
+	}
 
 	storeNameMap, err := r.buildStoreNameMap(storeIDsToMap(user.StoreIDs))
 	if err != nil {
