@@ -803,6 +803,7 @@ SELECT
 	i.item_name,
 	i.store_id,
 	st.store_name,
+	s.supplier_name,
 	so.qty,
 	so.issued_at,
 	COALESCE(so.reason, '')
@@ -810,6 +811,7 @@ FROM stock_out so
 JOIN programs p ON p.program_id = so.program_id
 JOIN items i ON i.item_id = p.item_id
 LEFT JOIN stores st ON st.store_id = i.store_id
+JOIN suppliers s ON s.suppliers_id = i.supplier_id
 JOIN users u ON u.id = so.user_id
 WHERE p.item_id = ?
 `
@@ -842,6 +844,7 @@ WHERE p.item_id = ?
 			&entry.ItemName,
 			&entry.StoreID,
 			&entry.StoreName,
+			&entry.SupplierName,
 			&entry.Qty,
 			&entry.IssuedAt,
 			&entry.Reason,

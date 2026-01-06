@@ -3,6 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"encoding/json"
+	"errors"
 	"strconv"
 	"strings"
 
@@ -78,11 +79,93 @@ func (r *UserReportRepository) GetSummaries() ([]models.UserReportSummary, error
 	return reports, nil
 }
 
+// GetDetail mengambil detail stok masuk dan keluar untuk satu user.
+func (r *UserReportRepository) GetDetail(userID int, itemName, date string) (models.UserReportDetail, error) {
+	detail := models.UserReportDetail{}
+	if userID <= 0 {
+		return detail, nil
+	}
+
+	user, err := r.fetchUserByID(userID)
+	if err != nil {
+		return detail, err
+	}
+	if user.ID == 0 {
+		return detail, nil
+	}
+
+	allowed := make(map[int]bool)
+	for _, id := range r.StoreIDs {
+		allowed[id] = true
+	}
+
+	user.StoreIDs = filterStoreIDs(user.StoreIDs, allowed)
+
+	storeNameMap, err := r.buildStoreNameMap(storeIDsToMap(user.StoreIDs))
+	if err != nil {
+		return detail, err
+	}
+
+	detail.UserID = user.ID
+	detail.NIP = user.NIP
+	detail.Name = user.Name
+	detail.StoreIDs = user.StoreIDs
+	detail.StoreNames = joinStoreNames(user.StoreIDs, storeNameMap)
+
+	// Jika akses store dikunci dan kosong, kembalikan info user saja.
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return detail, nil
+	}
+
+	stockIns, totalIn, err := r.fetchStockInsByUser(user.ID, itemName, date)
+	if err != nil {
+		return detail, err
+	}
+
+	stockOuts, totalOut, err := r.fetchStockOutByUser(user.ID, itemName, date)
+	if err != nil {
+		return detail, err
+	}
+
+	detail.StockIns = stockIns
+	detail.StockOuts = stockOuts
+	detail.TotalIn = totalIn
+	detail.TotalOut = totalOut
+
+	return detail, nil
+}
+
 type userReportUser struct {
 	ID       int
 	NIP      int
 	Name     string
 	StoreIDs []int
+}
+
+func (r *UserReportRepository) fetchUserByID(userID int) (userReportUser, error) {
+	var (
+		user     userReportUser
+		storeRaw string
+	)
+
+	if userID <= 0 {
+		return userReportUser{}, nil
+	}
+
+	err := r.DB.QueryRow(`
+		SELECT id, nip, name, store_id
+		FROM users
+		WHERE id = ?
+	`, userID).Scan(&user.ID, &user.NIP, &user.Name, &storeRaw)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return userReportUser{}, nil
+		}
+		return userReportUser{}, err
+	}
+
+	user.StoreIDs = parseStoreIDs(storeRaw)
+	return user, nil
 }
 
 func (r *UserReportRepository) fetchUsers() ([]userReportUser, error) {
@@ -134,6 +217,175 @@ func (r *UserReportRepository) buildStoreNameMap(storeIDs map[int]bool) (map[int
 	}
 
 	return result, nil
+}
+
+func (r *UserReportRepository) fetchStockInsByUser(userID int, itemName, date string) ([]models.StockIn, int, error) {
+	result := []models.StockIn{}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, 0, nil
+	}
+
+	args := []interface{}{userID}
+	conditions := []string{"si.user_id = ?"}
+
+	if itemName != "" {
+		conditions = append(conditions, "i.item_name LIKE ?")
+		args = append(args, "%"+itemName+"%")
+	}
+
+	if date != "" {
+		conditions = append(conditions, "DATE(si.received_at) = ?")
+		args = append(args, date)
+	}
+
+	if cond, condArgs := r.buildStoreFilter("i.store_id"); cond != "" {
+		conditions = append(conditions, cond)
+		args = append(args, condArgs...)
+	}
+
+	query := `
+		SELECT si.id,
+		       si.user_id,
+		       u.name,
+		       si.item_id,
+		       i.item_name,
+		       i.store_id,
+		       st.store_name,
+		       s.supplier_name,
+		       si.qty,
+		       si.received_at,
+		       si.details
+		FROM stock_in si
+		JOIN users u ON u.id = si.user_id
+		JOIN items i ON i.item_id = si.item_id
+		LEFT JOIN stores st ON st.store_id = i.store_id
+		JOIN suppliers s ON s.suppliers_id = i.supplier_id
+	`
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY si.received_at DESC"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	total := 0
+	for rows.Next() {
+		var entry models.StockIn
+		if err := rows.Scan(
+			&entry.ID,
+			&entry.UserID,
+			&entry.UserName,
+			&entry.ItemID,
+			&entry.ItemName,
+			&entry.StoreID,
+			&entry.StoreName,
+			&entry.SupplierName,
+			&entry.Qty,
+			&entry.ReceivedAt,
+			&entry.Description,
+		); err != nil {
+			return nil, total, err
+		}
+
+		entry.ReceivedAt, entry.ReceivedAtDisplay = formatStockInTime(entry.ReceivedAt)
+		total += entry.Qty
+		result = append(result, entry)
+	}
+
+	return result, total, rows.Err()
+}
+
+func (r *UserReportRepository) fetchStockOutByUser(userID int, itemName, date string) ([]models.StockOutDetail, int, error) {
+	result := []models.StockOutDetail{}
+	if r.EnforceStoreFilter && len(r.StoreIDs) == 0 {
+		return result, 0, nil
+	}
+
+	args := []interface{}{userID}
+	conditions := []string{"so.user_id = ?"}
+
+	if itemName != "" {
+		conditions = append(conditions, "i.item_name LIKE ?")
+		args = append(args, "%"+itemName+"%")
+	}
+
+	if date != "" {
+		conditions = append(conditions, "DATE(so.issued_at) = ?")
+		args = append(args, date)
+	}
+
+	if cond, condArgs := r.buildStoreFilter("i.store_id"); cond != "" {
+		conditions = append(conditions, cond)
+		args = append(args, condArgs...)
+	}
+
+	query := `
+		SELECT
+			so.id,
+			so.user_id,
+			u.name,
+			so.program_id,
+			p.item_id,
+			i.item_name,
+			i.store_id,
+			st.store_name,
+			s.supplier_name,
+			so.qty,
+			so.issued_at,
+			COALESCE(so.reason, '')
+		FROM stock_out so
+		JOIN programs p ON p.program_id = so.program_id
+		JOIN items i ON i.item_id = p.item_id
+		LEFT JOIN stores st ON st.store_id = i.store_id
+		JOIN suppliers s ON s.suppliers_id = i.supplier_id
+		JOIN users u ON u.id = so.user_id
+	`
+
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	query += " ORDER BY so.issued_at DESC"
+
+	rows, err := r.DB.Query(query, args...)
+	if err != nil {
+		return nil, 0, err
+	}
+	defer rows.Close()
+
+	total := 0
+	for rows.Next() {
+		var entry models.StockOutDetail
+		if err := rows.Scan(
+			&entry.ID,
+			&entry.UserID,
+			&entry.UserName,
+			&entry.ProgramID,
+			&entry.ItemID,
+			&entry.ItemName,
+			&entry.StoreID,
+			&entry.StoreName,
+			&entry.SupplierName,
+			&entry.Qty,
+			&entry.IssuedAt,
+			&entry.Reason,
+		); err != nil {
+			return nil, total, err
+		}
+
+		entry.IssuedAt, entry.IssuedAtDisplay = formatStockOutTime(entry.IssuedAt)
+		entry.Reason = strings.TrimSpace(entry.Reason)
+		total += entry.Qty
+		result = append(result, entry)
+	}
+
+	return result, total, rows.Err()
 }
 
 func (r *UserReportRepository) fetchStockInTotals() (map[int]int, error) {
@@ -340,4 +592,12 @@ func parseStoreIDs(raw string) []int {
 	}
 
 	return ids
+}
+
+func storeIDsToMap(ids []int) map[int]bool {
+	result := make(map[int]bool, len(ids))
+	for _, id := range ids {
+		result[id] = true
+	}
+	return result
 }

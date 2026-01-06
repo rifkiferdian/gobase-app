@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en"
+      data-layout-width="boxed"
+      data-topbar="dark"
+      data-preloader="disable"
+      data-card-layout="borderless"
+      data-bs-theme="light"
+      data-topbar-image="pattern-1">
+    <head>
+        <meta charset="utf-8" />
+        <!-- penting untuk responsive di HP -->
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+        <title>
+            {{ if .Title }}
+                {{ .Title }}
+            {{ else }}
+                Stock Hadiah App
+            {{ end }}
+        </title>
+
+        <!-- Bootstrap Css -->
+        <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
+        <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
+        <!-- Icons Css -->
+        <link href="/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
+        <!-- App Css-->
+        <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+
+        <link href="/assets/libs/select2/css/select2.min.css" rel="stylesheet" type="text/css" />
+
+        <!-- Plugin js (kalau perlu di-head) -->
+        <script src="/assets/js/plugin.js"></script>
+    </head>
+    <body data-sidebar="dark">
+        <div id="layout-wrapper">
+            {{ template "header" . }}
+            {{ template "sidebar" . }}
+        </div>
+
+        <div class="main-content">
+            <div class="page-content">
+                <div class="container-fluid">
+					<div class="row">
+                        <div class="col-12">
+                            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+                                <h4 class="mb-sm-0 font-size-18">User Report</h4>
+
+                                <div class="page-title-right">
+                                    <ol class="breadcrumb m-0">
+                                        <li class="breadcrumb-item"><a href="#">Report</a></li>
+                                        <li class="breadcrumb-item active">Detail</li>
+                                    </ol>
+                                </div>
+
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        {{ if .UserDetail }}
+                        <div class="col-12 mb-2">
+                            <div class="d-flex flex-column flex-sm-row align-items-sm-center gap-2">
+                                <div>
+                                    <h5 class="mb-0">{{ .UserDetail.Name }}</h5>
+                                    <div class="text-muted small">NIP: {{ .UserDetail.NIP }}</div>
+                                    <div class="text-muted small">Store: {{ .UserDetail.StoreNames }}</div>
+                                </div>
+                            </div>
+                        </div>
+                        {{ end }}
+                        <div class="col-md-3">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Barang Masuk</p>
+                                            <h4 class="mb-0">{{ .TotalIn }}</h4>
+                                        </div>
+
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                                <span class="avatar-title">
+                                                    <i class="bx bxs-archive-in font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-3">
+                            <div class="card mini-stats-wid">
+                                <div class="card-body">
+                                    <div class="d-flex">
+                                        <div class="flex-grow-1">
+                                            <p class="text-muted fw-medium">Barang Keluar</p>
+                                            <h4 class="mb-0">{{ .TotalOut }}</h4>
+                                        </div>
+
+                                        <div class="flex-shrink-0 align-self-center">
+                                            <div class="mini-stat-icon avatar-sm rounded-circle bg-primary">
+                                                <span class="avatar-title">
+                                                    <i class="bx bxs-archive-out font-size-24"></i>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-7">
+                            <div class="card shadow-sm">
+                                <div class="card-body">
+                                    <form method="get" action="/user-report-detail/{{ .UserDetail.UserID }}" class="row row-cols-lg-auto g-3 align-items-center">
+                                        <div class="col-12">
+                                            <label class="visually-hidden" for="itemNameSearch">Nama Hadiah</label>
+                                            <div class="input-group">
+                                                <div class="input-group-text">#</div>
+                                                <input type="text" class="form-control" id="itemNameSearch" name="item_name" value="{{ .FilterItemName }}" placeholder="Cari Nama Hadiah">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12">
+                                            <label class="visually-hidden" for="filterDate">Tanggal</label>
+                                            <div class="input-group">
+                                                <input type="date" class="form-control" id="filterDate" name="date" value="{{ .FilterDate }}">
+                                            </div>
+                                        </div>
+
+                                        <div class="col-12 d-flex gap-2">
+                                            <button type="submit" class="btn btn-primary w-md">Terapkan</button>
+                                            <a class="btn btn-light" href="/user-report-detail/{{ .UserDetail.UserID }}">Reset</a>
+                                        </div>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Rekap Stock In</h5>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-hover align-middle">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th style="width:60px;">No</th>
+                                                    <th style="width:20%;">Nama Item</th>
+                                                    <th>Supplier</th>
+                                                    <th style="width:8%;">Qty</th>
+                                                    <th>Tgl In</th>
+                                                    <th>Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{ range $i, $row := .StockIns }}
+                                                <tr>
+                                                    <td>{{ no $i 1 }}</td>
+                                                    <td>
+                                                        <div class="fw-semibold">{{ $row.ItemName }}</div>
+                                                        {{ if $row.StoreName }}<div class="text-muted small">Store: {{ $row.StoreName }}</div>{{ end }}
+                                                    </td>
+                                                    <td>{{ $row.SupplierName }}</td>
+                                                    <td>{{ $row.Qty }}</td>
+                                                    <td>{{ $row.ReceivedAtDisplay }}</td>
+                                                    <td>{{ if $row.Description }}{{ $row.Description }}{{ else }}-{{ end }}</td>
+                                                </tr>
+                                                {{ else }}
+                                                <tr>
+                                                    <td colspan="6" class="text-center">Belum ada data stock in untuk filter ini.</td>
+                                                </tr>
+                                                {{ end }}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="card shadow-sm">
+                                <div class="card-header">
+                                    <h5 class="mb-0">Rekap Stock Out</h5>
+                                </div>
+
+                                <div class="card-body">
+                                    <div class="table-responsive">
+                                        <table class="table table-bordered table-striped table-hover align-middle">
+                                            <thead class="table-dark">
+                                                <tr>
+                                                    <th style="width:60px;">No</th>
+                                                    <th style="width:20%;">Nama Item</th>
+                                                    <th>Supplier</th>
+                                                    <th style="width:8%;">Qty</th>
+                                                    <th>Tgl Out</th>
+                                                    <th>Keterangan</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{ range $i, $row := .StockOuts }}
+                                                <tr>
+                                                    <td>{{ no $i 1 }}</td>
+                                                    <td class="align-middle">
+                                                        <div class="fw-semibold">{{ $row.ItemName }}</div>
+                                                    </td>
+                                                    <td>{{ if $row.SupplierName }}{{ $row.SupplierName }}{{ else }}-{{ end }}</td>
+                                                    <td>{{ $row.Qty }}</td>
+                                                    <td>{{ $row.IssuedAtDisplay }}</td>
+                                                    <td>{{ if $row.Reason }}{{ $row.Reason }}{{ else }}-{{ end }}</td>
+                                                </tr>
+                                                {{ else }}
+                                                <tr>
+                                                    <td colspan="6" class="text-center">Belum ada data stock out untuk filter ini.</td>
+                                                </tr>
+                                                {{ end }}
+                                            </tbody>
+                                        </table>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+            {{ template "footer" . }}
+        </div>
+
+        <!-- JAVASCRIPT -->
+        <script src="/assets/libs/jquery/jquery.min.js"></script>
+        <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
+        <script src="/assets/libs/metismenu/metisMenu.min.js"></script>
+        <script src="/assets/libs/simplebar/simplebar.min.js"></script>
+        <script src="/assets/libs/node-waves/waves.min.js"></script>
+
+        <!-- dashboard init -->
+        <script src="/assets/js/pages/dashboard.init.js"></script>
+
+        <!-- Sweet Alerts js -->
+        <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+
+        <!-- Sweet alert init js-->
+        <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+
+        <script src="/assets/libs/select2/js/select2.min.js"></script>
+        <!-- form advanced init -->
+        <script src="/assets/js/pages/form-advanced.init.js"></script>     
+
+        <!-- App js -->
+        <script src="/assets/js/app.js"></script>
+    </body>
+</html>
+

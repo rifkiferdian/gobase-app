@@ -13,6 +13,7 @@ type StockOutDetail struct {
 	ItemName        string
 	StoreID         int
 	StoreName       string
+	SupplierName    string
 	Qty             int
 	IssuedAt        string
 	IssuedAtDisplay string
