@@ -2,6 +2,7 @@ package main
 
 import (
 	"encoding/gob"
+	"fmt"
 	"html/template"
 	"log"
 	"net/http"
@@ -26,8 +27,15 @@ func main() {
 	// Initialize database / config
 	config.Connect()
 
-	// Initialize Gin engine
-	r := gin.Default()
+	// Initialize Gin engine // menampilkan logger di terminal
+	// r := gin.Default()
+
+	// 🔥 Set Gin release mode (biar tidak ada log debug)
+	gin.SetMode(gin.ReleaseMode)
+
+	// Initialize Gin tanpa logger
+	r := gin.New()
+	r.Use(gin.Recovery())
 
 	// Custom template functions tambah
 	r.SetFuncMap(template.FuncMap{
@@ -70,6 +78,20 @@ func main() {
 	if port == "" {
 		port = "8080"
 	}
+
+	// ===============================
+	// 🔥 BANNER DI SINI (POSISI BENAR)
+	// ===============================
+	fmt.Println(`
+███╗   ███╗██╗██████╗  ██████╗ ████████╗ █████╗ 
+████╗ ████║██║██╔══██╗██╔═══██╗╚══██╔══╝██╔══██╗
+██╔████╔██║██║██████╔╝██║   ██║   ██║   ███████║
+██║╚██╔╝██║██║██╔══██╗██║   ██║   ██║   ██╔══██║
+██║ ╚═╝ ██║██║██║  ██║╚██████╔╝   ██║   ██║  ██║
+╚═╝     ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝
+`)
+	fmt.Println("🚀 Server is running at http://localhost:" + port)
+	fmt.Println("⚠️  DO NOT CLOSE THIS SERVER!")
 
 	// Start HTTP server and log fatal on error
 	if err := r.Run(":" + port); err != nil {
