@@ -478,13 +478,29 @@
                     $group.find('.bootstrap-touchspin-down').prop('disabled', disabled);
                 }
 
+                function getRemainingValue($group) {
+                    var $remaining = $group.closest('tr').find('.product-line-price');
+                    var remainingVal = parseInt($remaining.text(), 10);
+                    return isNaN(remainingVal) ? 0 : remainingVal;
+                }
+
+                function toggleUpButton($group) {
+                    var remainingVal = getRemainingValue($group);
+                    $group.find('.bootstrap-touchspin-up').prop('disabled', remainingVal <= 0);
+                }
+
+                function syncSpinButtons($group, value) {
+                    toggleDownButton($group, value);
+                    toggleUpButton($group);
+                }
+
                 function normalizeValue($input) {
                     var value = parseInt($input.val(), 10);
                     if (isNaN(value) || value < 0) {
                         value = 0;
                     }
                     $input.val(value);
-                    toggleDownButton($input.closest('.bootstrap-touchspin'), value);
+                    syncSpinButtons($input.closest('.bootstrap-touchspin'), value);
                     return value;
                 }
 
@@ -507,6 +523,11 @@
                     var current = normalizeValue($input);
 
                     if (delta < 0 && current <= 0) {
+                        return;
+                    }
+
+                    if (delta > 0 && getRemainingValue($group) <= 0) {
+                        syncSpinButtons($group, current);
                         return;
                     }
 
@@ -560,8 +581,7 @@
                         },
                         complete: function () {
                             var val = normalizeValue($input);
-                            toggleDownButton($group, val);
-                            $group.find('.bootstrap-touchspin-up').prop('disabled', false);
+                            syncSpinButtons($group, val);
                         }
                     });
                 }
