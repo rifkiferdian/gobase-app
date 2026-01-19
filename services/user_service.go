@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
+	"net/mail"
 	"stok-hadiah/config"
 	"stok-hadiah/models"
 	"stok-hadiah/repositories"
@@ -30,6 +31,12 @@ func (s *UserService) CreateUser(input models.UserCreateInput) error {
 
 	if username == "" || name == "" || input.Password == "" {
 		return errors.New("nama, username, dan password wajib diisi")
+	}
+	if email == "" {
+		return errors.New("email wajib diisi")
+	}
+	if _, err := mail.ParseAddress(email); err != nil {
+		return errors.New("email tidak valid")
 	}
 	if input.NIP <= 0 {
 		return errors.New("NIP wajib diisi")
@@ -91,6 +98,9 @@ func (s *UserService) CreateUser(input models.UserCreateInput) error {
 	if storeIDs == nil {
 		storeIDs = []int{}
 	}
+	if len(storeIDs) == 0 {
+		return errors.New("store wajib dipilih")
+	}
 
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(input.Password), bcrypt.DefaultCost)
 	if err != nil {
@@ -122,6 +132,12 @@ func (s *UserService) UpdateUser(input models.UserUpdateInput) error {
 	}
 	if username == "" || name == "" {
 		return errors.New("nama dan username wajib diisi")
+	}
+	if email == "" {
+		return errors.New("email wajib diisi")
+	}
+	if _, err := mail.ParseAddress(email); err != nil {
+		return errors.New("email tidak valid")
 	}
 	if input.NIP <= 0 {
 		return errors.New("NIP wajib diisi")
@@ -182,6 +198,9 @@ func (s *UserService) UpdateUser(input models.UserUpdateInput) error {
 	storeIDs := uniqueInts(input.StoreIDs)
 	if storeIDs == nil {
 		storeIDs = []int{}
+	}
+	if len(storeIDs) == 0 {
+		return errors.New("store wajib dipilih")
 	}
 
 	var hashedPassword string

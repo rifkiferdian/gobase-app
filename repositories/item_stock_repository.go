@@ -125,7 +125,6 @@ func (r *ItemStockRepository) buildSummaryQuery(filterName, filterCategory strin
 			p.program_start_dates,
 			p.program_end_dates,
 			sot.total_out
-		HAVING (COALESCE(SUM(si.qty), 0) - COALESCE(sot.total_out, 0)) > 0
 	`
 
 	return query, args
