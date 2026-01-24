@@ -1,12 +1,6 @@
 {{ define "layout/base.html" }}
 <!doctype html>
-<html lang="en"
-      data-layout-width="boxed"
-      data-topbar="dark"
-      data-preloader="disable"
-      data-card-layout="borderless"
-      data-bs-theme="light"
-      data-topbar-image="pattern-1">
+<html lang="en">
     <head>
         <meta charset="utf-8" />
         <!-- penting untuk responsive di HP -->
@@ -20,63 +14,166 @@
             {{ end }}
         </title>
 
-        <!-- Bootstrap Css -->
-        <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
-        <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
-        <!-- Icons Css -->
-        <link href="/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-        <!-- App Css-->
-        <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            display: ['"Plus Jakarta Sans"', 'ui-sans-serif', 'system-ui'],
+                        },
+                        colors: {
+                            brand: {
+                                50: '#f6f1f4',
+                                100: '#efe2ea',
+                                300: '#d1a0d6',
+                                500: '#8c149c',
+                                600: '#800080',
+                                700: '#571a3f',
+                            },
+                        },
+                        boxShadow: {
+                            card: '0 12px 26px rgba(16, 24, 40, 0.08)',
+                        },
+                    },
+                },
+            };
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+        <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+
+        <style>
+            .dash-surface {
+                background: radial-gradient(120% 120% at 10% 0%, #f9fbff 0%, #f3f6ff 40%, #f8fafc 100%);
+            }
+            main a {
+                color: #800080;
+            }
+            main a:hover {
+                color: #8c149c;
+            }
+        </style>
 
         <!-- Plugin js (kalau perlu di-head) -->
         <script src="/assets/js/plugin.js"></script>
     </head>
-    <body data-sidebar="dark">
-        <div id="layout-wrapper">
-            {{ template "header" . }}
+    <body class="bg-slate-100 font-display text-slate-900">
+        <div class="flex min-h-screen">
             {{ template "sidebar" . }}
+
+            <div class="flex min-h-screen flex-1 flex-col">
+                {{ template "header" . }}
+
+                <main class="flex-1 px-4 py-6 lg:px-8">
+                    <div class="mx-auto w-full max-w-7xl">
+                        {{ if eq .Page "dashboard" }}
+                            {{ template "dashboard_content" . }}
+                        {{ else if eq .Page "supplier" }}
+                            {{ template "supplier_content" . }}
+                        {{ else if eq .Page "item" }}
+                            {{ template "item_content" . }}
+                        {{ else if eq .Page "program" }}
+                            {{ template "program_content" . }}
+                        {{ else if eq .Page "item_in" }}
+                            {{ template "item_in_content" . }}
+                        {{ end }}
+                    </div>
+                </main>
+
+                {{ template "footer" . }}
+            </div>
         </div>
 
-        <div class="main-content">
-            <div class="page-content">
-                <div class="container-fluid">
-					{{ if eq .Page "dashboard" }}
-						{{ template "dashboard_content" . }}
-					{{ else if eq .Page "supplier" }}
-						{{ template "supplier_content" . }}
-					{{ else if eq .Page "item" }}
-						{{ template "item_content" . }}
-					{{ else if eq .Page "program" }}
-						{{ template "program_content" . }}
-					{{ else if eq .Page "item_in" }}
-						{{ template "item_in_content" . }}
-					{{ end }}
-                </div>
-            </div>
-            {{ template "footer" . }}
-        </div>
+        <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-slate-900/50 lg:hidden"></div>
 
         <!-- JAVASCRIPT -->
         <script src="/assets/libs/jquery/jquery.min.js"></script>
-        <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
-        <script src="/assets/libs/metismenu/metisMenu.min.js"></script>
-        <script src="/assets/libs/simplebar/simplebar.min.js"></script>
-        <script src="/assets/libs/node-waves/waves.min.js"></script>
-
-        <!-- apexcharts -->
-        <script src="/assets/libs/apexcharts/apexcharts.min.js"></script>
-
-        <!-- apexcharts init -->
-        <script src="/assets/js/pages/apexcharts.init.js"></script>
 
         <!-- Sweet Alerts js -->
-        <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
-        <!-- Sweet alert init js-->
-        <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                var sidebar = document.getElementById('app-sidebar');
+                var overlay = document.getElementById('sidebar-overlay');
+                var toggleButton = document.querySelector('[data-sidebar-toggle]');
 
-        <!-- App js -->
-        <script src="/assets/js/app.js"></script>
+                function closeSidebar() {
+                    if (!sidebar) return;
+                    sidebar.classList.add('-translate-x-full');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+
+                function openSidebar() {
+                    if (!sidebar) return;
+                    sidebar.classList.remove('-translate-x-full');
+                    if (overlay) overlay.classList.remove('hidden');
+                }
+
+                if (toggleButton) {
+                    toggleButton.addEventListener('click', function () {
+                        if (!sidebar) return;
+                        if (sidebar.classList.contains('-translate-x-full')) {
+                            openSidebar();
+                        } else {
+                            closeSidebar();
+                        }
+                    });
+                }
+
+                if (overlay) {
+                    overlay.addEventListener('click', closeSidebar);
+                }
+
+                var modalTriggers = document.querySelectorAll('[data-modal-open]');
+                var modalCloses = document.querySelectorAll('[data-modal-close]');
+
+                function openModal(modalId) {
+                    var modal = document.getElementById(modalId);
+                    if (!modal) return;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    document.body.classList.add('overflow-hidden');
+                }
+
+                function closeModal(modal) {
+                    if (!modal) return;
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    document.body.classList.remove('overflow-hidden');
+                }
+
+                modalTriggers.forEach(function (trigger) {
+                    trigger.addEventListener('click', function () {
+                        var target = trigger.getAttribute('data-modal-open');
+                        if (target) openModal(target);
+                    });
+                });
+
+                modalCloses.forEach(function (close) {
+                    close.addEventListener('click', function () {
+                        var modal = close.closest('[data-modal]');
+                        closeModal(modal);
+                    });
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key !== 'Escape') return;
+                    var openModals = document.querySelectorAll('[data-modal].flex');
+                    openModals.forEach(function (modal) {
+                        closeModal(modal);
+                    });
+                });
+            });
+        </script>
     </body>
 </html>
 {{ end }}
+
+
+

@@ -82,15 +82,7 @@ func main() {
 	// ===============================
 	// 🔥 BANNER DI SINI (POSISI BENAR)
 	// ===============================
-	fmt.Println(`
-███╗   ███╗██╗██████╗  ██████╗ ████████╗ █████╗ 
-████╗ ████║██║██╔══██╗██╔═══██╗╚══██╔══╝██╔══██╗
-██╔████╔██║██║██████╔╝██║   ██║   ██║   ███████║
-██║╚██╔╝██║██║██╔══██╗██║   ██║   ██║   ██╔══██║
-██║ ╚═╝ ██║██║██║  ██║╚██████╔╝   ██║   ██║  ██║
-╚═╝     ╚═╝╚═╝╚═╝  ╚═╝ ╚═════╝    ╚═╝   ╚═╝  ╚═╝
-`)
-	fmt.Println("--- APLIKASI STOCK HADIAH DI COUNTER PENITIPAN TAS ---")
+
 	fmt.Println("🚀 Server is running at http://localhost:" + port)
 	fmt.Println("⚠️  DO NOT CLOSE THIS SERVER!")
 

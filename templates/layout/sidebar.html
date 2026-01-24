@@ -1,97 +1,61 @@
 {{ define "sidebar" }}
-<div class="vertical-menu">
-
-    <div data-simplebar class="h-100">
-
-        <!--- Sidemenu -->
-        <div id="sidebar-menu">
-            <!-- Left Menu Start -->
-            <ul class="metismenu list-unstyled" id="side-menu">
-                <li class="menu-title" key="t-menu">Menu</li>
-                
-                <li>
-                    <a href="{{ baseURL "/dashboard" }}" class="waves-effect">
-                        <i class="bx bx-home-circle"></i>
-                        <span key="t-dashboards">Dashboards</span>
-                    </a>
-                </li>
-                
-                <li>
-                    <a href="javascript: void(0);" class="waves-effect has-arrow">
-                        <i class="bx bx-cog"></i>
-                        <span key="t-layouts">Master Data</span>
-                    </a>
-                    <ul class="sub-menu" aria-expanded="false">
-                        <li><a href="{{ baseURL "/suppliers" }}" key="t-login">Suplier</a></li>
-                        <li><a href="{{ baseURL "/items" }}" key="t-login-2">Barang</a></li>
-                        <li><a href="{{ baseURL "/programs" }}" key="t-login-2">Program</a></li>
-                    </ul>
-                </li>
-                {{ if or (index .Permissions "user_management_access") (index .Permissions "role_management_access") }}
-                <li class="menu-title" key="t-menu">User</li>
-                {{ end }}
-                {{ if index .Permissions "user_management_access" }}
-                <li class="">
-                    <a href="{{ baseURL "/users" }}" class="waves-effect">
-                        <i class="bx bx-user"></i>
-                        <span key="t-users">Users</span>
-                    </a>
-                </li>
-                {{ end }}
-                {{ if index .Permissions "role_management_access" }}
-                <li class="">
-                    <a href="{{ baseURL "/role" }}" class="waves-effect">
-                        <i class="bx bx-task"></i>
-                        <span key="t-users">Roles</span>
-                    </a>
-                </li>
-                {{ end }}
-                <li class="menu-title" key="t-pages">APPS</li>
-
-                <li>
-                    <a href="{{ baseURL "/item-in" }}" class="waves-effect">
-                        <i class="bx bxs-archive-in"></i>
-                        <span key="b-masuk">Barang Masuk</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ baseURL "/item-out" }}" class="waves-effect">
-                        <i class="bx bxs-archive-out"></i>
-                        <span key="b-keluar">Barang Keluar</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ baseURL "/item-out-report" }}" class="waves-effect">
-                        <i class="bx bxs-spreadsheet"></i>
-                        <span key="t-laporan">Laporan Stock Out</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ baseURL "/stock-report" }}" class="waves-effect">
-                        <i class="bx bxs-spreadsheet"></i>
-                        <span key="t-laporan">Laporan Stok</span>
-                    </a>
-                </li>
-                <li>
-                    <a href="{{ baseURL "/user-report-list" }}" class="waves-effect">
-                        <i class="bx bxs-spreadsheet"></i>
-                        <span key="t-laporan">Laporan Per User</span>
-                    </a>
-                </li>
-
-            </ul>
-            <ul class="metismenu list-unstyled" id="side-menu">
-                <li class="menu-title" key="t-menu">Lapor Programmer</li>
-                
-                <li>
-                    <a href="http://200.0.0.9/report-bug-sistem/" class="waves-effect">
-                        <i class="bx bx-error-alt"></i>
-                        <span key="t-dashboards" style="color: white;"><b>Lapor Error</b></span>
-                    </a>
-                </li>
-            </ul>
+<aside id="app-sidebar" class="fixed inset-y-0 left-0 z-40 flex w-64 -translate-x-full flex-col border-r border-slate-200 bg-white px-4 py-6 transition-transform duration-200 lg:static lg:shrink-0 lg:translate-x-0">
+    <div class="flex items-center gap-3 px-2 pb-6">
+        <div class="flex h-11 w-11 items-center justify-center rounded-xl bg-[#800080] text-xs font-semibold uppercase tracking-widest text-white">
+            STIE
         </div>
-        <!-- Sidebar -->
+        <div>
+            <p class="text-xs uppercase tracking-[0.3em] text-slate-400">Mail Approval</p>
+            <p class="text-sm font-semibold text-slate-800">Admin Panel</p>
+        </div>
     </div>
-</div>
+
+    <nav class="flex-1 overflow-y-auto">
+        <ul class="space-y-2">
+            <li>
+                <a href="{{ baseURL "/dashboard" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if eq .Page "dashboard" }}bg-brand-50 text-[#800080] shadow-sm ring-1 ring-brand-100{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}">
+                    <i class="bx bx-grid-alt text-xl"></i>
+                    <span key="t-dashboards">Dashboard</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800">
+                    <i class="bx bx-sitemap text-xl"></i>
+                    <span>Workflow Admin</span>
+                </a>
+            </li>
+            <li>
+                <a href="#" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800">
+                    <i class="bx bx-file text-xl"></i>
+                    <span>Document Types</span>
+                </a>
+            </li>
+            {{ if index .Permissions "role_management_access" }}
+            <li>
+                <a href="{{ baseURL "/role" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if or (eq .Page "role") (eq .Page "roleForm") (eq .Page "roleEdit") }}bg-brand-50 text-[#800080] shadow-sm ring-1 ring-brand-100{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}">
+                    <i class="bx bx-user text-xl"></i>
+                    <span>User Roles</span>
+                </a>
+            </li>
+            {{ end }}
+            {{ if index .Permissions "user_management_access" }}
+            <li>
+                <a href="{{ baseURL "/users" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if eq .Page "user" }}bg-brand-50 text-[#800080] shadow-sm ring-1 ring-brand-100{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}">
+                    <i class="bx bx-id-card text-xl"></i>
+                    <span>Users</span>
+                </a>
+            </li>
+            {{ end }}
+            <li>
+                <a href="#" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800">
+                    <i class="bx bx-bar-chart-square text-xl"></i>
+                    <span>Reports</span>
+                </a>
+            </li>
+        </ul>
+    </nav>
+</aside>
 {{ end }}
+
+
+

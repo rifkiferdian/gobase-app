@@ -1,11 +1,5 @@
 <!doctype html>
-<html lang="en"
-      data-layout-width="boxed"
-      data-topbar="dark"
-      data-preloader="disable"
-      data-card-layout="borderless"
-      data-bs-theme="light"
-      data-topbar-image="pattern-1">
+<html lang="en">
     <head>
         <meta charset="utf-8" />
         <!-- penting untuk responsive di HP -->
@@ -19,94 +13,112 @@
             {{ end }}
         </title>
 
-        <!-- Bootstrap Css -->
-        <link href="/assets/css/bootstrap.min.css" id="bootstrap-style" rel="stylesheet" type="text/css" />
-        <link href="/assets/libs/sweetalert2/sweetalert2.min.css" rel="stylesheet" type="text/css" />
-        <!-- Icons Css -->
-        <link href="/assets/css/icons.min.css" rel="stylesheet" type="text/css" />
-        <!-- App Css-->
-        <link href="/assets/css/app.min.css" id="app-style" rel="stylesheet" type="text/css" />
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+        <script>
+            tailwind.config = {
+                theme: {
+                    extend: {
+                        fontFamily: {
+                            display: ["Plus Jakarta Sans", "ui-sans-serif", "system-ui"],
+                        },
+                        colors: {
+                            brand: {
+                                50: "#f6f1f4",
+                                100: "#efe2ea",
+                                300: "#d1a0d6",
+                                500: "#8c149c",
+                                600: "#800080",
+                                700: "#571a3f",
+                            },
+                        },
+                    },
+                },
+            };
+        </script>
+        <script src="https://cdn.tailwindcss.com"></script>
+
+        <link href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css" rel="stylesheet" />
+        <link href="https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css" rel="stylesheet" />
+
+        <style>
+            main a {
+                color: #800080;
+            }
+            main a:hover {
+                color: #8c149c;
+            }
+        </style>
 
         <!-- Plugin js (kalau perlu di-head) -->
         <script src="/assets/js/plugin.js"></script>
     </head>
-    <body data-sidebar="dark">
-        <div id="layout-wrapper">
-            {{ template "header" . }}
+    <body class="bg-slate-100 font-display text-slate-900">
+        <div class="flex min-h-screen">
             {{ template "sidebar" . }}
-        </div>
 
-        <div class="main-content">
-            <div class="page-content">
-                <div class="container-fluid">
-					<div class="row">
-                        <div class="col-12">
-                            <div class="page-title-box d-sm-flex align-items-center justify-content-between">
-                                <h4 class="mb-sm-0 font-size-18">Users</h4>
+            <div class="flex min-h-screen flex-1 flex-col">
+                {{ template "header" . }}
 
-                                <div class="page-title-right">
-                                    <ol class="breadcrumb m-0">
-                                        <li class="breadcrumb-item"><a href="#">Settings</a></li>
-                                        <li class="breadcrumb-item active">Users</li>
-                                    </ol>
-                                </div>
-
+                <main class="flex-1 px-4 py-6 lg:px-8">
+                    <div class="mx-auto w-full max-w-7xl space-y-6">
+                        <div class="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+                            <div>
+                                <p class="text-xs font-semibold uppercase tracking-[0.25em] text-slate-400">Settings / Users</p>
+                                <h1 class="mt-2 text-2xl font-semibold text-slate-900">Users</h1>
                             </div>
                         </div>
-                    </div>
 
-                    <div class="row">
-                        <div class="col-12"> 
-                            <div class="card"> 
-                                <div class="card-header d-flex justify-content-between align-items-center">
-                                    <h5 class="mb-0">Daftar User</h5>
-                                    <button type="button" class="btn btn-primary waves-effect btn-label waves-light" data-bs-toggle="modal" data-bs-target="#userModal">
-                                        <i class="bx bx-plus label-icon"></i> New User
-                                    </button>
+                        <div class="rounded-2xl border border-slate-200 bg-white shadow-sm">
+                            <div class="flex flex-col gap-3 border-b border-slate-100 px-4 py-4 sm:flex-row sm:items-center sm:justify-between">
+                                <h2 class="text-base font-semibold text-slate-900">Daftar User</h2>
+                                <button type="button" class="inline-flex items-center gap-2 rounded-xl bg-[#800080] px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-[#8c149c]" data-modal-open="userModal">
+                                    <i class="bx bx-plus text-base"></i>
+                                    New User
+                                </button>
+                            </div>
+                            <div class="p-4">
+                                {{ if .Error }}
+                                <div class="mb-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-sm text-rose-600">
+                                    {{ .Error }}
                                 </div>
-                                <div class="card-body">
-                                    {{ if .Error }}
-                                    <div class="alert alert-danger" role="alert">
-                                        {{ .Error }}
-                                    </div>
-                                    {{ end }}
-                                    <div class="table-responsive">
-                                        <table class="table table-responsive">
-                                            <thead class="table-light">
-                                                <tr>
-                                                    <th style="width: 50px;">#</th>
-                                                    <th>Username</th>
-                                                    <th>Nama</th>
-                                                    <!-- <th>Email</th> -->
-                                                    <th>Role</th>
-                                                    <th>Store ID</th>
-                                                    <th>Status</th>
-                                                    <!-- <th>Created At</th> -->
-                                                    <th>Aksi</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {{ range $i, $user := .users }}
-                                                <tr>
-                                                    <td>{{ no $i 1 }}</td>
-                                                    <td>{{ $user.Username }}</td>
-                                                    <td>{{ $user.Name }}</td>
-                                                    <!-- <td>{{ $user.Email }}</td> -->
-                                                    <td><h5><span class=" badge badge-soft-info">{{ $user.RoleDisplay }}</span></h5></td>
-                                                    <td>{{ $user.StoreDisplay }}</td>
-                                                    <td><h5>
-                                                        {{ if eq $user.Status "active" }}
-                                                            <span class="badge badge-soft-success">{{ $user.StatusLabel }}</span>
-                                                        {{ else }}
-                                                            <span class="badge badge-soft-secondary">{{ $user.StatusLabel }}</span>
-                                                        {{ end }}
-                                                        </h5>
-                                                    </td>
-                                                    <!-- <td>{{ $user.CreatedAtDisplay }}</td> -->
-                                                    <td>
-                                                        <div class="d-flex justify-content-start">
+                                {{ end }}
+                                <div class="overflow-x-auto">
+                                    <table class="min-w-full text-sm">
+                                        <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                                            <tr>
+                                                <th class="px-3 py-2 text-left font-semibold">#</th>
+                                                <th class="px-3 py-2 text-left font-semibold">Username</th>
+                                                <th class="px-3 py-2 text-left font-semibold">Nama</th>
+                                                <th class="px-3 py-2 text-left font-semibold">Role</th>
+                                                <th class="px-3 py-2 text-left font-semibold">Store ID</th>
+                                                <th class="px-3 py-2 text-left font-semibold">Status</th>
+                                                <th class="px-3 py-2 text-left font-semibold">Aksi</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody class="divide-y divide-slate-100">
+                                            {{ range $i, $user := .users }}
+                                            <tr class="hover:bg-slate-50/70">
+                                                <td class="px-3 py-3 text-slate-500">{{ no $i 1 }}</td>
+                                                <td class="px-3 py-3 font-semibold text-slate-700">{{ $user.Username }}</td>
+                                                <td class="px-3 py-3 text-slate-600">{{ $user.Name }}</td>
+                                                <td class="px-3 py-3">
+                                                    <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-600">{{ $user.RoleDisplay }}</span>
+                                                </td>
+                                                <td class="px-3 py-3 text-slate-600">{{ $user.StoreDisplay }}</td>
+                                                <td class="px-3 py-3">
+                                                    {{ if eq $user.Status "active" }}
+                                                        <span class="inline-flex items-center rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-600">{{ $user.StatusLabel }}</span>
+                                                    {{ else }}
+                                                        <span class="inline-flex items-center rounded-full bg-slate-100 px-2.5 py-1 text-xs font-semibold text-slate-500">{{ $user.StatusLabel }}</span>
+                                                    {{ end }}
+                                                </td>
+                                                <td class="px-3 py-3">
+                                                    <div class="flex flex-wrap items-center gap-2">
                                                         <button type="button"
-                                                            class="btn btn-outline-warning waves-effect waves-light btn-sm me-1 btn-edit-user"
+                                                            class="inline-flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-1.5 text-xs font-semibold text-amber-700 transition hover:bg-amber-100 btn-edit-user"
                                                             data-user-id="{{ $user.ID }}"
                                                             data-nip="{{ $user.NIP }}"
                                                             data-username="{{ $user.Username }}"
@@ -115,216 +127,267 @@
                                                             data-status="{{ $user.Status }}"
                                                             data-stores="{{ range $index, $sid := $user.StoreIDs }}{{ if $index }},{{ end }}{{ $sid }}{{ end }}"
                                                             data-roles="{{ range $idx, $role := $user.RoleNames }}{{ if $idx }},{{ end }}{{ $role }}{{ end }}">
-                                                            <i class="bx bx-pen font-size-16 align-middle me-2"></i>Edit</button>
-                                                        <button type="button" class="btn btn-outline-danger waves-effect waves-light btn-sm btn-delete-user" data-url="/users/delete/{{ $user.ID }}" data-username="{{ $user.Username }}">
-                                                            <i class="bx bx-trash font-size-16 align-middle me-2"></i>Del</button>
-                                                        </div>
-                                                    </td>
-                                                </tr>
-                                                {{ else }}
-                                                <tr>
-                                                    <td colspan="8" class="text-center">Belum ada data user</td>
-                                                </tr>
-                                                {{ end }}
-                                            </tbody>
-                                        </table>
-                                    </div>
-                                </div>
-                            </div> 
-                        </div> 
-                    </div>
-                </div>
-            </div>
-            {{ template "footer" . }}
-        </div>
-
-    <!-- Modal -->
-    <div class="modal fade " id="userModal" tabindex="-1"
-         aria-labelledby="userModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal" id="userModalLabel">New User Form</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                
-                <form action="/users" method="post">
-                    <div class="modal-body">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label for="name" class="form-label">Name</label>
-                                    <input type="text" class="form-control "
-                                        id="name" name="name">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="username" class="form-label">Username Login</label>
-                                    <input type="text" class="form-control "
-                                        id="username" name="username">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="userPassword" class="form-label">Password</label>
-                                    <input type="password" name="password" class="form-control " id="userPassword">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="email" class="form-label">Email</label>
-                                    <input type="email" class="form-control " 
-                                        id="email" name="email" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="userRoles" class="form-label">Roles</label>
-                                    <select name="roles" id="userRoles" class="form-select" multiple>
-                                        {{ range .roles }}
-                                            <option value="{{ .Name }}">{{ .Name }}</option>
-                                        {{ end }}
-                                    </select>
-                                </div>
-                            </div>
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label for="nip" class="form-label">Nomor Identitas Pegawai</label>
-                                    <input type="text" class="form-control "
-                                        id="nip" name="nip" placeholder="Masukkan NIP/NIK Pegawai">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="store_id" class="form-label">Outlet MK</label>
-                                    <select id="store_id" class="form-select " name="store_id" multiple required>
-                                        {{ range .stores }}
-                                            <option value="{{ .StoreID }}">{{ .StoreName }}</option>
-                                        {{ end }}
-                                    </select>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="status" class="form-label">Aktif</label>
-                                    <select id="status" class="form-select" name="status">
-                                        <option value="active">Aktif</option>
-                                        <option value="non_active">Non Aktif</option>
-                                    </select>
+                                                            <i class="bx bx-pen text-sm"></i>
+                                                            Edit
+                                                        </button>
+                                                        <button type="button" class="inline-flex items-center gap-2 rounded-lg border border-rose-200 bg-rose-50 px-3 py-1.5 text-xs font-semibold text-rose-700 transition hover:bg-rose-100 btn-delete-user" data-url="/users/delete/{{ $user.ID }}" data-username="{{ $user.Username }}">
+                                                            <i class="bx bx-trash text-sm"></i>
+                                                            Del
+                                                        </button>
+                                                    </div>
+                                                </td>
+                                            </tr>
+                                            {{ else }}
+                                            <tr>
+                                                <td colspan="8" class="px-3 py-6 text-center text-sm text-slate-500">Belum ada data user</td>
+                                            </tr>
+                                            {{ end }}
+                                        </tbody>
+                                    </table>
                                 </div>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Batal</button>
-                        <button type="submit" class="btn btn-primary">
-                            <!-- <span wire:loading wire:target="store" class="spinner-border spinner-border-sm"></span> -->
+                </main>
+
+                {{ template "footer" . }}
+            </div>
+        </div>
+
+        <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-slate-900/50 lg:hidden"></div>
+
+        <div data-modal class="fixed inset-0 z-50 hidden items-center justify-center" id="userModal">
+            <div class="absolute inset-0 bg-slate-900/50" data-modal-close></div>
+            <div class="relative w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h2 class="text-lg font-semibold text-slate-900" id="userModalLabel">New User Form</h2>
+                    <button type="button" class="text-slate-400 transition hover:text-slate-600" data-modal-close>
+                        <i class="bx bx-x text-2xl"></i>
+                    </button>
+                </div>
+
+                <form action="/users" method="post" class="mt-6 space-y-6">
+                    <div class="grid gap-6 md:grid-cols-2">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="name" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Name</label>
+                                <input type="text" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="name" name="name">
+                            </div>
+
+                            <div>
+                                <label for="username" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Username Login</label>
+                                <input type="text" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="username" name="username">
+                            </div>
+
+                            <div>
+                                <label for="userPassword" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Password</label>
+                                <input type="password" name="password" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="userPassword">
+                            </div>
+
+                            <div>
+                                <label for="email" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Email</label>
+                                <input type="email" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="email" name="email" required>
+                            </div>
+
+                            <div>
+                                <label for="userRoles" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Roles</label>
+                                <select name="roles" id="userRoles" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" multiple>
+                                    {{ range .roles }}
+                                        <option value="{{ .Name }}">{{ .Name }}</option>
+                                    {{ end }}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="nip" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Nomor Identitas Pegawai</label>
+                                <input type="text" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="nip" name="nip" placeholder="Masukkan NIP/NIK Pegawai">
+                            </div>
+
+                            <div>
+                                <label for="store_id" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Outlet MK</label>
+                                <select id="store_id" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" name="store_id" multiple required>
+                                    {{ range .stores }}
+                                        <option value="{{ .StoreID }}">{{ .StoreName }}</option>
+                                    {{ end }}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="status" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Aktif</label>
+                                <select id="status" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" name="status">
+                                    <option value="active">Aktif</option>
+                                    <option value="non_active">Non Aktif</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+                        <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" data-modal-close>Batal</button>
+                        <button type="submit" class="rounded-xl bg-[#800080] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8c149c]">
                             Simpan
                         </button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
 
-    <!-- Edit Modal -->
-    <div class="modal fade " id="userEditModal" tabindex="-1"
-         aria-labelledby="userEditModalLabel" aria-hidden="true">
-        <div class="modal-dialog modal-dialog-centered modal-lg">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal" id="userEditModalLabel">Edit User</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        <div data-modal class="fixed inset-0 z-50 hidden items-center justify-center" id="userEditModal">
+            <div class="absolute inset-0 bg-slate-900/50" data-modal-close></div>
+            <div class="relative w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl">
+                <div class="flex items-center justify-between border-b border-slate-100 pb-4">
+                    <h2 class="text-lg font-semibold text-slate-900" id="userEditModalLabel">Edit User</h2>
+                    <button type="button" class="text-slate-400 transition hover:text-slate-600" data-modal-close>
+                        <i class="bx bx-x text-2xl"></i>
+                    </button>
                 </div>
-                
-                <form action="/users/update" method="post">
-                    <div class="modal-body">
-                        <input type="hidden" name="user_id" id="edit_user_id">
-                        <div class="row">
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label for="edit_name" class="form-label">Name</label>
-                                    <input type="text" class="form-control " id="edit_name" name="name">
-                                </div>
 
-                                <div class="mb-3">
-                                    <label for="edit_username" class="form-label">Username Login</label>
-                                    <input type="text" class="form-control " id="edit_username" name="username">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="edit_userPassword" class="form-label">Password</label>
-                                    <input type="password" name="password" class="form-control " id="edit_userPassword" placeholder="Kosongkan jika tidak diubah">
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="edit_email" class="form-label">Email</label>
-                                    <input type="email" class="form-control " id="edit_email" name="email" required>
-                                </div>
-
-                                <div class="mb-3">
-                                    <label for="edit_userRoles" class="form-label">Roles</label>
-                                    <select name="roles" id="edit_userRoles" class="form-select" multiple>
-                                        {{ range .roles }}
-                                            <option value="{{ .Name }}">{{ .Name }}</option>
-                                        {{ end }}
-                                    </select>
-                                </div>
+                <form action="/users/update" method="post" class="mt-6 space-y-6">
+                    <input type="hidden" name="user_id" id="edit_user_id">
+                    <div class="grid gap-6 md:grid-cols-2">
+                        <div class="space-y-4">
+                            <div>
+                                <label for="edit_name" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Name</label>
+                                <input type="text" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="edit_name" name="name">
                             </div>
-                            <div class="col-6">
-                                <div class="mb-3">
-                                    <label for="edit_nip" class="form-label">Nomor Identitas Pegawai</label>
-                                    <input type="text" class="form-control " id="edit_nip" name="nip" placeholder="Masukkan NIP/NIK Pegawai">
-                                </div>
 
-                                <div class="mb-3">
-                                    <label for="edit_store_id" class="form-label">Outlet MK</label>
-                                    <select id="edit_store_id" class="form-select " name="store_id" multiple required>
-                                        {{ range .stores }}
-                                            <option value="{{ .StoreID }}">{{ .StoreName }}</option>
-                                        {{ end }}
-                                    </select>
-                                </div>
+                            <div>
+                                <label for="edit_username" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Username Login</label>
+                                <input type="text" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="edit_username" name="username">
+                            </div>
 
-                                <div class="mb-3">
-                                    <label for="edit_status" class="form-label">Aktif</label>
-                                    <select id="edit_status" class="form-select" name="status">
-                                        <option value="active">Aktif</option>
-                                        <option value="non_active">Non Aktif</option>
-                                    </select>
-                                </div>
+                            <div>
+                                <label for="edit_userPassword" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Password</label>
+                                <input type="password" name="password" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="edit_userPassword" placeholder="Kosongkan jika tidak diubah">
+                            </div>
+
+                            <div>
+                                <label for="edit_email" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Email</label>
+                                <input type="email" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="edit_email" name="email" required>
+                            </div>
+
+                            <div>
+                                <label for="edit_userRoles" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Roles</label>
+                                <select name="roles" id="edit_userRoles" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" multiple>
+                                    {{ range .roles }}
+                                        <option value="{{ .Name }}">{{ .Name }}</option>
+                                    {{ end }}
+                                </select>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div>
+                                <label for="edit_nip" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Nomor Identitas Pegawai</label>
+                                <input type="text" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" id="edit_nip" name="nip" placeholder="Masukkan NIP/NIK Pegawai">
+                            </div>
+
+                            <div>
+                                <label for="edit_store_id" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Outlet MK</label>
+                                <select id="edit_store_id" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" name="store_id" multiple required>
+                                    {{ range .stores }}
+                                        <option value="{{ .StoreID }}">{{ .StoreName }}</option>
+                                    {{ end }}
+                                </select>
+                            </div>
+
+                            <div>
+                                <label for="edit_status" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Aktif</label>
+                                <select id="edit_status" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" name="status">
+                                    <option value="active">Aktif</option>
+                                    <option value="non_active">Non Aktif</option>
+                                </select>
                             </div>
                         </div>
                     </div>
-                    
-                    <div class="modal-footer">
-                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" >Batal</button>
-                        <button type="submit" class="btn btn-primary">
-                            Update
-                        </button>
+
+                    <div class="flex flex-col gap-3 border-t border-slate-100 pt-4 sm:flex-row sm:justify-end">
+                        <button type="button" class="rounded-xl border border-slate-200 bg-white px-4 py-2 text-sm font-semibold text-slate-600 transition hover:bg-slate-50" data-modal-close>Batal</button>
+                        <button type="submit" class="rounded-xl bg-[#800080] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#8c149c]">Update</button>
                     </div>
                 </form>
             </div>
         </div>
-    </div>
 
         <!-- JAVASCRIPT -->
         <script src="/assets/libs/jquery/jquery.min.js"></script>
-        <script src="/assets/libs/bootstrap/js/bootstrap.bundle.min.js"></script>
-        <script src="/assets/libs/metismenu/metisMenu.min.js"></script>
-        <script src="/assets/libs/simplebar/simplebar.min.js"></script>
-        <script src="/assets/libs/node-waves/waves.min.js"></script>
-
-        <!-- apexcharts -->
-        <script src="/assets/libs/apexcharts/apexcharts.min.js"></script>
-
-        <!-- dashboard init -->
-        <script src="/assets/js/pages/dashboard.init.js"></script>
 
         <!-- Sweet Alerts js -->
-        <script src="/assets/libs/sweetalert2/sweetalert2.min.js"></script>
-
-        <!-- Sweet alert init js-->
-        <script src="/assets/js/pages/sweet-alerts.init.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
         <script>
             document.addEventListener('DOMContentLoaded', function () {
+                var sidebar = document.getElementById('app-sidebar');
+                var overlay = document.getElementById('sidebar-overlay');
+                var toggleButton = document.querySelector('[data-sidebar-toggle]');
+
+                function closeSidebar() {
+                    if (!sidebar) return;
+                    sidebar.classList.add('-translate-x-full');
+                    if (overlay) overlay.classList.add('hidden');
+                }
+
+                function openSidebar() {
+                    if (!sidebar) return;
+                    sidebar.classList.remove('-translate-x-full');
+                    if (overlay) overlay.classList.remove('hidden');
+                }
+
+                if (toggleButton) {
+                    toggleButton.addEventListener('click', function () {
+                        if (!sidebar) return;
+                        if (sidebar.classList.contains('-translate-x-full')) {
+                            openSidebar();
+                        } else {
+                            closeSidebar();
+                        }
+                    });
+                }
+
+                if (overlay) {
+                    overlay.addEventListener('click', closeSidebar);
+                }
+
+                var modalTriggers = document.querySelectorAll('[data-modal-open]');
+                var modalCloses = document.querySelectorAll('[data-modal-close]');
+
+                function openModal(modalId) {
+                    var modal = document.getElementById(modalId);
+                    if (!modal) return;
+                    modal.classList.remove('hidden');
+                    modal.classList.add('flex');
+                    document.body.classList.add('overflow-hidden');
+                }
+
+                function closeModal(modal) {
+                    if (!modal) return;
+                    modal.classList.add('hidden');
+                    modal.classList.remove('flex');
+                    document.body.classList.remove('overflow-hidden');
+                }
+
+                modalTriggers.forEach(function (trigger) {
+                    trigger.addEventListener('click', function () {
+                        var target = trigger.getAttribute('data-modal-open');
+                        if (target) openModal(target);
+                    });
+                });
+
+                modalCloses.forEach(function (close) {
+                    close.addEventListener('click', function () {
+                        var modal = close.closest('[data-modal]');
+                        closeModal(modal);
+                    });
+                });
+
+                document.addEventListener('keydown', function (event) {
+                    if (event.key !== 'Escape') return;
+                    var openModals = document.querySelectorAll('[data-modal].flex');
+                    openModals.forEach(function (modal) {
+                        closeModal(modal);
+                    });
+                });
+
                 var deleteButtons = document.querySelectorAll('.btn-delete-user');
                 deleteButtons.forEach(function (btn) {
                     btn.addEventListener('click', function (event) {
@@ -350,8 +413,6 @@
                 });
 
                 var editButtons = document.querySelectorAll('.btn-edit-user');
-                var editModalEl = document.getElementById('userEditModal');
-                var editModal = (typeof bootstrap !== 'undefined' && editModalEl) ? new bootstrap.Modal(editModalEl) : null;
 
                 function parseListAttr(val) {
                     if (!val) return [];
@@ -370,9 +431,8 @@
 
                 editButtons.forEach(function (btn) {
                     btn.addEventListener('click', function () {
-                        if (!editModalEl) {
-                            return;
-                        }
+                        var editModalEl = document.getElementById('userEditModal');
+                        if (!editModalEl) return;
 
                         var idInput = editModalEl.querySelector('#edit_user_id');
                         var nameInput = editModalEl.querySelector('#edit_name');
@@ -395,18 +455,13 @@
                         setMultiSelect(roleSelect, parseListAttr(btn.getAttribute('data-roles')));
                         setMultiSelect(storeSelect, parseListAttr(btn.getAttribute('data-stores')));
 
-                        if (editModal) {
-                            editModal.show();
-                        } else {
-                            editModalEl.classList.add('show');
-                            editModalEl.style.display = 'block';
-                        }
+                        openModal('userEditModal');
                     });
                 });
             });
         </script>
-
-        <!-- App js -->
-        <script src="/assets/js/app.js"></script>
     </body>
 </html>
+
+
+
