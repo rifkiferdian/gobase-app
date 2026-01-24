@@ -73,6 +73,14 @@ func main() {
 	// Register application routes
 	routes.RegisterWebRoutes(r)
 
+	// Render custom 404 page
+	r.NoRoute(func(c *gin.Context) {
+		c.HTML(http.StatusNotFound, "error.html", gin.H{
+			"code_error": http.StatusNotFound,
+			"error":      "Page not found",
+		})
+	})
+
 	// Determine port (fallback to 8080 if APP_PORT is not set)
 	port := os.Getenv("APP_PORT")
 	if port == "" {
