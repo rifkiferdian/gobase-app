@@ -11,19 +11,19 @@
     </div>
 
     <nav class="flex-1 overflow-y-auto">
-        <ul class="space-y-2">
+        <ul class="space-y-2" style="margin-top: 10px;">
             <li>
-                <a href="{{ baseURL "/dashboard" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if eq .Page "dashboard" }}bg-brand-50 text-[#800080] shadow-sm ring-1 ring-brand-100{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}">
+                <a href="{{ baseURL "/dashboard" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if eq .Page "dashboard" }}bg-brand-50 text-[#800080] shadow-sm ring-1{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}" {{ if eq .Page "dashboard" }}style="--tw-ring-color: rgb(128 0 128 / var(--tw-bg-opacity, 1));"{{ end }}>
                     <i class="bx bx-grid-alt text-xl"></i>
                     <span key="t-dashboards">Dashboard</span>
                 </a>
             </li>
-            <li>
+            <!-- <li>
                 <a href="#" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800">
                     <i class="bx bx-sitemap text-xl"></i>
                     <span>Workflow Admin</span>
                 </a>
-            </li>
+            </li> -->
             <li>
                 <a href="#" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800">
                     <i class="bx bx-file text-xl"></i>
@@ -32,7 +32,7 @@
             </li>
             {{ if index .Permissions "role_management_access" }}
             <li>
-                <a href="{{ baseURL "/role" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if or (eq .Page "role") (eq .Page "roleForm") (eq .Page "roleEdit") }}bg-brand-50 text-[#800080] shadow-sm ring-1 ring-brand-100{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}">
+                <a href="{{ baseURL "/role" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if or (eq .Page "role") (eq .Page "roleForm") (eq .Page "roleEdit") }}bg-brand-50 text-[#800080] shadow-sm ring-1{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}" {{ if or (eq .Page "role") (eq .Page "roleForm") (eq .Page "roleEdit") }}style="--tw-ring-color: rgb(128 0 128 / var(--tw-bg-opacity, 1));"{{ end }}>
                     <i class="bx bx-user text-xl"></i>
                     <span>User Roles</span>
                 </a>
@@ -40,7 +40,7 @@
             {{ end }}
             {{ if index .Permissions "user_management_access" }}
             <li>
-                <a href="{{ baseURL "/users" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if eq .Page "user" }}bg-brand-50 text-[#800080] shadow-sm ring-1 ring-brand-100{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}">
+                <a href="{{ baseURL "/users" }}" class="flex items-center gap-4 rounded-2xl px-4 py-3 text-[15px] font-semibold {{ if eq .Page "user" }}bg-brand-50 text-[#800080] shadow-sm ring-1{{ else }}text-slate-600 transition hover:bg-slate-100/70 hover:text-slate-800{{ end }}" {{ if eq .Page "user" }}style="--tw-ring-color: rgb(128 0 128 / var(--tw-bg-opacity, 1));"{{ end }}>
                     <i class="bx bx-id-card text-xl"></i>
                     <span>Users</span>
                 </a>
@@ -56,6 +56,5 @@
     </nav>
 </aside>
 {{ end }}
-
 
 
