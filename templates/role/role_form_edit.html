@@ -18,7 +18,8 @@
         <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
 
         <script>
-            tailwind.config = {
+            window.tailwind = window.tailwind || {};
+            window.tailwind.config = {
                 theme: {
                     extend: {
                         fontFamily: {
@@ -155,7 +156,7 @@
         <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-slate-900/50 lg:hidden"></div>
 
         <!-- JAVASCRIPT -->
-        <script src="/assets/libs/jquery/jquery.min.js"></script>
+        <script src="https://code.jquery.com/jquery-4.0.0.js"></script>
 
         <!-- Sweet Alerts js -->
         <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
