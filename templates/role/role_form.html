@@ -163,22 +163,26 @@
             document.addEventListener('DOMContentLoaded', function () {
                 var sidebar = document.getElementById('app-sidebar');
                 var overlay = document.getElementById('sidebar-overlay');
-                var toggleButton = document.querySelector('[data-sidebar-toggle]');
+                var toggleButtons = document.querySelectorAll('[data-sidebar-toggle]');
 
                 function closeSidebar() {
                     if (!sidebar) return;
                     sidebar.classList.add('-translate-x-full');
                     if (overlay) overlay.classList.add('hidden');
+                    if (!document.querySelector('[data-modal].flex')) {
+                        document.body.classList.remove('overflow-hidden');
+                    }
                 }
 
                 function openSidebar() {
                     if (!sidebar) return;
                     sidebar.classList.remove('-translate-x-full');
                     if (overlay) overlay.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
                 }
 
-                if (toggleButton) {
-                    toggleButton.addEventListener('click', function () {
+                toggleButtons.forEach(function (button) {
+                    button.addEventListener('click', function () {
                         if (!sidebar) return;
                         if (sidebar.classList.contains('-translate-x-full')) {
                             openSidebar();
@@ -186,7 +190,7 @@
                             closeSidebar();
                         }
                     });
-                }
+                });
 
                 if (overlay) {
                     overlay.addEventListener('click', closeSidebar);
@@ -264,6 +268,4 @@
         </script>
     </body>
 </html>
-
-
 

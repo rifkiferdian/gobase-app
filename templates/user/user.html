@@ -58,7 +58,7 @@
         <div class="flex min-h-screen">
             {{ template "sidebar" . }}
 
-            <div class="flex min-h-screen flex-1 flex-col">
+            <div class="flex min-h-screen min-w-0 flex-1 flex-col">
                 {{ template "header" . }}
 
                 <main class="flex-1 px-4 py-6 lg:px-8">
@@ -85,8 +85,8 @@
                                 </div>
                                 {{ end }}
                                 <div class="overflow-x-auto">
-                                    <table class="min-w-full text-sm">
-                                        <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+                                    <table class="w-full min-w-[720px] text-sm">
+                                        <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500 whitespace-nowrap">
                                             <tr>
                                                 <th class="px-3 py-2 text-left font-semibold">#</th>
                                                 <th class="px-3 py-2 text-left font-semibold">Username</th>
@@ -155,9 +155,9 @@
 
         <div id="sidebar-overlay" class="fixed inset-0 z-40 hidden bg-slate-900/50 lg:hidden"></div>
 
-        <div data-modal class="fixed inset-0 z-50 hidden items-center justify-center" id="userModal">
+        <div data-modal class="fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto p-4 sm:items-center sm:p-6" id="userModal">
             <div class="absolute inset-0 bg-slate-900/50" data-modal-close></div>
-            <div class="relative w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl">
+            <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:p-6">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h2 class="text-lg font-semibold text-slate-900" id="userModalLabel">New User Form</h2>
                     <button type="button" class="text-slate-400 transition hover:text-slate-600" data-modal-close>
@@ -190,7 +190,7 @@
 
                             <div>
                                 <label for="userRoles" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Roles</label>
-                                <select name="roles" id="userRoles" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" multiple>
+                                <select name="roles" id="userRoles" class="mt-2 h-28 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 sm:h-32" multiple>
                                     {{ range .roles }}
                                         <option value="{{ .Name }}">{{ .Name }}</option>
                                     {{ end }}
@@ -205,7 +205,7 @@
 
                             <div>
                                 <label for="store_id" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Outlet MK</label>
-                                <select id="store_id" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" name="store_id" multiple required>
+                                <select id="store_id" class="mt-2 h-28 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 sm:h-32" name="store_id" multiple required>
                                     {{ range .stores }}
                                         <option value="{{ .StoreID }}">{{ .StoreName }}</option>
                                     {{ end }}
@@ -232,9 +232,9 @@
             </div>
         </div>
 
-        <div data-modal class="fixed inset-0 z-50 hidden items-center justify-center" id="userEditModal">
+        <div data-modal class="fixed inset-0 z-50 hidden items-start justify-center overflow-y-auto p-4 sm:items-center sm:p-6" id="userEditModal">
             <div class="absolute inset-0 bg-slate-900/50" data-modal-close></div>
-            <div class="relative w-full max-w-4xl rounded-2xl bg-white p-6 shadow-xl">
+            <div class="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-4 shadow-xl sm:p-6">
                 <div class="flex items-center justify-between border-b border-slate-100 pb-4">
                     <h2 class="text-lg font-semibold text-slate-900" id="userEditModalLabel">Edit User</h2>
                     <button type="button" class="text-slate-400 transition hover:text-slate-600" data-modal-close>
@@ -268,7 +268,7 @@
 
                             <div>
                                 <label for="edit_userRoles" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Roles</label>
-                                <select name="roles" id="edit_userRoles" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" multiple>
+                                <select name="roles" id="edit_userRoles" class="mt-2 h-28 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 sm:h-32" multiple>
                                     {{ range .roles }}
                                         <option value="{{ .Name }}">{{ .Name }}</option>
                                     {{ end }}
@@ -283,7 +283,7 @@
 
                             <div>
                                 <label for="edit_store_id" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Outlet MK</label>
-                                <select id="edit_store_id" class="mt-2 h-32 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500" name="store_id" multiple required>
+                                <select id="edit_store_id" class="mt-2 h-28 w-full rounded-xl border border-slate-200 bg-white px-3 py-2 text-sm outline-none focus:border-brand-500 sm:h-32" name="store_id" multiple required>
                                     {{ range .stores }}
                                         <option value="{{ .StoreID }}">{{ .StoreName }}</option>
                                     {{ end }}
@@ -318,22 +318,26 @@
             document.addEventListener('DOMContentLoaded', function () {
                 var sidebar = document.getElementById('app-sidebar');
                 var overlay = document.getElementById('sidebar-overlay');
-                var toggleButton = document.querySelector('[data-sidebar-toggle]');
+                var toggleButtons = document.querySelectorAll('[data-sidebar-toggle]');
 
                 function closeSidebar() {
                     if (!sidebar) return;
                     sidebar.classList.add('-translate-x-full');
                     if (overlay) overlay.classList.add('hidden');
+                    if (!document.querySelector('[data-modal].flex')) {
+                        document.body.classList.remove('overflow-hidden');
+                    }
                 }
 
                 function openSidebar() {
                     if (!sidebar) return;
                     sidebar.classList.remove('-translate-x-full');
                     if (overlay) overlay.classList.remove('hidden');
+                    document.body.classList.add('overflow-hidden');
                 }
 
-                if (toggleButton) {
-                    toggleButton.addEventListener('click', function () {
+                toggleButtons.forEach(function (button) {
+                    button.addEventListener('click', function () {
                         if (!sidebar) return;
                         if (sidebar.classList.contains('-translate-x-full')) {
                             openSidebar();
@@ -341,7 +345,7 @@
                             closeSidebar();
                         }
                     });
-                }
+                });
 
                 if (overlay) {
                     overlay.addEventListener('click', closeSidebar);
@@ -461,6 +465,3 @@
         </script>
     </body>
 </html>
-
-
-

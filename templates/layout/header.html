@@ -1,10 +1,31 @@
 {{ define "header" }}
 <header class="sticky top-0 z-30 border-b border-slate-200 bg-white/90 backdrop-blur">
-    <div class="flex items-center justify-between px-4 py-3 lg:px-8">
-        <div class="flex items-center gap-3">
-            <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 lg:hidden" data-sidebar-toggle>
+    <div class="relative flex flex-wrap items-center justify-between gap-3 px-4 py-3 lg:px-8">
+        <div class="flex min-w-0 items-center gap-3">
+            <button type="button" class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50 lg:hidden" data-sidebar-toggle aria-label="Open sidebar">
                 <i class="bx bx-menu text-xl"></i>
             </button>
+
+            <div class="flex min-w-0 flex-col leading-tight sm:hidden">
+                <span class="text-[10px] font-semibold uppercase tracking-[0.35em] text-slate-400">Mail Approval</span>
+                <span class="truncate text-sm font-semibold text-slate-800">
+                    {{ if eq .Page "dashboard" }}
+                        Dashboard
+                    {{ else if eq .Page "user" }}
+                        Users
+                    {{ else if eq .Page "role" }}
+                        Roles
+                    {{ else if eq .Page "roleForm" }}
+                        New Role
+                    {{ else if eq .Page "roleEdit" }}
+                        Edit Role
+                    {{ else if .Title }}
+                        {{ .Title }}
+                    {{ else }}
+                        Mail Approval
+                    {{ end }}
+                </span>
+            </div>
 
             <form class="hidden w-full max-w-md lg:block">
                 <div class="relative">
@@ -14,14 +35,14 @@
             </form>
         </div>
 
-        <div class="flex items-center gap-4 mr-10">
-            <details class="relative lg:hidden">
+        <div class="flex items-center gap-2 sm:gap-4 lg:mr-10">
+            <details class="lg:hidden">
                 <summary class="list-none">
                     <div class="inline-flex h-10 w-10 items-center justify-center rounded-xl border border-slate-200 text-slate-600 transition hover:bg-slate-50">
-                        <i class="mdi mdi-magnify"></i>
+                        <i class="bx bx-search text-xl"></i>
                     </div>
                 </summary>
-                <div class="absolute right-0 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
+                <div class="absolute left-4 right-4 top-full mt-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-lg">
                     <input type="text" class="w-full rounded-xl border border-slate-200 bg-slate-50 px-3 py-2 text-sm text-slate-600 outline-none focus:border-brand-500 focus:bg-white" placeholder="Search ...">
                 </div>
             </details>
@@ -33,7 +54,7 @@
                         <span class="absolute right-1 top-1 inline-flex min-w-[18px] items-center justify-center rounded-full bg-rose-500 px-1.5 text-[10px] font-semibold leading-4 text-white ring-2 ring-white">3</span>
                     </div>
                 </summary>
-                <div class="absolute right-0 mt-3 w-72 rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-lg">
+                <div class="absolute right-0 mt-3 w-[min(92vw,18rem)] rounded-2xl border border-slate-200 bg-white p-3 text-sm shadow-lg">
                     <div class="px-2 pb-2 text-xs font-semibold uppercase tracking-wide text-slate-400">Notifications</div>
                     <a class="flex items-start gap-3 rounded-xl px-3 py-2 transition hover:bg-slate-50" href="#">
                         <span class="inline-flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full bg-rose-50 text-rose-600">
@@ -60,17 +81,17 @@
 
             <details class="relative">
                 <summary class="list-none cursor-pointer">
-                    <div class="inline-flex items-center gap-3 text-slate-600">
-                        <div class="text-right sm:text-left">
+                    <div class="inline-flex items-center gap-2 sm:gap-3 text-slate-600">
+                        <div class="hidden text-right sm:block sm:text-left">
                             <div class="text-sm font-semibold text-slate-800" key="t-henry">{{ if .User }}{{ index .User "name" }}{{ end }}</div>
                             <div class="text-xs text-slate-400">Super Admin</div>
                         </div>
-                        <div class="inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#800080] text-sm font-semibold text-white">
+                        <div class="inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#800080] text-sm font-semibold text-white sm:h-10 sm:w-10">
                             {{ if .Initials }}{{ .Initials }}{{ end }}
                         </div>
                     </div>
                 </summary>
-                <div class="absolute right-0 mt-3 w-48 rounded-2xl border border-slate-200 bg-white p-2 text-sm shadow-lg">
+                <div class="absolute right-0 mt-3 w-[min(92vw,12rem)] rounded-2xl border border-slate-200 bg-white p-2 text-sm shadow-lg">
                     <a class="flex items-center gap-2 rounded-xl px-3 py-2 text-slate-600 transition hover:bg-slate-50" href="/profile">
                         <i class="bx bx-user text-base"></i>
                         <span key="t-profile">Profile</span>
