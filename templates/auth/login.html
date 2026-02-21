@@ -9,37 +9,7 @@
 
         <link rel="stylesheet" href="/assets/fonts/google/manrope-space-grotesk.css">
 
-        <script>
-            window.tailwind = window.tailwind || {};
-            window.tailwind.config = {
-                theme: {
-                    extend: {
-                        fontFamily: {
-                            display: ["Space Grotesk", "ui-sans-serif", "system-ui"],
-                            body: ["Manrope", "ui-sans-serif", "system-ui"],
-                        },
-                        colors: {
-                            brand: {
-                                50: "#f6f3ff",
-                                100: "#e9e1ff",
-                                200: "#d2c1ff",
-                                300: "#b49bff",
-                                400: "#9567ff",
-                                500: "#7b35ff",
-                                600: "#6c20f2",
-                                700: "#5718c1",
-                                800: "#40128f",
-                                900: "#2d0d65",
-                            },
-                        },
-                        boxShadow: {
-                            glow: "0 30px 80px -40px rgba(90, 24, 154, 0.6)",
-                        },
-                    },
-                },
-            };
-        </script>
-        <script src="https://cdn.tailwindcss.com"></script>
+        <link rel="stylesheet" href="/assets/css/tailwind.css">
     </head>
 
     <body class="min-h-screen bg-[#f3f5fb] font-body text-slate-900">
@@ -62,13 +32,13 @@
                                 </div>
                                 <div>
                                     <p class="text-[11px] uppercase tracking-[0.35em] text-white/70">STIE Widya Wiwaha</p>
-                                    <p class="text-lg font-display font-semibold">Mail Approval</p>
+                                    <p class="text-lg font-display-auth font-semibold">Mail Approval</p>
                                 </div>
                             </div>
                         </div>
 
                         <div class="relative z-10 px-10 pb-16">
-                            <h1 class="text-[40px] font-display font-semibold leading-[1.15] tracking-tight">
+                            <h1 class="text-[40px] font-display-auth font-semibold leading-[1.15] tracking-tight">
                                 <span class="block">Internal Document</span>
                                 <span class="block">Management</span>
                                 <span class="block">System</span>
@@ -91,7 +61,7 @@
                     <section class="flex flex-col justify-center px-6 py-12 sm:px-10 lg:px-12">
                         <div class="mx-auto w-full max-w-md">
                             <div class="mb-8">
-                                <h2 class="text-3xl font-display font-semibold text-slate-900">Welcome back</h2>
+                                <h2 class="text-3xl font-display-auth font-semibold text-slate-900">Welcome back</h2>
                                 <p class="mt-2 text-sm text-slate-500">Please enter your details to sign in.</p>
                             </div>
 
@@ -104,7 +74,7 @@
                             <form action="/login" method="post" class="space-y-5">
                                 <div>
                                     <label for="username" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Email or Username</label>
-                                    <input id="username" name="username" type="text" placeholder="Enter your email or username" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-brand-500 focus:ring-4 focus:ring-brand-100" />
+                                    <input id="username" name="username" type="text" placeholder="Enter your email or username" class="mt-2 w-full rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm shadow-sm outline-none transition focus:border-brand-auth-500 focus:ring-4 focus:ring-brand-auth-100" />
                                 </div>
 
                                 <div>
@@ -112,7 +82,7 @@
                                         <label for="password" class="text-xs font-semibold uppercase tracking-wider text-slate-500">Password</label>
                                         <!-- <a href="#" class="text-xs font-semibold text-[#800080] hover:text-[#8c149c]">Forgot Password?</a> -->
                                     </div>
-                                    <div class="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-brand-500 focus-within:ring-4 focus-within:ring-brand-100">
+                                    <div class="mt-2 flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 shadow-sm focus-within:border-brand-auth-500 focus-within:ring-4 focus-within:ring-brand-auth-100">
                                         <input id="password" name="password" type="password" placeholder="Enter your password" class="w-full bg-transparent py-3 text-sm outline-none" />
                                         <button type="button" class="rounded-lg px-2 py-1 text-slate-400 transition hover:text-[#800080]" aria-label="Toggle password visibility" data-password-toggle>
                                             <svg class="h-5 w-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -125,7 +95,7 @@
 
                                 <div class="flex items-center justify-between rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-500">
                                     <label class="flex items-center gap-2">
-                                        <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[#800080] focus:ring-brand-500" />
+                                        <input type="checkbox" class="h-4 w-4 rounded border-slate-300 text-[#800080] focus:ring-brand-auth-500" />
                                         <span>I'm not a robot</span>
                                     </label>
                                     <svg class="h-5 w-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
