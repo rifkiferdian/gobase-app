@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"database/sql"
-	"stok-hadiah/models"
+	"gobase-app/models"
 	"strings"
 )
 
@@ -68,3 +68,4 @@ func formatGroupLabel(groupKey string) string {
 	normalized := strings.ReplaceAll(groupKey, "_", " ")
 	return strings.Title(normalized)
 }
+

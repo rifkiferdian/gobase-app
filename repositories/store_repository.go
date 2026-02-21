@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"database/sql"
-	"stok-hadiah/models"
+	"gobase-app/models"
 	"strings"
 )
 
@@ -71,3 +71,4 @@ func (r *StoreRepository) GetByIDs(ids []int) ([]models.Store, error) {
 
 	return stores, nil
 }
+

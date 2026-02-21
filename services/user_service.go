@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 	"net/mail"
-	"stok-hadiah/config"
-	"stok-hadiah/models"
-	"stok-hadiah/repositories"
+	"gobase-app/config"
+	"gobase-app/models"
+	"gobase-app/repositories"
 	"strings"
 
 	"golang.org/x/crypto/bcrypt"
@@ -332,3 +332,4 @@ func uniqueInts(values []int) []int {
 	}
 	return result
 }
+

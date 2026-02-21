@@ -1,4 +1,4 @@
-module stok-hadiah
+module gobase-app
 
 go 1.25.4
 
@@ -46,3 +46,4 @@ require (
 	golang.org/x/tools v0.38.0 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
 )
+

@@ -4,8 +4,8 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"stok-hadiah/models"
-	"stok-hadiah/repositories"
+	"gobase-app/models"
+	"gobase-app/repositories"
 	"strconv"
 	"strings"
 )
@@ -177,3 +177,4 @@ func formatInt64Slice(values []int64) string {
 
 	return strings.Join(parts, ", ")
 }
+

@@ -54,7 +54,7 @@ Nilai di atas contoh saja; cek implementasi di package `config` untuk memastikan
 2. Masuk ke folder proyek:
 
    ```bash
-   cd stok-hadiah
+   cd gobase-app
    ```
 
 3. Download dependensi:

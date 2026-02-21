@@ -2,8 +2,8 @@ package middleware
 
 import (
 	"net/http"
-	"stok-hadiah/models"
-	"stok-hadiah/services"
+	"gobase-app/models"
+	"gobase-app/services"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -151,5 +151,6 @@ func PermissionContext() gin.HandlerFunc {
 		c.Next()
 	}
 }
+
 
 

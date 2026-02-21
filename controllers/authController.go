@@ -3,9 +3,9 @@ package controllers
 import (
 	"database/sql"
 	"net/http"
-	"stok-hadiah/config"
-	helpers "stok-hadiah/helper"
-	"stok-hadiah/models"
+	"gobase-app/config"
+	helpers "gobase-app/helper"
+	"gobase-app/models"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -150,3 +150,4 @@ func CreateUser(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "User created successfully"})
 }
+

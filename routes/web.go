@@ -1,8 +1,8 @@
 package routes
 
 import (
-	"stok-hadiah/controllers"
-	"stok-hadiah/middleware"
+	"gobase-app/controllers"
+	"gobase-app/middleware"
 
 	"github.com/gin-gonic/gin"
 )
@@ -33,3 +33,4 @@ func RegisterWebRoutes(r *gin.Engine) {
 		auth.GET("/role/delete/:id", middleware.RequirePermission("role_delete"), controllers.RoleDelete)
 	}
 }
+

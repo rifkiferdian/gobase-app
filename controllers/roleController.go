@@ -2,10 +2,10 @@ package controllers
 
 import (
 	"net/http"
-	"stok-hadiah/config"
-	"stok-hadiah/models"
-	"stok-hadiah/repositories"
-	"stok-hadiah/services"
+	"gobase-app/config"
+	"gobase-app/models"
+	"gobase-app/repositories"
+	"gobase-app/services"
 	"strconv"
 	"strings"
 
@@ -229,3 +229,4 @@ func renderRoleEditForm(c *gin.Context, role models.RoleDetail, message string) 
 		"Error":               message,
 	})
 }
+

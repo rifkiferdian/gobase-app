@@ -7,9 +7,9 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"stok-hadiah/config"
-	"stok-hadiah/models"
-	"stok-hadiah/routes"
+	"gobase-app/config"
+	"gobase-app/models"
+	"gobase-app/routes"
 	"strings"
 
 	"github.com/gin-contrib/sessions"
@@ -99,3 +99,4 @@ func main() {
 		log.Fatalf("failed to run server: %v", err)
 	}
 }
+

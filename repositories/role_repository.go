@@ -2,7 +2,7 @@ package repositories
 
 import (
 	"database/sql"
-	"stok-hadiah/models"
+	"gobase-app/models"
 	"strings"
 )
 
@@ -262,3 +262,4 @@ func (r *RoleRepository) DeleteByID(id int) error {
 
 	return tx.Commit()
 }
+

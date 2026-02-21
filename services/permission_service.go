@@ -1,8 +1,8 @@
 package services
 
 import (
-	"stok-hadiah/models"
-	"stok-hadiah/repositories"
+	"gobase-app/models"
+	"gobase-app/repositories"
 )
 
 type PermissionService struct {
@@ -12,3 +12,4 @@ type PermissionService struct {
 func (s *PermissionService) GetGroupedPermissions() ([]models.PermissionGroup, error) {
 	return s.Repo.GetGrouped()
 }
+

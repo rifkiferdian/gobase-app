@@ -3,7 +3,7 @@ package repositories
 import (
 	"database/sql"
 	"encoding/json"
-	"stok-hadiah/models"
+	"gobase-app/models"
 	"strconv"
 	"strings"
 	"time"
@@ -435,3 +435,4 @@ func (r *UserRepository) DeleteUser(id int) error {
 
 	return tx.Commit()
 }
+

@@ -2,9 +2,9 @@ package controllers
 
 import (
 	"net/http"
-	"stok-hadiah/models"
+	"gobase-app/models"
 
-	helpers "stok-hadiah/helper"
+	helpers "gobase-app/helper"
 
 	"github.com/gin-contrib/sessions"
 	"github.com/gin-gonic/gin"
@@ -80,3 +80,4 @@ func Render(c *gin.Context, name string, data gin.H) {
 
 	c.HTML(http.StatusOK, name, data)
 }
+
